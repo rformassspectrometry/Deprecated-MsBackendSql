@@ -1,0 +1,42 @@
+Package: MsBackenSqlDb
+Title: SQL Database-based Mass Spectrometry Data Backends
+Version: 0.0.1
+Description: Mass spectrometry (MS) data backends storing all data
+             in an SQL database.
+Authors@R: c(
+	   person(given = "Johannes", family = "Rainer",
+	   comment = c(ORCID = "0000-0002-6977-7147"),
+	   email = "Johannes.Rainer@eurac.edu",
+	   role = c("aut", "cre")))
+Depends:
+    R (>= 3.5.0),
+    Spectra (>= 0.5.0)
+Imports:
+    methods,
+    S4Vectors,
+    IRanges,
+    MsCoreUtils,
+    DBI
+Suggests:
+    testthat,
+    knitr (>= 1.1.0),
+    BiocStyle (>= 2.5.19),
+    msdata,
+    RSQLite,
+    mzR,
+    rmarkdown
+Remotes:
+   RforMassSpectrometry/Spectra,
+   RforMassSpectrometry/MsCoreUtils
+License: Artistic-2.0
+LazyData: yes
+VignetteBuilder: knitr
+BugReports: https://github.com/RforMassSpectrometry/MsBackendSql/issues
+URL: https://github.com/RforMassSpectrometry/MsBackendSql
+biocViews: Infrastructure, Proteomics, MassSpectrometry
+RoxygenNote: 7.1.0
+Roxygen: list(markdown=TRUE)
+Collate:
+    'hidden_aliases.R'
+    'MsBackendSqlDb-functions.R'
+    'MsBackendSqlDb.R'
