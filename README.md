@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/badge/license-Artistic--2.0-brightgreen.svg)](https://opensource.org/licenses/Artistic-2.0)
 
 The `MsBackendSql` package defines `MsBackend` backends for the
-[Spectra][Spectra](https://github.com/rformassspectrometry/Spectra) R package to
+[Spectra](https://github.com/rformassspectrometry/Spectra) R package to
 store and retrieve mass spectrometry data to and from SQL databases.
 
 For more information see the package vignette.
