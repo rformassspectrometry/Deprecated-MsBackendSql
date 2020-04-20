@@ -3,11 +3,18 @@ Title: SQL Database-based Mass Spectrometry Data Backends
 Version: 0.0.1
 Description: Mass spectrometry (MS) data backends storing all data
              in an SQL database.
-Authors@R: c(
-	   person(given = "Johannes", family = "Rainer",
-	   comment = c(ORCID = "0000-0002-6977-7147"),
-	   email = "Johannes.Rainer@eurac.edu",
-	   role = c("aut", "cre")))
+Authors@R: 
+    c(person(given = "Johannes", family = "Rainer",
+             email = "Johannes.Rainer@eurac.edu",
+             role = c("aut", "cre"),
+             comment = c(ORCID = "0000-0002-6977-7147")),
+      person(given = "Chong", family = "Tang",
+             email = "chong.tang@uclouvain.be",
+             role = "aut"),
+      person(given = "Laurent", family = "Gatto",
+             email = "laurent.gatto@uclouvain.be",
+             role = "aut",	     
+             comment = c(ORCID = "0000-0002-1520-2268")))	     
 Depends:
     R (>= 3.5.0),
     Spectra (>= 0.5.0)
