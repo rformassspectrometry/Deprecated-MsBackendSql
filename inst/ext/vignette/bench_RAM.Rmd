@@ -12,8 +12,9 @@ BiocStyle::markdown()
 
 # Introduction
 
-In this vignette, we want to benchmark 3 backends for the package `Spectra`:
-`MsBackendSql`, `MsBackendMzR` and `MsBackendDataFrame`.
+In this vignette, we want to benchmark 2 backends for the package `Spectra`:
+`MsBackendSql` and `MsBackendMzR`, to evaluate whether the new backend 
+`MsBackendSql` can reduce the RAM consumption.
 
 # Usage
 
@@ -30,34 +31,23 @@ library(tidyverse)
 library(pryr)
 ```
 
-The example below demonstrates the functionality with a single file:
+The example below demonstrates the functionality of `MsBackendSql` with a single 
+file:
 
-```{r usage1, warning=FALSE}
+```{r usage1, warning = FALSE}
 f <- msdata::proteomics(full.names = TRUE)[4]
 conn1 <- dbConnect(SQLite(), "b1.db")
 b1 <- backendInitialize(MsBackendSqlDb(), dbcon = conn1, files = f)
+object_size(b1)
 ```
 
-We can also load the raw `mzML` file with `Spectra` package.
+We can also load the raw `mzML` file with `MsBackendMzR` backend.
 
 ```{r usage2}
-sps_tmt <-  Spectra(f, backend = MsBackendMzR())
-sps_tmt
-```
-
-We can also load the file with two different backends: `MsBackendMzR` and 
-`MsBackendDataFrame`:
-
-```{r usage3}
 b2 <- Spectra::backendInitialize(MsBackendMzR(), files = f)
-b3 <- setBackend(sps_tmt, MsBackendDataFrame())
 object_size(b2)
-object_size(b3)
 ```
 
-Since `MsBackendDataFrame` is using in-memory mode to store the data. So we can
-just compare the memory consumption between `MsBackendSql` and 
-`MsBackendMzR`.
 
 # Benchmarking
 
