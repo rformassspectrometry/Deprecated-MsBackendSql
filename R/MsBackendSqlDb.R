@@ -125,3 +125,29 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
                                 pkey, "= ?"))
               object
           })
+
+#' @rdname hidden_aliases
+#' 
+setMethod("sqlVariables", "MsBackendSqlDb", function(object) {
+  unique(names(.SPECTRA_DATA_COLUMNS))
+})
+
+
+#' @rdname hidden_aliases
+#' 
+setMethod("$", signature = "MsBackendSqlDb", 
+          function(x, columns = object@columns) {
+    if (!any(sqlVariables(x) == columns))
+    stop("spectra variable '", columns, "' not available")
+    .get_db_data(x, columns)[, 1]
+})
+
+#' @rdname hidden_aliases
+#' 
+setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
+  if (is.list(value) && any(c("mz", "intensity") == name))
+    value <- NumericList(value, compress = FALSE)
+  x@spectraData[[name]] <- value
+  validObject(x)
+  x
+})
