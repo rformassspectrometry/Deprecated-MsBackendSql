@@ -97,7 +97,7 @@ dbfile_size <- file.size(db_files) / 1024^2
 
 The benchmarking data:
 
-```{r bench2, cache=TRUE}
+```{r bench3, cache=TRUE}
 load("peakRAM_SQL.rda")
 dfr <- data.frame(rbind(peakram1, peakram10, peakram20,
                         peakram50, peakram100, peakram200),
