@@ -1828,7 +1828,7 @@ file:</p>
 conn1 &lt;- dbConnect(SQLite(), &quot;b1.db&quot;)
 b1 &lt;- backendInitialize(MsBackendSqlDb(), dbcon = conn1, files = f)
 object_size(b1)</code></pre>
-<pre><code>## 37.9 kB</code></pre>
+<pre><code>## 38 kB</code></pre>
 <p>We can also load the raw <code>mzML</code> file with <code>MsBackendMzR</code> backend.</p>
 <pre class="r"><code>b2 &lt;- Spectra::backendInitialize(MsBackendMzR(), files = f)
 object_size(b2)</code></pre>
@@ -1864,6 +1864,28 @@ for (i in seq_along(n)) {
 save(peakram1, peakram10, peakram20,
      peakram50, peakram100, peakram200, res1,
      file = &quot;peakRAM_SQL.rda&quot;)</code></pre>
+<p>We repeatedly stored the metadata as SQLite tables in the following
+SQLite databases. Below, we retrieved each single metadata table in
+the SQLite database, and checked their RAM consumptions (MiB) and the
+file size (MB).</p>
+<pre class="r"><code>db_files &lt;- dir(pattern = &quot;bench.*db&quot;)
+db_files &lt;- db_files[order(as.numeric(sub(&quot;\\.db&quot;, &quot;&quot;, sub(&quot;bench&quot;, &quot;&quot;, db_files))))]
+dbfile_size &lt;- file.size(db_files) / 1024^2</code></pre>
+<p>The benchmarking data:</p>
+<pre class="r"><code>load(&quot;peakRAM_SQL.rda&quot;)
+dfr &lt;- data.frame(rbind(peakram1, peakram10, peakram20,
+                        peakram50, peakram100, peakram200),
+                  dbfile_size,
+                  n = c(1, 10, 20, 50, 100, 200)) %&gt;%
+    select(-1)
+dfr</code></pre>
+<pre><code>##   Elapsed_Time_sec Total_RAM_Used_MiB Peak_RAM_Used_MiB dbfile_size   n
+## 1           16.091                  0            1223.5    581.9883   1
+## 2          157.965                  0            1407.3   5819.8789  10
+## 3          317.991                  0            1452.3  11639.7578  20
+## 4          796.534                  0            1461.1  29099.4062  50
+## 5         1592.226                  0            1430.9  58198.8164 100
+## 6         3156.715                  0            1471.0 116397.6289 200</code></pre>
 </div>
 
 
