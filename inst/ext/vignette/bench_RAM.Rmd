@@ -105,5 +105,74 @@ dfr <- data.frame(rbind(peakram1, peakram10, peakram20,
                   n = c(1, 10, 20, 50, 100, 200)) %>%
     select(-1)
 dfr
+ram_records <- res1 %>% bind_rows(.)
+dfr1 <- data.frame(rbind(peakram1, peakram10, peakram20,
+                        peakram50, peakram100, peakram200), 
+                        ram_records[-1],
+                   n = c(1, 10, 20, 50, 100, 200)) %>%
+    select(-1)
+dfr1
 ```
 
+# Results
+
+Firstly, we want to compare the RAM consumptions with the local on-disk SQL 
+database sizes.
+
+```{r benchfig1, fig.wide = TRUE, cache=TRUE}
+dfr %>%
+    select(n, Total_RAM_Used_MiB, Peak_RAM_Used_MiB, dbfile_size) %>%
+    pivot_longer(names_to = "param",
+                 values_to = "value",
+                 -n) %>%
+    ggplot(aes(x = n, y = value, colour = param)) +
+    geom_line() +
+    geom_point()
+```
+
+Below, we also want to benchmark the differences between `MsBackendSql` and
+`MsBackendMzR`. We can notice that `MsBackendMzR` is much faster than 
+`MsBackendSql` for data reading.
+
+```{r benchfig2, fig.wide = TRUE, cache=TRUE}
+dfr1 %>%
+    select(n, Elapsed_Time_sec_SQL = Elapsed_Time_sec, 
+           Elapsed_Time_sec_mzR = Elapsed_Time_sec.1) %>%
+    pivot_longer(names_to = "param",
+                 values_to = "value",
+                 -n) %>%
+    ggplot(aes(x = n, y = value, colour = param)) +
+    geom_line() +
+    geom_point()
+```
+
+The total RAM consumption is also within our expectation, `MsBackendSql` 
+backend can greatly reduce the RAM consumtion by storing metadata into SQLite
+database.
+
+```{r benchfig3, fig.wide = TRUE, cache=TRUE}
+dfr1 %>%
+        select(n, Total_RAM_Used_MiB_SQL = Total_RAM_Used_MiB, 
+               Total_RAM_Used_MiB_mzR = Total_RAM_Used_MiB.1) %>%
+        pivot_longer(names_to = "param",
+                     values_to = "value",
+                     -n) %>%
+        ggplot(aes(x = n, y = value, colour = param)) +
+        geom_line() +
+        geom_point()
+```
+
+The final plot shows that the new backend `MsBackendSql` requires more RAM 
+consumption on the peak than `MsBackendMzR`. 
+
+```{r benchfig4, fig.wide = TRUE, cache=TRUE}
+dfr1 %>%
+        select(n, Peak_RAM_Used_MiB_SQL = Peak_RAM_Used_MiB, 
+               Peak_RAM_Used_MiB_mzR = Peak_RAM_Used_MiB.1) %>%
+        pivot_longer(names_to = "param",
+                     values_to = "value",
+                     -n) %>%
+        ggplot(aes(x = n, y = value, colour = param)) +
+        geom_line() +
+        geom_point()
+```
