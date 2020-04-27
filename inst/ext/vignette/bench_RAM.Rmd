@@ -92,13 +92,6 @@ file size (MB).
 ```{r bench2, cache = TRUE}
 db_files <- dir(pattern = "bench.*db")
 db_files <- db_files[order(as.numeric(sub("\\.db", "", sub("bench", "", db_files))))]
-db_size <- sapply(db_files,
-                  function(dbf) {           
-                      conn <- dbConnect(RSQLite::SQLite(), dbf)
-                      on.exit(dbDisconnect(conn))
-                      metatable <- dbReadTable(conn, 'msdata')
-                      object_size(metatable) / 1024^2
-                  })
 dbfile_size <- file.size(db_files) / 1024^2
 ```
 
@@ -108,7 +101,6 @@ The benchmarking data:
 load("peakRAM_SQL.rda")
 dfr <- data.frame(rbind(peakram1, peakram10, peakram20,
                         peakram50, peakram100, peakram200),
-                  db_size,
                   dbfile_size,
                   n = c(1, 10, 20, 50, 100, 200)) %>%
     select(-1)
