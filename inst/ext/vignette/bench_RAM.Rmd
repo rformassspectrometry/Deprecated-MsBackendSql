@@ -176,3 +176,9 @@ dfr1 %>%
         geom_line() +
         geom_point()
 ```
+
+# Session information
+
+```{r}
+sessionInfo()
+```
