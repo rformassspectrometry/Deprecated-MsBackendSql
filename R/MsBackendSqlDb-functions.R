@@ -122,3 +122,45 @@ MsBackendSqlDb <- function() {
         res[[i]] <- NumericList(res[[i]])
     res
 }
+
+#' data types of spectraData columns
+#'
+#' @noRd
+.SPECTRA_DATA_COLUMNS <- c(
+    msLevel = "integer",
+    rtime = "numeric",
+    acquisitionNum = "integer",
+    scanIndex = "integer",
+    mz = "NumericList",
+    intensity = "NumericList",
+    dataStorage = "character",
+    dataOrigin = "character",
+    centroided = "logical",
+    smoothed = "logical",
+    polarity = "integer",
+    precScanNum = "integer",
+    precursorMz = "numeric",
+    precursorIntensity = "numeric",
+    precursorCharge = "integer",
+    collisionEnergy = "numeric",
+    isolationWindowLowerMz = "numeric",
+    isolationWindowTargetMz = "numeric",
+    isolationWindowUpperMz = "numeric"
+    peaksCount = "integer",
+    totIonCurrent = "numeric",
+    basePeakMZ = "numeric",
+    basePeakIntensity = "numeric",
+    ionisationEnergy = "numeric",
+    lowMZ = "numeric",
+    highMZ = "numeric",
+    mergedScan = "integer",
+    mergedResultScanNum = "integer",
+    mergedResultStartScanNum = "integer",
+    mergedResultEndScanNum = "integer",
+    injectionTime = "numeric",
+    filterString = "character",
+    spectrumId = "character",
+    ionMobilityDriftTime = "numeric",
+    scanWindowLowerLimit = "numeric",
+    scanWindowUpperLimit = "numeric"
+)
