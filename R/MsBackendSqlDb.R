@@ -136,18 +136,22 @@ setMethod("sqlVariables", "MsBackendSqlDb", function(object) {
 #' @rdname hidden_aliases
 #' 
 setMethod("$", signature = "MsBackendSqlDb", 
-          function(x, columns = object@columns) {
-    if (!any(sqlVariables(x) == columns))
+          function(x, columns = x@columns) {
+    if (!is.null(.valid_db_table_has_columns(x@dbcon, 
+                                             x@dbtable, 
+                                             columns)))
     stop("spectra variable '", columns, "' not available")
     .get_db_data(x, columns)[, 1]
 })
 
 #' @rdname hidden_aliases
 #' 
-setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
-  if (is.list(value) && any(c("mz", "intensity") == name))
-    value <- NumericList(value, compress = FALSE)
-  x@spectraData[[name]] <- value
+setReplaceMethod("$", "MsBackendSqlDb", function(x, columns, value) {
+  basic_type <- c("integer", "numeric", "logical", "factor", "character")
+  if (is.list(value) && any(c("mz", "intensity") == columns) && 
+      !inherits(value, basic_type))
+    value <- lapply(value, base::serialize, NULL)
+  x@spectraData[[columns]] <- value
   validObject(x)
   x
 })
