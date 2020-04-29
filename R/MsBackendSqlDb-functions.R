@@ -122,3 +122,35 @@ MsBackendSqlDb <- function() {
         res[[i]] <- NumericList(res[[i]])
     res
 }
+
+
+
+#' Get data from the database and ensure the right data type is returned.
+#'
+#' @importFrom DBI dbSendQuery dbBind dbExecute dbClearResult
+#'
+#' @noRd
+.replace_db_table_columns <- function(object, column, value) {
+    str1 <- object@columns[object@columns != column]
+    sql1 <- paste0("CREATE VIEW metaview AS SELECT ",
+                   toString(str1), " FROM ", object@dbtable)
+    qry <- dbSendQuery(object@dbcon, sql1)
+    dbClearResult(qry)
+    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "_pkey",
+                   " FROM ", object@dbtable)
+    qry2 <- dbSendQuery(object@dbcon, sql2)
+    dbClearResult(qry2)
+    metapkey <- dbReadTable(object@dbcon, 'metakey')
+    dbWriteTable(object@dbcon, 'token', 
+                 data.frame(value, pkey = metapkey))
+    sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
+                   "INNER JOIN token on token.X_pkey = metaview1._pkey")
+    dbExecute(object@dbcon, sql3)
+    dbExecute(object@dbcon, paste0("ALTER TABLE ", object@dbtable,
+                                    " RENAME TO _msdata_old")
+    dbExecute(object@dbcon, "ALTER TABLE msdata1 RENAME TO ", object@dbtable)
+    dbExecute(object@dbcon, "DROP TABLE IF EXISTS _msdata_old")
+    ## Drop View
+    dbExecute(object@dbcon, "DROP TABLE IF EXISTS token")
+    dbExecute(object@dbcon, "DROP VIEW IF EXISTS metaview")
+}
