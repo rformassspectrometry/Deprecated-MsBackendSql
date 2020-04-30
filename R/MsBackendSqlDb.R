@@ -128,34 +128,27 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 
 #' @rdname hidden_aliases
 #' 
-setMethod("sqlVariables", "MsBackendSqlDb", function(object) {
-  unique(names(.SPECTRA_DATA_COLUMNS))
-})
-
-
-#' @rdname hidden_aliases
-#' 
 setMethod("$", signature = "MsBackendSqlDb", 
-          function(x, columns = x@columns) {
+          function(x, name) {
     if (!is.null(.valid_db_table_has_columns(x@dbcon, 
                                              x@dbtable, 
-                                             columns)))
-    stop("spectra variable '", columns, "' not available")
-    res <- .get_db_data(x, columns)[, 1]
+                                             name)))
+    stop("spectra variable '", name, "' not available")
+    res <- .get_db_data(x, name)[, 1]
     res
 })
 
 #' @rdname hidden_aliases
 #' 
-setReplaceMethod("$", "MsBackendSqlDb", function(x, columns, value) {
-  if (!(length(list(object@rows)) == length(value)))
+setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
+  if (!(length(list(x@rows)) == length(value)))
   stop("Provided values has different length than the column.")
   basic_type <- c("integer", "numeric", "logical", "factor", "character")
-  if (is.list(value) && any(c("mz", "intensity") == columns) && 
+  if (is.list(value) && any(c("mz", "intensity") == name) && 
        inherits(value, basic_type))
     value <- lapply(value, base::serialize, NULL)
-  .replace_db_table_columns(x, columns, value)
-  modCount <- modCount + 1L
+  .replace_db_table_columns(x, name, value)
+  x@modCount <- x@modCount + 1L
   validObject(x)
   x
 })

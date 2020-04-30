@@ -2,3 +2,9 @@ docs
 local_data
 *.o
 *.so
+.Rhistory
+.Rproj.user
+*.db
+**/bench_RAM_cache
+*.Rproj
+.gitignore

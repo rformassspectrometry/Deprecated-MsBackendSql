@@ -101,7 +101,7 @@ MsBackendSqlDb <- function() {
 #' @importFrom S4Vectors DataFrame
 #'
 #' @noRd
-.get_db_data <- function(object, columns = object@columns) {
+.get_db_data <- function(object, columns) {
     qry <- dbSendQuery(object@dbcon,
                        paste0("select ", paste(columns, collapse = ","),
                               " from ", object@dbtable, " where _pkey = ?"))
@@ -147,8 +147,9 @@ MsBackendSqlDb <- function() {
                    "INNER JOIN token on token.X_pkey = metaview1._pkey")
     dbExecute(object@dbcon, sql3)
     dbExecute(object@dbcon, paste0("ALTER TABLE ", object@dbtable,
-                                    " RENAME TO _msdata_old")
-    dbExecute(object@dbcon, "ALTER TABLE msdata1 RENAME TO ", object@dbtable)
+                                    " RENAME TO _msdata_old"))
+    dbExecute(object@dbcon, "ALTER TABLE msdata1 RENAME TO ", 
+              object@dbtable)
     dbExecute(object@dbcon, "DROP TABLE IF EXISTS _msdata_old")
     ## Drop View
     dbExecute(object@dbcon, "DROP TABLE IF EXISTS token")

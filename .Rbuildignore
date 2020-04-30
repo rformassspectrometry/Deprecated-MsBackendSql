@@ -9,3 +9,5 @@ local_data
 NEWS.md
 README.Rmd
 ^\.github$
+^.*\.Rproj$
+^\.Rproj\.user$
