@@ -56,6 +56,8 @@ NULL
 #'
 #' @author Johannes Rainer
 #'
+#' @export MsBackendSqlDb
+#'
 #' @exportClass MsBackendSqlDb
 #'
 #' @examples
@@ -80,15 +82,15 @@ setClass("MsBackendSqlDb",
          prototype = prototype(spectraData = "msdata",
                                readonly = FALSE,
                                modCount = 0L,
-                               rows = integer(),
-                               columns = character(),
+                               rows = integer(0),
+                               columns = character(0),
                                version = "0.1"))
 
 setValidity("MsBackendSqlDb", function(object) {
-    msg <- .valid_db_table_columns(object@dbcon, object@dbtable)
-    msg <- c(msg, .valid_db_table_has_columns(object@dbcon, object@columns))
-    if (is.null(msg)) TRUE
-    else msg
+  msg <- .valid_db_table_columns(object@dbcon, object@dbtable)
+  msg <- c(msg, .valid_db_table_has_columns(object@dbcon, object@columns))
+  if (is.null(msg)) TRUE
+  else msg
 })
 
 #' @rdname MsBackendSqlDb
@@ -100,31 +102,42 @@ setValidity("MsBackendSqlDb", function(object) {
 #' @exportMethod backendInitialize
 setMethod("backendInitialize", signature = "MsBackendSqlDb",
           function(object, dbcon, files = character(), dbtable = "msdata") {
-              if (missing(dbcon) || !dbIsValid(dbcon))
-                  stop("A valid connection to a database has to be provided",
-                       " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
-                       " information.")
-              pkey <- "_pkey"
-              object@dbcon <- dbcon
-              object@dbtable <- dbtable
-              if (length(files)) {
-                  idx <- lapply(files, FUN = .write_mzR_to_db, con = dbcon,
-                                dbtable = dbtable)
-                  object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
-              } else {
-                  object@rows <- dbGetQuery(
-                      dbcon, paste0("select ", pkey, " from ", dbtable))[, pkey]
-              }
-              msg <- .valid_db_table_columns(dbcon, dbtable)
-              if (length(msg)) stop(msg)
-              cns <- colnames(dbGetQuery(dbcon, paste0("select * from ",
-                                                       dbtable, " limit 2")))
-              object@columns <- cns[cns != pkey]
-              object@query <- dbSendQuery(
-                  dbcon, paste0("select ? from ", dbtable, " where ",
-                                pkey, "= ?"))
-              object
+            if (missing(dbcon) || !dbIsValid(dbcon))
+              stop("A valid connection to a database has to be provided",
+                   " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
+                   " information.")
+            pkey <- "_pkey"
+            object@dbcon <- dbcon
+            object@dbtable <- dbtable
+            if (length(files)) {
+              idx <- lapply(files, FUN = .write_mzR_to_db, con = dbcon,
+                            dbtable = dbtable)
+              object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
+            } else {
+              object@rows <- dbGetQuery(
+                dbcon, paste0("select ", pkey, " from ", dbtable))[, pkey]
+            }
+            msg <- .valid_db_table_columns(dbcon, dbtable)
+            if (length(msg)) stop(msg)
+            cns <- colnames(dbGetQuery(dbcon, paste0("select * from ",
+                                                     dbtable, " limit 2")))
+            object@columns <- cns[cns != pkey]
+            object@query <- dbSendQuery(
+              dbcon, paste0("select ? from ", dbtable, " where ",
+                            pkey, "= ?"))
+            object
           })
+
+#' @rdname hidden_aliases
+setMethod("length", "MsBackendSqlDb", function(x) {
+  length(x@rows)
+})
+
+#' @rdname hidden_aliases
+setMethod("dataStorage", "MsBackendSqlDb", function(object) {
+  rep("<db>", length(object))
+})
+
 
 #' @rdname hidden_aliases
 #' 
