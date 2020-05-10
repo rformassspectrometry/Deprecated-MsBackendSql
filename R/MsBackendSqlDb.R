@@ -24,6 +24,9 @@ NULL
 #'
 #' @param dbtable `character(1)` the name of the database table with the data.
 #'     Defaults to `dbtable = "msdata"`.
+#'     
+#' @param spectraColumn "DataFrame" Internal DataFrame to caching some columns
+#'     for modification.
 #'
 #' @section Creating an `MsBackendSqlDb` instance:
 #'
@@ -78,12 +81,14 @@ setClass("MsBackendSqlDb",
                    modCount = "integer",
                    rows = "integer",
                    columns = "character",
-                   query = "DBIResult"),
+                   query = "DBIResult",
+                   spectraColumn = "DataFrame"),
          prototype = prototype(spectraData = "msdata",
                                readonly = FALSE,
                                modCount = 0L,
                                rows = integer(0),
                                columns = character(0),
+                               spectraColumn = DataFrame(),
                                version = "0.1"))
 
 setValidity("MsBackendSqlDb", function(object) {
@@ -128,14 +133,54 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
             object
           })
 
+## Data accessors
 #' @rdname hidden_aliases
-setMethod("length", "MsBackendSqlDb", function(x) {
-  length(x@rows)
+setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
+  .get_db_data(object, "acquisitionNum")
+})
+
+#' @rdname hidden_aliases
+setMethod("centroided", "MsBackendSqlDb", function(object) {
+  .get_db_data(object, "centroided")
+})
+
+#' @rdname hidden_aliases
+setMethod("collisionEnergy", "MsBackendSqlDb", function(object) {
+  .get_db_data(object, "collisionEnergy")
+})
+
+#' @rdname hidden_aliases
+setMethod("dataOrigin", "MsBackendSqlDb", function(object) {
+  .get_db_data(object, "dataOrigin")
 })
 
 #' @rdname hidden_aliases
 setMethod("dataStorage", "MsBackendSqlDb", function(object) {
   rep("<db>", length(object))
+})
+
+#' @rdname hidden_aliases
+setMethod("intensity", "MsBackendSqlDb", function(object) {
+  msg <- .valid_db_table_has_columns(object@dbcon, 
+                                     object@dbtable, 
+                                     "intensity")
+  if (is.null(msg)) 
+    .get_db_data(object, "intensity")
+  else {
+    lst <- NumericList(numeric(), compress = FALSE)
+    lst[rep(1, times = length(object))]
+  }
+})
+
+#' @rdname hidden_aliases
+#' @importFrom MsCoreUtils vapply1d
+setMethod("ionCount", "MsBackendSqlDb", function(object) {
+  vapply1d(intensity(object), sum, na.rm = TRUE)
+})
+
+#' @rdname hidden_aliases
+setMethod("length", "MsBackendSqlDb", function(x) {
+  length(x@rows)
 })
 
 
