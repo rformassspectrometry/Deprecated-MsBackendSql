@@ -111,7 +111,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
               stop("A valid connection to a database has to be provided",
                    " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
                    " information.")
-            pkey <- "_pkey"
+            pkey <- "pkey"
             object@dbcon <- dbcon
             object@dbtable <- dbtable
             if (length(files)) {
@@ -141,17 +141,17 @@ setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("centroided", "MsBackendSqlDb", function(object) {
-  .get_db_data(object, "centroided")
+    as.logical(.get_db_data(object, "centroided"))
 })
 
 #' @rdname hidden_aliases
 setMethod("collisionEnergy", "MsBackendSqlDb", function(object) {
-  .get_db_data(object, "collisionEnergy")
+    .get_db_data(object, "collisionEnergy")
 })
 
 #' @rdname hidden_aliases
 setMethod("dataOrigin", "MsBackendSqlDb", function(object) {
-  .get_db_data(object, "dataOrigin")
+    .get_db_data(object, "dataOrigin")
 })
 
 #' @rdname hidden_aliases
@@ -181,6 +181,15 @@ setMethod("ionCount", "MsBackendSqlDb", function(object) {
 #' @rdname hidden_aliases
 setMethod("length", "MsBackendSqlDb", function(x) {
   length(x@rows)
+})
+
+#' @rdname hidden_aliases
+setMethod("spectraColumn", "MsBackendSqlDb", function(object, columns) {
+    msg <- .valid_db_table_has_columns(object@dbcon, 
+                                       object@dbtable,
+                                       columns)
+    if (is.null(msg))
+        object@spectraColumn <- .get_db_data(object, columns)
 })
 
 

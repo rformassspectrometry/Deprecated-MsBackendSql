@@ -10,7 +10,7 @@ MsBackendSqlDb <- function() {
     new("MsBackendSqlDb")
 }
 
-.valid_db_table_columns <- function(dbcon, dbtable, pkey = "_pkey") {
+.valid_db_table_columns <- function(dbcon, dbtable, pkey = "pkey") {
     if (!dbExistsTable(dbcon, dbtable))
         return(paste0("database table '", dbtable, "' not found"))
     tmp <- dbGetQuery(dbcon, paste0("select * from ", dbtable, " limit 3"))
@@ -79,7 +79,7 @@ MsBackendSqlDb <- function() {
     if (!dbExistsTable(con, dbtable)) {
         flds <- dbDataType(con, x)
         if (inherits(con, "SQLiteConnection"))
-            flds <- c(flds, `_pkey` = "INTEGER PRIMARY KEY")
+            flds <- c(flds, `pkey` = "INTEGER PRIMARY KEY")
         else stop(class(con)[1], " connections are not yet supported.")
         ## mysql INT AUTO_INCREMENT
         qr <- paste0("create table '", dbtable, "' (",
@@ -104,7 +104,7 @@ MsBackendSqlDb <- function() {
 .get_db_data <- function(object, columns) {
     qry <- dbSendQuery(object@dbcon,
                        paste0("select ", paste(columns, collapse = ","),
-                              " from ", object@dbtable, " where _pkey = ?"))
+                              " from ", object@dbtable, " where pkey = ?"))
     qry <- dbBind(qry, list(object@rows))
     res <- dbFetch(qry)
     dbClearResult(qry)
@@ -136,7 +136,7 @@ MsBackendSqlDb <- function() {
                    toString(str1), " FROM ", object@dbtable)
     qry <- dbSendQuery(object@dbcon, sql1)
     dbClearResult(qry)
-    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "_pkey",
+    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "pkey",
                    " FROM ", object@dbtable)
     qry2 <- dbSendQuery(object@dbcon, sql2)
     dbClearResult(qry2)
@@ -144,7 +144,7 @@ MsBackendSqlDb <- function() {
     dbWriteTable(object@dbcon, 'token', 
                  data.frame(value, pkey = metapkey))
     sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
-                   "INNER JOIN token on token.X_pkey = metaview1._pkey")
+                   "INNER JOIN token on token.pkey = metaview1.pkey")
     dbExecute(object@dbcon, sql3)
     dbExecute(object@dbcon, paste0("ALTER TABLE ", object@dbtable,
                                     " RENAME TO _msdata_old"))
