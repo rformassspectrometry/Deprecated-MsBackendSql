@@ -38,6 +38,31 @@ MsBackendSqlDb <- function() {
     NULL
 }
 
+#' data types of spectraData columns
+#'
+#' @noRd
+.SPECTRA_DATA_COLUMNS <- c(
+    msLevel = "integer",
+    rtime = "numeric",
+    acquisitionNum = "integer",
+    scanIndex = "integer",
+    mz = "NumericList",
+    intensity = "NumericList",
+    dataStorage = "character",
+    dataOrigin = "character",
+    centroided = "logical",
+    smoothed = "logical",
+    polarity = "integer",
+    precScanNum = "integer",
+    precursorMz = "numeric",
+    precursorIntensity = "numeric",
+    precursorCharge = "integer",
+    collisionEnergy = "numeric",
+    isolationWindowLowerMz = "numeric",
+    isolationWindowTargetMz = "numeric",
+    isolationWindowUpperMz = "numeric"
+)
+
 .valid_db_table_has_columns <- function(dbcon, dbtable, columns) {
     tmp <- dbGetQuery(dbcon, paste0("select * from ", dbtable, " limit 3"))
     if (!all(columns %in% colnames(tmp)))

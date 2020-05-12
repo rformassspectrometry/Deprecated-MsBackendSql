@@ -81,14 +81,12 @@ setClass("MsBackendSqlDb",
                    modCount = "integer",
                    rows = "integer",
                    columns = "character",
-                   query = "DBIResult",
-                   spectraColumn = "DataFrame"),
+                   query = "DBIResult"),
          prototype = prototype(spectraData = "msdata",
                                readonly = FALSE,
                                modCount = 0L,
                                rows = integer(0),
                                columns = character(0),
-                               spectraColumn = DataFrame(),
                                version = "0.1"))
 
 setValidity("MsBackendSqlDb", function(object) {
@@ -96,6 +94,18 @@ setValidity("MsBackendSqlDb", function(object) {
   msg <- c(msg, .valid_db_table_has_columns(object@dbcon, object@columns))
   if (is.null(msg)) TRUE
   else msg
+})
+
+#' @rdname hidden_aliases
+setMethod("show", "MsBackendSqlDb", function(object) {
+    spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
+    cat(class(object), "with", nrow(spd), "spectra\n")
+    if (nrow(spd)) {
+      txt <- capture.output(print(spd))
+      cat(txt[-1], sep = "\n")
+      sp_cols <- spectraVariables(object)
+      cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
+    }
 })
 
 #' @rdname MsBackendSqlDb
@@ -140,6 +150,12 @@ setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+setMethod("as.list", "MsBackendSqlDb", function(x) {
+    mapply(cbind, mz = mz(x), intensity = intensity(x),
+           SIMPLIFY = FALSE, USE.NAMES = FALSE)
+})
+
+#' @rdname hidden_aliases
 setMethod("centroided", "MsBackendSqlDb", function(object) {
     as.logical(.get_db_data(object, "centroided"))
 })
@@ -156,42 +172,140 @@ setMethod("dataOrigin", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("dataStorage", "MsBackendSqlDb", function(object) {
-  rep("<db>", length(object))
+    rep("<db>", length(object))
 })
 
 #' @rdname hidden_aliases
 setMethod("intensity", "MsBackendSqlDb", function(object) {
-  msg <- .valid_db_table_has_columns(object@dbcon, 
-                                     object@dbtable, 
-                                     "intensity")
-  if (is.null(msg)) 
-    .get_db_data(object, "intensity")
-  else {
-    lst <- NumericList(numeric(), compress = FALSE)
-    lst[rep(1, times = length(object))]
-  }
+    msg <- .valid_db_table_has_columns(object@dbcon, 
+                                       object@dbtable, 
+                                       "intensity")
+    if (is.null(msg)) 
+      .get_db_data(object, "intensity")
+    else {
+      lst <- NumericList(numeric(), compress = FALSE)
+      lst[rep(1, times = length(object))]
+    }
 })
 
 #' @rdname hidden_aliases
 #' @importFrom MsCoreUtils vapply1d
 setMethod("ionCount", "MsBackendSqlDb", function(object) {
-  vapply1d(intensity(object), sum, na.rm = TRUE)
+    vapply1d(intensity(object), sum, na.rm = TRUE)
+})
+
+#' @rdname hidden_aliases
+setMethod("isEmpty", "MsBackendSqlDb", function(x) {
+    lengths(intensity(x)) == 0
 })
 
 #' @rdname hidden_aliases
 setMethod("length", "MsBackendSqlDb", function(x) {
-  length(x@rows)
+    length(x@rows)
 })
 
 #' @rdname hidden_aliases
-setMethod("spectraColumn", "MsBackendSqlDb", function(object, columns) {
-    msg <- .valid_db_table_has_columns(object@dbcon, 
-                                       object@dbtable,
-                                       columns)
-    if (is.null(msg))
-        object@spectraColumn <- .get_db_data(object, columns)
+setMethod("lengths", "MsBackendSqlDb", function(x, use.names = FALSE) {
+    lengths(mz(x))
 })
 
+#' @rdname hidden_aliases
+setMethod("msLevel", "MsBackendSqlDb", function(object, ...) {
+    msg <- .valid_db_table_has_columns(object@dbcon, 
+                                       object@dbtable, 
+                                       "msLevel")
+    if (is.null(msg))
+      .get_db_data(object, "msLevel")
+    else {
+      rep(1L, times = length(object))
+    }
+})
+
+#' @rdname hidden_aliases
+setMethod("mz", "MsBackendSqlDb", function(object) {
+    msg <- .valid_db_table_has_columns(object@dbcon, 
+                                       object@dbtable, 
+                                       "mz")
+    if (is.null(msg))
+      .get_db_data(object, "mz")
+    else {
+      lst <- NumericList(numeric(), compress = FALSE)
+      lst[rep(1, times = length(object))]
+    }
+})
+
+#' @rdname hidden_aliases
+setMethod("polarity", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "polarity")
+})
+
+#' @rdname hidden_aliases
+setMethod("precScanNum", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "precScanNum")
+})
+
+#' @rdname hidden_aliases
+setMethod("precursorCharge", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "precursorCharge")
+})
+
+#' @rdname hidden_aliases
+setMethod("precursorIntensity", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "precursorIntensity")
+})
+
+#' @rdname hidden_aliases
+setMethod("precursorMz", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "precursorMz")
+})
+
+#' @rdname hidden_aliases
+setMethod("rtime", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "rtime")
+})
+
+#' @rdname hidden_aliases
+setMethod("scanIndex", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "scanIndex")
+})
+
+#' @rdname hidden_aliases
+#'
+#' @importFrom methods as
+#'
+#' @importFrom S4Vectors SimpleList
+#'
+#' @importMethodsFrom S4Vectors lapply
+setMethod("asDataFrame", "MsBackendSqlDb",
+          function(object, columns = spectraVariables(object)) {
+            dbfields <- dbListFields(object@dbcon, object@dbtable)
+            dbfields <- dbfields[!(dbfields %in% "pkey")]
+            df_columns <- intersect(columns, dbfields)
+            res <- .get_db_data(object, df_columns)
+            other_columns <- setdiff(columns, dbfields)
+            if (length(other_columns)) {
+              other_res <- .get_db_data(object, other_columns)
+              names(other_res) <- other_columns
+              is_mz_int <- names(other_res) %in% c("mz", "intensity")
+              if (!all(is_mz_int))
+                res <- cbind(res, as(other_res[!is_mz_int], "DataFrame"))
+              if (any(names(other_res) == "mz"))
+                res$mz <- if (length(other_res$mz)) other_res$mz
+              else NumericList(compress = FALSE)
+              if (any(names(other_res) == "intensity"))
+                res$intensity <- if (length(other_res$intensity)) other_res$intensity
+              else NumericList(compress = FALSE)
+            }
+            res[, columns, drop = FALSE]
+          })
+
+
+#' @rdname hidden_aliases
+setMethod("spectraVariables", "MsBackendSqlDb", function(object) {
+    dbfields <- dbListFields(object@dbcon, object@dbtable)
+    dbfields <- dbfields[!(dbfields %in% "pkey")]
+    unique(c(names(.SPECTRA_DATA_COLUMNS), dbfields))
+})
 
 #' @rdname hidden_aliases
 #' 
