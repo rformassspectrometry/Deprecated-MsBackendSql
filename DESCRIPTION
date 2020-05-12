@@ -45,6 +45,9 @@ RoxygenNote: 7.1.0
 Roxygen: list(markdown=TRUE)
 Collate:
     'hidden_aliases.R'
+    'MsBackend-functions.R'
+    'MsBackend.R'
     'MsBackendSqlDb-functions.R'
     'MsBackendSqlDb.R'
+    'peaks-functions.R'
 Encoding: UTF-8

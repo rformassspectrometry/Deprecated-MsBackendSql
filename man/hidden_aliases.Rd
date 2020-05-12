@@ -3,10 +3,82 @@
 \docType{methods}
 \name{hidden_aliases}
 \alias{hidden_aliases}
+\alias{show,MsBackendSqlDb-method}
+\alias{acquisitionNum,MsBackendSqlDb-method}
+\alias{as.list,MsBackendSqlDb-method}
+\alias{centroided,MsBackendSqlDb-method}
+\alias{collisionEnergy,MsBackendSqlDb-method}
+\alias{dataOrigin,MsBackendSqlDb-method}
+\alias{dataStorage,MsBackendSqlDb-method}
+\alias{intensity,MsBackendSqlDb-method}
+\alias{ionCount,MsBackendSqlDb-method}
+\alias{isCentroided,MsBackendSqlDb-method}
+\alias{isEmpty,MsBackendSqlDb-method}
+\alias{length,MsBackendSqlDb-method}
+\alias{lengths,MsBackendSqlDb-method}
+\alias{msLevel,MsBackendSqlDb-method}
+\alias{mz,MsBackendSqlDb-method}
+\alias{polarity,MsBackendSqlDb-method}
+\alias{precScanNum,MsBackendSqlDb-method}
+\alias{precursorCharge,MsBackendSqlDb-method}
+\alias{precursorIntensity,MsBackendSqlDb-method}
+\alias{precursorMz,MsBackendSqlDb-method}
+\alias{rtime,MsBackendSqlDb-method}
+\alias{scanIndex,MsBackendSqlDb-method}
+\alias{asDataFrame,MsBackendSqlDb-method}
+\alias{spectraVariables,MsBackendSqlDb-method}
 \alias{$,MsBackendSqlDb-method}
 \alias{$<-,MsBackendSqlDb-method}
 \title{Internal page for hidden aliases}
 \usage{
+\S4method{show}{MsBackendSqlDb}(object)
+
+\S4method{acquisitionNum}{MsBackendSqlDb}(object)
+
+\S4method{as.list}{MsBackendSqlDb}(x)
+
+\S4method{centroided}{MsBackendSqlDb}(object)
+
+\S4method{collisionEnergy}{MsBackendSqlDb}(object)
+
+\S4method{dataOrigin}{MsBackendSqlDb}(object)
+
+\S4method{dataStorage}{MsBackendSqlDb}(object)
+
+\S4method{intensity}{MsBackendSqlDb}(object)
+
+\S4method{ionCount}{MsBackendSqlDb}(object)
+
+\S4method{isCentroided}{MsBackendSqlDb}(object, ...)
+
+\S4method{isEmpty}{MsBackendSqlDb}(x)
+
+\S4method{length}{MsBackendSqlDb}(x)
+
+\S4method{lengths}{MsBackendSqlDb}(x, use.names = FALSE)
+
+\S4method{msLevel}{MsBackendSqlDb}(object, ...)
+
+\S4method{mz}{MsBackendSqlDb}(object)
+
+\S4method{polarity}{MsBackendSqlDb}(object)
+
+\S4method{precScanNum}{MsBackendSqlDb}(object)
+
+\S4method{precursorCharge}{MsBackendSqlDb}(object)
+
+\S4method{precursorIntensity}{MsBackendSqlDb}(object)
+
+\S4method{precursorMz}{MsBackendSqlDb}(object)
+
+\S4method{rtime}{MsBackendSqlDb}(object)
+
+\S4method{scanIndex}{MsBackendSqlDb}(object)
+
+\S4method{asDataFrame}{MsBackendSqlDb}(object, columns = spectraVariables(object))
+
+\S4method{spectraVariables}{MsBackendSqlDb}(object)
+
 \S4method{$}{MsBackendSqlDb}(x, name)
 
 \S4method{$}{MsBackendSqlDb}(x, name) <- value

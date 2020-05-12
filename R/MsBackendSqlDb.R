@@ -195,6 +195,12 @@ setMethod("ionCount", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+#' @importFrom MsCoreUtils vapply1l
+setMethod("isCentroided", "MsBackendSqlDb", function(object, ...) {
+    vapply1l(as.list(object), .peaks_is_centroided)
+})
+
+#' @rdname hidden_aliases
 setMethod("isEmpty", "MsBackendSqlDb", function(x) {
     lengths(intensity(x)) == 0
 })
