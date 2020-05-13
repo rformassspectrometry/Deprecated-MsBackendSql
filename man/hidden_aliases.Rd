@@ -14,6 +14,9 @@
 \alias{ionCount,MsBackendSqlDb-method}
 \alias{isCentroided,MsBackendSqlDb-method}
 \alias{isEmpty,MsBackendSqlDb-method}
+\alias{isolationWindowLowerMz,MsBackendSqlDb-method}
+\alias{isolationWindowTargetMz,MsBackendSqlDb-method}
+\alias{isolationWindowUpperMz,MsBackendSqlDb-method}
 \alias{length,MsBackendSqlDb-method}
 \alias{lengths,MsBackendSqlDb-method}
 \alias{msLevel,MsBackendSqlDb-method}
@@ -25,8 +28,10 @@
 \alias{precursorMz,MsBackendSqlDb-method}
 \alias{rtime,MsBackendSqlDb-method}
 \alias{scanIndex,MsBackendSqlDb-method}
+\alias{smoothed,MsBackendSqlDb-method}
 \alias{asDataFrame,MsBackendSqlDb-method}
 \alias{spectraVariables,MsBackendSqlDb-method}
+\alias{tic,MsBackendSqlDb-method}
 \alias{$,MsBackendSqlDb-method}
 \alias{$<-,MsBackendSqlDb-method}
 \title{Internal page for hidden aliases}
@@ -53,6 +58,12 @@
 
 \S4method{isEmpty}{MsBackendSqlDb}(x)
 
+\S4method{isolationWindowLowerMz}{MsBackendSqlDb}(object)
+
+\S4method{isolationWindowTargetMz}{MsBackendSqlDb}(object)
+
+\S4method{isolationWindowUpperMz}{MsBackendSqlDb}(object)
+
 \S4method{length}{MsBackendSqlDb}(x)
 
 \S4method{lengths}{MsBackendSqlDb}(x, use.names = FALSE)
@@ -75,9 +86,13 @@
 
 \S4method{scanIndex}{MsBackendSqlDb}(object)
 
+\S4method{smoothed}{MsBackendSqlDb}(object)
+
 \S4method{asDataFrame}{MsBackendSqlDb}(object, columns = spectraVariables(object))
 
 \S4method{spectraVariables}{MsBackendSqlDb}(object)
+
+\S4method{tic}{MsBackendSqlDb}(object, initial = TRUE)
 
 \S4method{$}{MsBackendSqlDb}(x, name)
 

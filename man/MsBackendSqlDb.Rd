@@ -22,9 +22,6 @@ not already contain the data.}
 
 \item{dbtable}{\code{character(1)} the name of the database table with the data.
 Defaults to \code{dbtable = "msdata"}.}
-
-\item{spectraColumn}{"DataFrame" Internal DataFrame to caching some columns
-for modification.}
 }
 \description{
 The \code{MsBackendSqlDb} is an \link{MsBackend} backend which keeps all spectra data

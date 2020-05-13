@@ -145,7 +145,7 @@ MsBackendSqlDb <- function() {
     mzint <- which(colnames(res) %in% c("mz", "intensity"))
     for (i in mzint)
         res[[i]] <- NumericList(res[[i]])
-    res
+    res 
 }
 
 

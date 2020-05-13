@@ -24,9 +24,6 @@ NULL
 #'
 #' @param dbtable `character(1)` the name of the database table with the data.
 #'     Defaults to `dbtable = "msdata"`.
-#'     
-#' @param spectraColumn "DataFrame" Internal DataFrame to caching some columns
-#'     for modification.
 #'
 #' @section Creating an `MsBackendSqlDb` instance:
 #'
@@ -206,6 +203,21 @@ setMethod("isEmpty", "MsBackendSqlDb", function(x) {
 })
 
 #' @rdname hidden_aliases
+setMethod("isolationWindowLowerMz", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "isolationWindowLowerMz")
+})
+
+#' @rdname hidden_aliases
+setMethod("isolationWindowTargetMz", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "isolationWindowTargetMz")
+})
+
+#' @rdname hidden_aliases
+setMethod("isolationWindowUpperMz", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "isolationWindowUpperMz")
+})
+
+#' @rdname hidden_aliases
 setMethod("length", "MsBackendSqlDb", function(x) {
     length(x@rows)
 })
@@ -276,6 +288,11 @@ setMethod("scanIndex", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+setMethod("smoothed", "MsBackendSqlDb", function(object) {
+    .get_db_data(object, "smoothed")
+})
+
+#' @rdname hidden_aliases
 #'
 #' @importFrom methods as
 #'
@@ -303,7 +320,7 @@ setMethod("asDataFrame", "MsBackendSqlDb",
               else NumericList(compress = FALSE)
             }
             res[, columns, drop = FALSE]
-          })
+})
 
 
 #' @rdname hidden_aliases
@@ -314,6 +331,15 @@ setMethod("spectraVariables", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+setMethod("tic", "MsBackendSqlDb", function(object, initial = TRUE) {
+    if (initial) {
+      if (any(dbListFields(object@dbcon, object@dbtable) == "totIonCurrent"))
+        .get_db_data(object, "totIonCurrent")
+      else rep(NA_real_, times = length(object))
+    }   else vapply1d(intensity(object), sum, na.rm = TRUE)
+})
+
+#' @rdname hidden_aliases
 #' 
 setMethod("$", signature = "MsBackendSqlDb", 
           function(x, name) {
@@ -321,8 +347,12 @@ setMethod("$", signature = "MsBackendSqlDb",
                                              x@dbtable, 
                                              name)))
     stop("spectra variable '", name, "' not available")
-    res <- .get_db_data(x, name)[, 1]
-    res
+    if (length(name) == 1) {
+        res <- .get_db_data(x, name)
+        res }
+    else {
+        res <- .get_db_data(x, name[1])
+        res }
 })
 
 #' @rdname hidden_aliases
