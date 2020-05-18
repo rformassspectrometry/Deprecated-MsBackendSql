@@ -141,6 +141,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
           })
 
 ## Data accessors
+
 #' @rdname hidden_aliases
 setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
   .get_db_data(object, "acquisitionNum")
@@ -151,6 +152,54 @@ setMethod("as.list", "MsBackendSqlDb", function(x) {
     mapply(cbind, mz = mz(x), intensity = intensity(x),
            SIMPLIFY = FALSE, USE.NAMES = FALSE)
 })
+
+#' @rdname MsBackendSqlDb
+#' 
+#' @export
+getDBtable <- function(x) {
+  stopifnot(inherits(x, "MsBackendSqlDb"))
+  x@dbtable
+}
+
+#' @rdname MsBackendSqlDb
+#' 
+#' @export
+getDBcon <- function(x) {
+  stopifnot(inherits(x, "MsBackendSqlDb"))
+  x@dbcon
+}
+
+#' @rdname MsBackendSqlDb
+#' 
+#' @export
+getModCount <- function(x) {
+  stopifnot(inherits(x, "MsBackendSqlDb"))
+  x@modCount
+}
+
+#' @rdname MsBackendSqlDb
+#' 
+#' @export
+getRows <- function(x) {
+  stopifnot(inherits(x, "MsBackendSqlDb"))
+  x@rows
+}
+
+#' @rdname MsBackendSqlDb
+#' 
+#' @export
+getColumns <- function(x) {
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@columns
+}
+
+#' @rdname MsBackendSqlDb
+#' 
+#' @export
+getQuery <- function(x) {
+  stopifnot(inherits(x, "MsBackendSqlDb"))
+  x@query
+}
 
 #' @rdname hidden_aliases
 setMethod("centroided", "MsBackendSqlDb", function(object) {
@@ -289,7 +338,7 @@ setMethod("scanIndex", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("smoothed", "MsBackendSqlDb", function(object) {
-    .get_db_data(object, "smoothed")
+    as.logical(.get_db_data(object, "smoothed"))
 })
 
 #' @rdname hidden_aliases
@@ -297,8 +346,6 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #' @importFrom methods as
 #'
 #' @importFrom S4Vectors SimpleList
-#'
-#' @importMethodsFrom S4Vectors lapply
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
             dbfields <- dbListFields(object@dbcon, object@dbtable)
@@ -322,6 +369,10 @@ setMethod("asDataFrame", "MsBackendSqlDb",
             res[, columns, drop = FALSE]
 })
 
+#' @rdname hidden_aliases
+setMethod("spectraNames", "MsBackendSqlDb", function(object) {
+    rep(NA_real_, times = length(object))
+})
 
 #' @rdname hidden_aliases
 setMethod("spectraVariables", "MsBackendSqlDb", function(object) {
@@ -354,6 +405,7 @@ setMethod("$", signature = "MsBackendSqlDb",
         res <- .get_db_data(x, name[1])
         res }
 })
+
 
 #' @rdname hidden_aliases
 #' 

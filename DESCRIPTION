@@ -23,7 +23,9 @@ Imports:
     S4Vectors,
     IRanges,
     MsCoreUtils,
-    DBI
+    DBI,
+    BiocGenerics,
+    ProtGenerics
 Suggests:
     testthat,
     knitr (>= 1.1.0),

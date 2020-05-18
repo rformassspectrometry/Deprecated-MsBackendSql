@@ -10,6 +10,16 @@ MsBackendSqlDb <- function() {
     new("MsBackendSqlDb")
 }
 
+#' @description
+#'
+#' Check if SQLite table has all required columns.
+#' 
+#' @param dbcon a `DBIConnection` object to connect to the database.
+#' 
+#' @param dbtable `character(1)` the name of the database table with the data.
+#'     Defaults to `dbtable = "msdata"`.
+#'
+#' @noRd
 .valid_db_table_columns <- function(dbcon, dbtable, pkey = "pkey") {
     if (!dbExistsTable(dbcon, dbtable))
         return(paste0("database table '", dbtable, "' not found"))
@@ -63,6 +73,18 @@ MsBackendSqlDb <- function() {
     isolationWindowUpperMz = "numeric"
 )
 
+#' @description
+#'
+#' Check if SQLite table has the specified columns by the users.
+#' 
+#' @param dbcon a `DBIConnection` object to connect to the database.
+#' 
+#' @param dbtable `character(1)` the name of the database table with the data.
+#'     Defaults to `dbtable = "msdata"`.
+#'     
+#' @param columns `character` the names of the columns specified by the users.
+#'
+#' @noRd
 .valid_db_table_has_columns <- function(dbcon, dbtable, columns) {
     tmp <- dbGetQuery(dbcon, paste0("select * from ", dbtable, " limit 3"))
     if (!all(columns %in% colnames(tmp)))
@@ -80,13 +102,23 @@ MsBackendSqlDb <- function() {
 #'
 #' @noRd
 .write_mzR_to_db <- function(x = character(), con = NULL, dbtable = "msdata") {
-    hdr <- as.data.frame(Spectra:::.mzR_header(x))
+    hdr <- Spectra:::.mzR_header(x)
+    hdr <- as.data.frame(hdr)
     pks <- Spectra:::.mzR_peaks(x, hdr$scanIndex)
     hdr$mz <- lapply(pks, "[", , 1)
     hdr$intensity <- lapply(pks, "[", , 2)
     hdr$dataOrigin <- x
     hdr$dataStorage <- "<db>"
     rm(pks)
+    msg <- is.null(setdiff(names(.SPECTRA_DATA_COLUMNS), names(hdr)))
+    if (!is.null(msg))
+        nr_x <- nrow(hdr)
+        if (nr_x)
+            set_diff <- setdiff(names(.SPECTRA_DATA_COLUMNS), names(hdr))
+            ncol1 <- length(set_diff)
+            df1 <- data.frame(matrix(ncol = ncol1, nrow = nr_x))
+            colnames(df1) <- set_diff
+    hdr <- cbind(hdr, df1)
     .write_data_to_db(hdr, con = con, dbtable = dbtable)
 }
 
@@ -150,7 +182,8 @@ MsBackendSqlDb <- function() {
 
 
 
-#' Get data from the database and ensure the right data type is returned.
+#' Replace the columns from the database and ensure the right data type can be 
+#'   returned.
 #'
 #' @importFrom DBI dbSendQuery dbBind dbExecute dbClearResult
 #'
