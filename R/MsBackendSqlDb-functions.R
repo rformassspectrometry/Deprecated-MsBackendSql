@@ -185,7 +185,7 @@ MsBackendSqlDb <- function() {
 #' Replace the columns from the database and ensure the right data type can be 
 #'   returned.
 #'
-#' @importFrom DBI dbSendQuery dbBind dbExecute dbClearResult
+#' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable
 #'
 #' @noRd
 .replace_db_table_columns <- function(object, column, value) {

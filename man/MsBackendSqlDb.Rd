@@ -40,6 +40,8 @@ not already contain the data.}
 
 \item{dbtable}{\code{character(1)} the name of the database table with the data.
 Defaults to \code{dbtable = "msdata"}.}
+
+\item{x}{a \code{MsBackendSqlDb} object.}
 }
 \description{
 The \code{MsBackendSqlDb} is an \link{MsBackend} backend which keeps all spectra data
@@ -68,7 +70,8 @@ specify the database table name that contains, or should contain the data.
 
 
 The \code{MsBackendSqlDb} defines the following slots which should not be
-accessed or changed by the user:
+accessed or changed by the user, which can be retrieved by \code{getter}
+functions:
 \itemize{
 \item \verb{@dbtable} (\code{character}): the name of the database table (or view)
 containing the data.
@@ -92,5 +95,5 @@ fls <- dir(system.file("sciex", package = "msdata"), full.names = TRUE,
 msb <- backendInitialize(MsBackendSqlDb(), dbcon = con, files = fls)
 }
 \author{
-Johannes Rainer
+Johannes Rainer, Chong Tang.
 }

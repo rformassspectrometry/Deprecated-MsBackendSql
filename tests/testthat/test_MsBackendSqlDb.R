@@ -1,5 +1,5 @@
-test_con <- dbConnect(SQLite(), tempfile(pattern = "Test", fileext = ".db"))
-test_con1 <- dbConnect(SQLite(), tempfile(pattern = "Test", fileext = "1.db"))
+test_con <- dbConnect(SQLite(), "test.db")
+test_con1 <- dbConnect(SQLite(), "test1.db")
 dbExecute(test_con, "PRAGMA auto_vacuum = FULL")
 dbExecute(test_con1, "PRAGMA auto_vacuum = FULL")
 fl <- msdata::proteomics(full.names = TRUE)[4]
@@ -21,6 +21,9 @@ test_that("initializeBackend,MsBackendSqlDb works", {
     expect_true(is(intensity(test_be), "NumericList"))
 })
 
+test_that("as.list,MsBackendSqlDb works", {
+    expect_identical(as.list(test_be), as.list(b1))
+})
 
 test_that("acquisitionNum, MsBackendSqlDb works", {
     expect_equal(acquisitionNum(test_be), acquisitionNum(b1))
@@ -53,9 +56,9 @@ test_that("intensity,MsBackendSqlDb works", {
     expect_identical(intensity(test_be), intensity(b1))
 })
 
-test_that("ionCound,MsBackendSqlDb works", {
-    expect_identical(ionCound(test_be), ionCound(b1))
-    expect_true(is(ionCound(test_be), "numeric"))
+test_that("ionCount,MsBackendSqlDb works", {
+    expect_identical(ionCount(test_be), ionCount(b1))
+    expect_true(is(ionCount(test_be), "numeric"))
 })
 
 test_that("isolationWindowLowerMz,MsBackendSqlDb works", {
@@ -89,10 +92,6 @@ test_that("msLevel,MsBackendSqlDb works", {
 test_that("mz,MsBackendSqlDb works", {
     expect_true(is(mz(test_be), "NumericList"))
     expect_identical(mz(test_be), mz(b1))
-})
-
-test_that("as.list,MsBackendSqlDb works", {
-    expect_identical(as.list(test_be), as.list(b1))
 })
 
 test_that("lengths,MsBackendDataFrame works", {
@@ -147,10 +146,6 @@ test_that("tic,MsBackendSqlDb works", {
 
 test_that("spectraVariables,MsBackendSqlDb works", {
     expect_equal(spectraVariables(test_be), spectraVariables(b1))
-})
-
-test_that("show,MsBackendSqlDb works", {
-    show(test_be)
 })
 
 test_that("$,MsBackendSqlDb works", {

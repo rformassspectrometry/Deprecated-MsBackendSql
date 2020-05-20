@@ -5,7 +5,6 @@
 \alias{hidden_aliases}
 \alias{show,MsBackendSqlDb-method}
 \alias{acquisitionNum,MsBackendSqlDb-method}
-\alias{as.list,MsBackendSqlDb-method}
 \alias{centroided,MsBackendSqlDb-method}
 \alias{collisionEnergy,MsBackendSqlDb-method}
 \alias{dataOrigin,MsBackendSqlDb-method}
@@ -21,6 +20,7 @@
 \alias{lengths,MsBackendSqlDb-method}
 \alias{msLevel,MsBackendSqlDb-method}
 \alias{mz,MsBackendSqlDb-method}
+\alias{as.list,MsBackendSqlDb-method}
 \alias{polarity,MsBackendSqlDb-method}
 \alias{precScanNum,MsBackendSqlDb-method}
 \alias{precursorCharge,MsBackendSqlDb-method}
@@ -40,8 +40,6 @@
 \S4method{show}{MsBackendSqlDb}(object)
 
 \S4method{acquisitionNum}{MsBackendSqlDb}(object)
-
-\S4method{as.list}{MsBackendSqlDb}(x)
 
 \S4method{centroided}{MsBackendSqlDb}(object)
 
@@ -72,6 +70,8 @@
 \S4method{msLevel}{MsBackendSqlDb}(object, ...)
 
 \S4method{mz}{MsBackendSqlDb}(object)
+
+\S4method{as.list}{MsBackendSqlDb}(x)
 
 \S4method{polarity}{MsBackendSqlDb}(object)
 

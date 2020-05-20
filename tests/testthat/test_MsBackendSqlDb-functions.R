@@ -1,5 +1,5 @@
-test_con <- dbConnect(SQLite(), tempfile(pattern = "Test", fileext = ".db"))
-test_con1 <- dbConnect(SQLite(), tempfile(pattern = "Test", fileext = "1.db"))
+test_con <- dbConnect(SQLite(), "test2.db")
+test_con1 <- dbConnect(SQLite(), "test3.db")
 dbExecute(test_con, "PRAGMA auto_vacuum = FULL")
 dbExecute(test_con1, "PRAGMA auto_vacuum = FULL")
 fl <- msdata::proteomics(full.names = TRUE)[4]

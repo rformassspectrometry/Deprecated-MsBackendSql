@@ -41,7 +41,8 @@ NULL
 #' @section Implementation notes:
 #'
 #' The `MsBackendSqlDb` defines the following slots which should not be
-#' accessed or changed by the user:
+#' accessed or changed by the user, which can be retrieved by `getter` 
+#' functions:
 #'
 #' - `@dbtable` (`character`): the name of the database table (or view)
 #'   containing the data.
@@ -54,7 +55,7 @@ NULL
 #'
 #' @name MsBackendSqlDb
 #'
-#' @author Johannes Rainer
+#' @author Johannes Rainer, Chong Tang.
 #'
 #' @export MsBackendSqlDb
 #'
@@ -93,6 +94,10 @@ setValidity("MsBackendSqlDb", function(object) {
   else msg
 })
 
+#' @importMethodsFrom methods show
+#'
+#' @importFrom utils capture.output
+#' 
 #' @rdname hidden_aliases
 setMethod("show", "MsBackendSqlDb", function(object) {
     spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
@@ -147,44 +152,48 @@ setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
   .get_db_data(object, "acquisitionNum")
 })
 
-#' @rdname hidden_aliases
-setMethod("as.list", "MsBackendSqlDb", function(x) {
-    mapply(cbind, mz = mz(x), intensity = intensity(x),
-           SIMPLIFY = FALSE, USE.NAMES = FALSE)
-})
-
+#' @param x a `MsBackendSqlDb` object.
+#' 
 #' @rdname MsBackendSqlDb
 #' 
 #' @export
 getDBtable <- function(x) {
-  stopifnot(inherits(x, "MsBackendSqlDb"))
-  x@dbtable
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@dbtable
 }
 
+#' @param x a `MsBackendSqlDb` object.
+#' 
 #' @rdname MsBackendSqlDb
 #' 
 #' @export
 getDBcon <- function(x) {
-  stopifnot(inherits(x, "MsBackendSqlDb"))
-  x@dbcon
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@dbcon
 }
 
+#' @param x a `MsBackendSqlDb` object.
+#' 
 #' @rdname MsBackendSqlDb
 #' 
 #' @export
 getModCount <- function(x) {
-  stopifnot(inherits(x, "MsBackendSqlDb"))
-  x@modCount
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@modCount
 }
 
+#' @param x a `MsBackendSqlDb` object.
+#' 
 #' @rdname MsBackendSqlDb
 #' 
 #' @export
 getRows <- function(x) {
-  stopifnot(inherits(x, "MsBackendSqlDb"))
-  x@rows
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@rows
 }
 
+#' @param x a `MsBackendSqlDb` object.
+#' 
 #' @rdname MsBackendSqlDb
 #' 
 #' @export
@@ -193,12 +202,14 @@ getColumns <- function(x) {
     x@columns
 }
 
+#' @param x a `MsBackendSqlDb` object.
+#' 
 #' @rdname MsBackendSqlDb
 #' 
 #' @export
 getQuery <- function(x) {
-  stopifnot(inherits(x, "MsBackendSqlDb"))
-  x@query
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@query
 }
 
 #' @rdname hidden_aliases
@@ -221,6 +232,10 @@ setMethod("dataStorage", "MsBackendSqlDb", function(object) {
     rep("<db>", length(object))
 })
 
+#' @exportMethod intensity
+#' 
+#' @importMethodsFrom ProtGenerics intensity
+#' 
 #' @rdname hidden_aliases
 setMethod("intensity", "MsBackendSqlDb", function(object) {
     msg <- .valid_db_table_has_columns(object@dbcon, 
@@ -235,6 +250,7 @@ setMethod("intensity", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+#' 
 #' @importFrom MsCoreUtils vapply1d
 setMethod("ionCount", "MsBackendSqlDb", function(object) {
     vapply1d(intensity(object), sum, na.rm = TRUE)
@@ -288,6 +304,10 @@ setMethod("msLevel", "MsBackendSqlDb", function(object, ...) {
     }
 })
 
+#' @exportMethod mz
+#' 
+#' @importMethodsFrom ProtGenerics mz
+#' 
 #' @rdname hidden_aliases
 setMethod("mz", "MsBackendSqlDb", function(object) {
     msg <- .valid_db_table_has_columns(object@dbcon, 
@@ -300,6 +320,17 @@ setMethod("mz", "MsBackendSqlDb", function(object) {
       lst[rep(1, times = length(object))]
     }
 })
+
+#' @importMethodsFrom BiocGenerics as.list
+#' 
+#' @exportMethod as.list
+#'
+#' @rdname hidden_aliases
+setMethod("as.list", "MsBackendSqlDb", function(x) {
+    mapply(cbind, mz = mz(x), intensity = intensity(x),
+           SIMPLIFY = FALSE, USE.NAMES = FALSE)
+})
+
 
 #' @rdname hidden_aliases
 setMethod("polarity", "MsBackendSqlDb", function(object) {
@@ -346,6 +377,12 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #' @importFrom methods as
 #'
 #' @importFrom S4Vectors SimpleList
+#' 
+#' @importMethodsFrom Spectra asDataFrame
+#' 
+#' @importMethodsFrom DBI dbListFields
+#' 
+#' @exportMethod asDataFrame
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
             dbfields <- dbListFields(object@dbcon, object@dbtable)
@@ -374,6 +411,12 @@ setMethod("spectraNames", "MsBackendSqlDb", function(object) {
     rep(NA_real_, times = length(object))
 })
 
+#' @importMethodsFrom ProtGenerics spectraVariables
+#' 
+#' @importMethodsFrom DBI dbListFields
+#' 
+#' @exportMethod spectraVariables
+#' 
 #' @rdname hidden_aliases
 setMethod("spectraVariables", "MsBackendSqlDb", function(object) {
     dbfields <- dbListFields(object@dbcon, object@dbtable)
@@ -418,6 +461,5 @@ setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
     value <- lapply(value, base::serialize, NULL)
   .replace_db_table_columns(x, name, value)
   x@modCount <- x@modCount + 1L
-  validObject(x)
   x
 })
