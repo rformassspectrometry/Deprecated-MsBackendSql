@@ -6,3 +6,7 @@ r:
   - release
   - devel
 cache: packages
+addons:
+  apt:
+    packages:
+      - r-cran-ncdf4
