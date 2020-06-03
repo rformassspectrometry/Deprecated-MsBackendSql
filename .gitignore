@@ -1,0 +1,4 @@
+*.db
+*.Rproj
+.Rproj.user
+*~
