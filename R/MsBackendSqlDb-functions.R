@@ -20,7 +20,7 @@ MsBackendSqlDb <- function() {
 #'     Defaults to `dbtable = "msdata"`.
 #'
 #' @noRd
-.valid_db_table_columns <- function(dbcon, dbtable, pkey = "pkey") {
+.valid_db_table_columns <- function(dbcon, dbtable, pkey = "_pkey") {
     if (!dbExistsTable(dbcon, dbtable))
         return(paste0("database table '", dbtable, "' not found"))
     tmp <- dbGetQuery(dbcon, paste0("select * from ", dbtable, " limit 3"))
@@ -47,31 +47,6 @@ MsBackendSqlDb <- function() {
         return("required columns 'mz' and 'intensity' have the wrong data type")
     NULL
 }
-
-#' data types of spectraData columns
-#'
-#' @noRd
-.SPECTRA_DATA_COLUMNS <- c(
-    msLevel = "integer",
-    rtime = "numeric",
-    acquisitionNum = "integer",
-    scanIndex = "integer",
-    mz = "NumericList",
-    intensity = "NumericList",
-    dataStorage = "character",
-    dataOrigin = "character",
-    centroided = "logical",
-    smoothed = "logical",
-    polarity = "integer",
-    precScanNum = "integer",
-    precursorMz = "numeric",
-    precursorIntensity = "numeric",
-    precursorCharge = "integer",
-    collisionEnergy = "numeric",
-    isolationWindowLowerMz = "numeric",
-    isolationWindowTargetMz = "numeric",
-    isolationWindowUpperMz = "numeric"
-)
 
 #' @description
 #'
@@ -110,11 +85,12 @@ MsBackendSqlDb <- function() {
     hdr$dataOrigin <- x
     hdr$dataStorage <- "<db>"
     rm(pks)
-    msg <- is.null(setdiff(names(.SPECTRA_DATA_COLUMNS), names(hdr)))
+    msg <- is.null(setdiff(names(Spectra:::.SPECTRA_DATA_COLUMNS), names(hdr)))
     if (!is.null(msg))
         nr_x <- nrow(hdr)
         if (nr_x)
-            set_diff <- setdiff(names(.SPECTRA_DATA_COLUMNS), names(hdr))
+            set_diff <- setdiff(names(Spectra:::.SPECTRA_DATA_COLUMNS), 
+                                names(hdr))
             ncol1 <- length(set_diff)
             df1 <- data.frame(matrix(ncol = ncol1, nrow = nr_x))
             colnames(df1) <- set_diff
@@ -136,7 +112,7 @@ MsBackendSqlDb <- function() {
     if (!dbExistsTable(con, dbtable)) {
         flds <- dbDataType(con, x)
         if (inherits(con, "SQLiteConnection"))
-            flds <- c(flds, `pkey` = "INTEGER PRIMARY KEY")
+            flds <- c(flds, `_pkey` = "INTEGER PRIMARY KEY")
         else stop(class(con)[1], " connections are not yet supported.")
         ## mysql INT AUTO_INCREMENT
         qr <- paste0("create table '", dbtable, "' (",
@@ -161,7 +137,7 @@ MsBackendSqlDb <- function() {
 .get_db_data <- function(object, columns) {
     qry <- dbSendQuery(object@dbcon,
                        paste0("select ", paste(columns, collapse = ","),
-                              " from ", object@dbtable, " where pkey = ?"))
+                              " from ", object@dbtable, " where _pkey = ?"))
     qry <- dbBind(qry, list(object@rows))
     res <- dbFetch(qry)
     dbClearResult(qry)
@@ -180,10 +156,49 @@ MsBackendSqlDb <- function() {
     res 
 }
 
+#' @param x a `MsBackendSqlDb` object.
+#' 
+#' @noRd
+.getDbTable <- function(x) {
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@dbtable
+}
+
+#' @param x a `MsBackendSqlDb` object.
+#' 
+#' @noRd
+.getModCount <- function(x) {
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@modCount
+}
+
+#' @param x a `MsBackendSqlDb` object.
+#' 
+#' @noRd
+.getRows <- function(x) {
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@rows
+}
+
+#' @param x a `MsBackendSqlDb` object.
+#' 
+#' @noRd
+.getColumns <- function(x) {
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@columns
+}
+
+#' @param x a `MsBackendSqlDb` object.
+#' 
+#' @noRd
+.getQuery <- function(x) {
+    stopifnot(inherits(x, "MsBackendSqlDb"))
+    x@query
+}
 
 
 #' Replace the columns from the database and ensure the right data type can be 
-#'   returned.
+#'   returned. 
 #'
 #' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable
 #'
@@ -194,7 +209,7 @@ MsBackendSqlDb <- function() {
                    toString(str1), " FROM ", object@dbtable)
     qry <- dbSendQuery(object@dbcon, sql1)
     dbClearResult(qry)
-    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "pkey",
+    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "_pkey",
                    " FROM ", object@dbtable)
     qry2 <- dbSendQuery(object@dbcon, sql2)
     dbClearResult(qry2)
@@ -202,7 +217,7 @@ MsBackendSqlDb <- function() {
     dbWriteTable(object@dbcon, 'token', 
                  data.frame(value, pkey = metapkey))
     sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
-                   "INNER JOIN token on token.pkey = metaview1.pkey")
+                   "INNER JOIN token on token._pkey = metaview1._pkey")
     dbExecute(object@dbcon, sql3)
     dbExecute(object@dbcon, paste0("ALTER TABLE ", object@dbtable,
                                     " RENAME TO _msdata_old"))

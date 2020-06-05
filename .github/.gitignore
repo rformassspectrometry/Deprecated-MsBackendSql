@@ -1,0 +1,5 @@
+*.db
+*.Rproj
+.Rproj.user
+*~
+*.html

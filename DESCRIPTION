@@ -50,5 +50,4 @@ Collate:
     'hidden_aliases.R'
     'MsBackendSqlDb-functions.R'
     'MsBackendSqlDb.R'
-    'peaks-functions-SQL.R'
 Encoding: UTF-8

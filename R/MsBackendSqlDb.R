@@ -123,7 +123,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
               stop("A valid connection to a database has to be provided",
                    " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
                    " information.")
-            pkey <- "pkey"
+            pkey <- "_pkey"
             object@dbcon <- dbcon
             object@dbtable <- dbtable
             if (length(files)) {
@@ -151,66 +151,6 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
   .get_db_data(object, "acquisitionNum")
 })
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @rdname MsBackendSqlDb
-#' 
-#' @export
-getDBtable <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
-    x@dbtable
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @rdname MsBackendSqlDb
-#' 
-#' @export
-getDBcon <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
-    x@dbcon
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @rdname MsBackendSqlDb
-#' 
-#' @export
-getModCount <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
-    x@modCount
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @rdname MsBackendSqlDb
-#' 
-#' @export
-getRows <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
-    x@rows
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @rdname MsBackendSqlDb
-#' 
-#' @export
-getColumns <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
-    x@columns
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @rdname MsBackendSqlDb
-#' 
-#' @export
-getQuery <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
-    x@query
-}
 
 #' @rdname hidden_aliases
 setMethod("centroided", "MsBackendSqlDb", function(object) {
@@ -259,7 +199,7 @@ setMethod("ionCount", "MsBackendSqlDb", function(object) {
 #' @rdname hidden_aliases
 #' @importFrom MsCoreUtils vapply1l
 setMethod("isCentroided", "MsBackendSqlDb", function(object, ...) {
-    vapply1l(as.list(object), .peaks_is_centroided)
+    vapply1l(as.list(object), Spectra:::.peaks_is_centroided)
 })
 
 #' @rdname hidden_aliases
@@ -386,7 +326,7 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
             dbfields <- dbListFields(object@dbcon, object@dbtable)
-            dbfields <- dbfields[!(dbfields %in% "pkey")]
+            dbfields <- dbfields[!(dbfields %in% "_pkey")]
             df_columns <- intersect(columns, dbfields)
             res <- .get_db_data(object, df_columns)
             other_columns <- setdiff(columns, dbfields)
@@ -420,8 +360,8 @@ setMethod("spectraNames", "MsBackendSqlDb", function(object) {
 #' @rdname hidden_aliases
 setMethod("spectraVariables", "MsBackendSqlDb", function(object) {
     dbfields <- dbListFields(object@dbcon, object@dbtable)
-    dbfields <- dbfields[!(dbfields %in% "pkey")]
-    unique(c(names(.SPECTRA_DATA_COLUMNS), dbfields))
+    dbfields <- dbfields[!(dbfields %in% "_pkey")]
+    unique(c(names(Spectra:::.SPECTRA_DATA_COLUMNS), dbfields))
 })
 
 #' @rdname hidden_aliases

@@ -5,29 +5,11 @@
 \alias{class:MsBackendSqlDb}
 \alias{MsBackendSqlDb-class}
 \alias{backendInitialize,MsBackendSqlDb-method}
-\alias{getDBtable}
-\alias{getDBcon}
-\alias{getModCount}
-\alias{getRows}
-\alias{getColumns}
-\alias{getQuery}
 \title{SQL database based mass spectrometry data backend}
 \usage{
 MsBackendSqlDb()
 
 \S4method{backendInitialize}{MsBackendSqlDb}(object, dbcon, files = character(), dbtable = "msdata")
-
-getDBtable(x)
-
-getDBcon(x)
-
-getModCount(x)
-
-getRows(x)
-
-getColumns(x)
-
-getQuery(x)
 }
 \arguments{
 \item{object}{a \code{MsBackendSqlDb} object.}
@@ -40,8 +22,6 @@ not already contain the data.}
 
 \item{dbtable}{\code{character(1)} the name of the database table with the data.
 Defaults to \code{dbtable = "msdata"}.}
-
-\item{x}{a \code{MsBackendSqlDb} object.}
 }
 \description{
 The \code{MsBackendSqlDb} is an \link{MsBackend} backend which keeps all spectra data
