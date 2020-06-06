@@ -54,7 +54,7 @@ MsBackendSqlDb <- function() {
                       paste0(cn[!cn %in% names(r)], collapse = ","),
                       " not found"))
 
-    isCorrectType <- mapply(is, object=r[names(req_cols)], class2=req_cols)
+    isCorrectType <- mapply(is, object = r[names(req_cols)], class2 = req_cols)
     if (!all(isCorrectType))
         return(paste0("required column(s) ",
                       paste0(names(req_cols)[!isCorrectType],
