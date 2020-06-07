@@ -47,6 +47,7 @@ jobs:
           brew install netcdf
           brew install cdo
           brew install nco
+          brew cask install xquartz
           brew install ncview 
       
       - name: Install netcdf (Linux)
