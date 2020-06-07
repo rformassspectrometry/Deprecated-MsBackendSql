@@ -42,7 +42,8 @@ test_that("centroided, MsBackendSqlDb work", {
 })
 
 test_that("dataOrigin,MsBackendSqlDb works", {
-    expect_equal(dataOrigin(test_be), dataOrigin(b1))
+    expect_equal(gsub("\\\\", "/", dataOrigin(test_be)), 
+                 gsub("\\\\", "/", dataOrigin(b1)))
     expect_true(is(dataOrigin(test_be), "character"))
 })
 
