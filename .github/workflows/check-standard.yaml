@@ -41,7 +41,7 @@ jobs:
         run: pacman -S mingw-w64-x86_64-netcdf
 
       - name: Install netcdf (macOS)
-        if: runner.os == 'macOS-latest'
+        if: matrix.config.os == 'macOS-latest'
         run: |
           brew tap homebrew/science
           brew install netcdf
@@ -50,7 +50,7 @@ jobs:
           brew install ncview 
       
       - name: Install netcdf (Linux)
-        if: runner.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-latest'
         run: sudo apt-get install libnetcdf-dev netcdf-bin libhdf5-dev libgit2-dev
 
       - name: Query dependencies
