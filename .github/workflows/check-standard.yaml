@@ -21,7 +21,7 @@ jobs:
           - {os: windows-latest, r: '3.6'}
           - {os: macOS-latest, r: '3.6'}
           - {os: macOS-latest, r: 'devel'}
-          - {os: ubuntu-18.04, r: '3.6', rspm: "https://demo.rstudiopm.com/all/__linux__/bionic/latest"}
+          - {os: ubuntu-latest, r: '3.6', rspm: "https://demo.rstudiopm.com/all/__linux__/bionic/latest"}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -35,6 +35,23 @@ jobs:
           r-version: ${{ matrix.config.r }}
 
       - uses: r-lib/actions/setup-pandoc@master
+
+      - name: Install netcdf (Windows)
+        if: runner.os == 'windows-latest'
+        run: pacman -S mingw-w64-x86_64-netcdf
+
+      - name: Install netcdf (macOS)
+        if: runner.os == 'macOS-latest'
+        run: |
+          brew tap homebrew/science
+          brew install netcdf
+          brew install cdo
+          brew install nco
+          brew install ncview 
+      
+      - name: Install netcdf (Linux)
+        if: runner.os == 'ubuntu-latest'
+        run: sudo apt-get install libnetcdf-dev
 
       - name: Query dependencies
         run: |
