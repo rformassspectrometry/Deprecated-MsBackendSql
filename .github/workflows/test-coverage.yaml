@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with: 
-          r-version: '3.6'
+          r-version: 'devel'
 
       - uses: r-lib/actions/setup-r@master
 
@@ -28,7 +28,7 @@ jobs:
 
       - name: Query dependencies
         run: |
-          install.packages('remotes')
+          install.packages('remotes', 'withr')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
         shell: Rscript {0}
 
