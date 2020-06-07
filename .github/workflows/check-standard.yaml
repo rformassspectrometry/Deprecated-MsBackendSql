@@ -51,7 +51,7 @@ jobs:
       
       - name: Install netcdf (Linux)
         if: runner.os == 'ubuntu-latest'
-        run: sudo apt-get install libnetcdf-dev
+        run: sudo apt-get install libnetcdf-dev netcdf-bin libhdf5-dev libgit2-dev
 
       - name: Query dependencies
         run: |
