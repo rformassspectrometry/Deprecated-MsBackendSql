@@ -35,13 +35,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          install.packages(c("withr"))
           install.packages(c("remotes"))
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
         shell: Rscript {0}
-
-      - name: Install withr
-        run: Rscript -e "install.packages('withr')"
 
       - name: Test coverage
         run: covr::codecov()
