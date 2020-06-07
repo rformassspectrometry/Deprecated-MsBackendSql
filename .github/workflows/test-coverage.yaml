@@ -13,10 +13,18 @@ jobs:
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
+        with: 
+          r-version: 'devel'
 
       - uses: r-lib/actions/setup-r@master
 
       - uses: r-lib/actions/setup-pandoc@master
+
+      - name: Install netcdf (macOS)
+        if: matrix.config.os == 'macOS-latest'
+        run: |
+          brew tap brewsci/science
+          brew install netcdf
 
       - name: Query dependencies
         run: |
