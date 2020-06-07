@@ -43,7 +43,7 @@ jobs:
       - name: Install netcdf (macOS)
         if: matrix.config.os == 'macOS-latest'
         run: |
-          brew tap homebrew/science
+          brew tap brewsci/science
           brew install netcdf
           brew install cdo
           brew install nco
