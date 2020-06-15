@@ -85,16 +85,9 @@ MsBackendSqlDb <- function() {
     hdr$dataOrigin <- x
     hdr$dataStorage <- "<db>"
     rm(pks)
-    msg <- is.null(setdiff(names(Spectra:::.SPECTRA_DATA_COLUMNS), names(hdr)))
-    if (!is.null(msg))
-        nr_x <- nrow(hdr)
-        if (nr_x)
-            set_diff <- setdiff(names(Spectra:::.SPECTRA_DATA_COLUMNS), 
-                                names(hdr))
-            ncol1 <- length(set_diff)
-            df1 <- data.frame(matrix(ncol = ncol1, nrow = nr_x))
-            colnames(df1) <- set_diff
-    hdr <- cbind(hdr, df1)
+    missingCol <- setdiff(names(Spectra:::.SPECTRA_DATA_COLUMNS), names(hdr))
+    if (length(missingCol) > 0)
+        hdr[, setdiff(names(Spectra:::.SPECTRA_DATA_COLUMNS), names(hdr))] <- NA 
     .write_data_to_db(hdr, con = con, dbtable = dbtable)
 }
 
@@ -134,33 +127,36 @@ MsBackendSqlDb <- function() {
 #' @importFrom S4Vectors DataFrame
 #'
 #' @noRd
-.get_db_data <- function(object, columns) {
-    qry <- dbSendQuery(object@dbcon,
-                       paste0("select ", paste(columns, collapse = ","),
-                              " from ", object@dbtable, " where _pkey = ?"))
-    qry <- dbBind(qry, list(object@rows))
-    res <- dbFetch(qry)
-    dbClearResult(qry)
-    is_blob <- which(vapply1l(res, is, "blob"))
-    for (i in is_blob)
-        res[[i]] <- lapply(res[[i]], unserialize)
-    if (ncol(res) == 1) {
-        if (any(c("mz", "intensity") %in% colnames(res)))
-            return(NumericList(res[[1]], compress = FALSE))
-        else return(res[[1]])
+.get_db_data <- function(object, columns = character()) {
+    if (length(setdiff(columns, object@columns)) == 0) {
+        qry <- dbSendQuery(object@dbcon,
+                           paste0("select ", paste(columns, collapse = ","),
+                                  " from ", object@dbtable, " where _pkey = ?"))
+        qry <- dbBind(qry, list(object@rows))
+        res <- dbFetch(qry)
+        dbClearResult(qry)
+        is_blob <- which(vapply1l(res, is, "blob"))
+        for (i in is_blob)
+            res[[i]] <- lapply(res[[i]], unserialize)
+        if (ncol(res) == 1) {
+            if (any(c("mz", "intensity") %in% colnames(res)))
+                return(NumericList(res[[1]], compress = FALSE))
+            else return(res[[1]])
+        }
+        res <- DataFrame(res)
+        mzint <- which(colnames(res) %in% c("mz", "intensity"))
+        for (i in mzint)
+            res[[i]] <- NumericList(res[[i]])
+        res 
+    } else {
+        print("Columns missing from database.")
     }
-    res <- DataFrame(res)
-    mzint <- which(colnames(res) %in% c("mz", "intensity"))
-    for (i in mzint)
-        res[[i]] <- NumericList(res[[i]])
-    res 
 }
 
 #' @param x a `MsBackendSqlDb` object.
 #' 
 #' @noRd
 .getDbTable <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
     x@dbtable
 }
 
@@ -168,7 +164,6 @@ MsBackendSqlDb <- function() {
 #' 
 #' @noRd
 .getModCount <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
     x@modCount
 }
 
@@ -176,7 +171,6 @@ MsBackendSqlDb <- function() {
 #' 
 #' @noRd
 .getRows <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
     x@rows
 }
 
@@ -184,7 +178,6 @@ MsBackendSqlDb <- function() {
 #' 
 #' @noRd
 .getColumns <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
     x@columns
 }
 
@@ -192,7 +185,6 @@ MsBackendSqlDb <- function() {
 #' 
 #' @noRd
 .getQuery <- function(x) {
-    stopifnot(inherits(x, "MsBackendSqlDb"))
     x@query
 }
 

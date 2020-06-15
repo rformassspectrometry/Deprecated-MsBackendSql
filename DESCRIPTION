@@ -27,7 +27,6 @@ Imports:
     BiocGenerics,
     ProtGenerics
 Suggests:
-    dplyr,
     testthat,
     knitr (>= 1.1.0),
     BiocStyle (>= 2.5.19),

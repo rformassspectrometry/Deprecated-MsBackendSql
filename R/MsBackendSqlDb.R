@@ -88,10 +88,10 @@ setClass("MsBackendSqlDb",
                                version = "0.1"))
 
 setValidity("MsBackendSqlDb", function(object) {
-  msg <- .valid_db_table_columns(object@dbcon, object@dbtable)
-  msg <- c(msg, .valid_db_table_has_columns(object@dbcon, object@columns))
-  if (is.null(msg)) TRUE
-  else msg
+    msg <- .valid_db_table_columns(object@dbcon, object@dbtable)
+    msg <- c(msg, .valid_db_table_has_columns(object@dbcon, object@columns))
+    if (is.null(msg)) TRUE
+    else msg
 })
 
 #' @importMethodsFrom methods show
@@ -119,31 +119,31 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 #' @exportMethod backendInitialize
 setMethod("backendInitialize", signature = "MsBackendSqlDb",
           function(object, dbcon, files = character(), dbtable = "msdata") {
-            if (missing(dbcon) || !dbIsValid(dbcon))
-              stop("A valid connection to a database has to be provided",
-                   " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
-                   " information.")
-            pkey <- "_pkey"
-            object@dbcon <- dbcon
-            object@dbtable <- dbtable
-            if (length(files)) {
-              idx <- lapply(files, FUN = .write_mzR_to_db, con = dbcon,
-                            dbtable = dbtable)
-              object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
-            } else {
-              object@rows <- dbGetQuery(
-                dbcon, paste0("select ", pkey, " from ", dbtable))[, pkey]
-            }
-            msg <- .valid_db_table_columns(dbcon, dbtable)
-            if (length(msg)) stop(msg)
-            cns <- colnames(dbGetQuery(dbcon, paste0("select * from ",
-                                                     dbtable, " limit 2")))
-            object@columns <- cns[cns != pkey]
-            object@query <- dbSendQuery(
-              dbcon, paste0("select ? from ", dbtable, " where ",
-                            pkey, "= ?"))
-            object
-          })
+    if (missing(dbcon) || !dbIsValid(dbcon))
+        stop("A valid connection to a database has to be provided",
+             " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
+             " information.")
+    pkey <- "_pkey"
+    object@dbcon <- dbcon
+    object@dbtable <- dbtable
+    if (length(files)) {
+        idx <- lapply(files, FUN = .write_mzR_to_db, con = dbcon,
+                      dbtable = dbtable)
+        object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
+    } else {
+        object@rows <- dbGetQuery(
+            dbcon, paste0("select ", pkey, " from ", dbtable))[, pkey]
+    }
+    msg <- .valid_db_table_columns(dbcon, dbtable)
+    if (length(msg)) stop(msg)
+    cns <- colnames(dbGetQuery(dbcon, paste0("select * from ",
+                                             dbtable, " limit 2")))
+    object@columns <- cns[cns != pkey]
+    object@query <- dbSendQuery(
+        dbcon, paste0("select ? from ", dbtable, " where ",
+                      pkey, "= ?"))
+    object
+})
 
 ## Data accessors
 
@@ -178,15 +178,7 @@ setMethod("dataStorage", "MsBackendSqlDb", function(object) {
 #' 
 #' @rdname hidden_aliases
 setMethod("intensity", "MsBackendSqlDb", function(object) {
-    msg <- .valid_db_table_has_columns(object@dbcon, 
-                                       object@dbtable, 
-                                       "intensity")
-    if (is.null(msg)) 
-      .get_db_data(object, "intensity")
-    else {
-      lst <- NumericList(numeric(), compress = FALSE)
-      lst[rep(1, times = length(object))]
-    }
+    .get_db_data(object, "intensity")
 })
 
 #' @rdname hidden_aliases
@@ -234,14 +226,7 @@ setMethod("lengths", "MsBackendSqlDb", function(x, use.names = FALSE) {
 
 #' @rdname hidden_aliases
 setMethod("msLevel", "MsBackendSqlDb", function(object, ...) {
-    msg <- .valid_db_table_has_columns(object@dbcon, 
-                                       object@dbtable, 
-                                       "msLevel")
-    if (is.null(msg))
-      .get_db_data(object, "msLevel")
-    else {
-      rep(1L, times = length(object))
-    }
+    .get_db_data(object, "msLevel")
 })
 
 #' @exportMethod mz
@@ -250,15 +235,7 @@ setMethod("msLevel", "MsBackendSqlDb", function(object, ...) {
 #' 
 #' @rdname hidden_aliases
 setMethod("mz", "MsBackendSqlDb", function(object) {
-    msg <- .valid_db_table_has_columns(object@dbcon, 
-                                       object@dbtable, 
-                                       "mz")
-    if (is.null(msg))
-      .get_db_data(object, "mz")
-    else {
-      lst <- NumericList(numeric(), compress = FALSE)
-      lst[rep(1, times = length(object))]
-    }
+    .get_db_data(object, "mz")
 })
 
 #' @importMethodsFrom BiocGenerics as.list
@@ -325,25 +302,25 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #' @exportMethod asDataFrame
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
-            dbfields <- dbListFields(object@dbcon, object@dbtable)
-            dbfields <- dbfields[!(dbfields %in% "_pkey")]
-            df_columns <- intersect(columns, dbfields)
-            res <- .get_db_data(object, df_columns)
-            other_columns <- setdiff(columns, dbfields)
-            if (length(other_columns)) {
-              other_res <- .get_db_data(object, other_columns)
-              names(other_res) <- other_columns
-              is_mz_int <- names(other_res) %in% c("mz", "intensity")
-              if (!all(is_mz_int))
-                res <- cbind(res, as(other_res[!is_mz_int], "DataFrame"))
-              if (any(names(other_res) == "mz"))
-                res$mz <- if (length(other_res$mz)) other_res$mz
-              else NumericList(compress = FALSE)
-              if (any(names(other_res) == "intensity"))
-                res$intensity <- if (length(other_res$intensity)) other_res$intensity
-              else NumericList(compress = FALSE)
-            }
-            res[, columns, drop = FALSE]
+    dbfields <- dbListFields(object@dbcon, object@dbtable)
+    dbfields <- dbfields[!(dbfields %in% "_pkey")]
+    df_columns <- intersect(columns, dbfields)
+    res <- .get_db_data(object, columns)
+    other_columns <- setdiff(columns, dbfields)
+    if (length(other_columns)) {
+        other_res <- .get_db_data(object, other_columns)
+        names(other_res) <- other_columns
+        is_mz_int <- names(other_res) %in% c("mz", "intensity")
+        if (!all(is_mz_int))
+            res <- cbind(res, as(other_res[!is_mz_int], "DataFrame"))
+        if (any(names(other_res) == "mz"))
+            res$mz <- if (length(other_res$mz)) other_res$mz
+        else NumericList(compress = FALSE)
+        if (any(names(other_res) == "intensity"))
+            res$intensity <- if (length(other_res$intensity)) other_res$intensity
+        else NumericList(compress = FALSE)
+      }
+    res[, columns, drop = FALSE]
 })
 
 #' @rdname hidden_aliases
