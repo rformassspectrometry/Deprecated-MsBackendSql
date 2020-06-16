@@ -95,6 +95,8 @@ test_that(".write_data_to_db works", {
 })
 
 test_that(".get_db_data works", {
+    expect_match(.get_db_data(test_be, "Random"),
+                 "Columns missing from database")
     expect_equal(.get_db_data(test_be, "totIonCurrent"), 
                  test_tbl$totIonCurrent)
     expect_equal(.get_db_data(test_be, "acquisitionNum"), 

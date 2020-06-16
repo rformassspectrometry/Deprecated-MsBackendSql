@@ -5,6 +5,8 @@ dbExecute(test_con1, "PRAGMA auto_vacuum = FULL")
 fl <- msdata::proteomics(full.names = TRUE)[4]
 test_be <- backendInitialize(MsBackendSqlDb(), test_con, fl)
 b1 <- Spectra::backendInitialize(MsBackendMzR(), files = fl)
+b2 <- Spectra(fl, backend = MsBackendMzR())
+b2 <- setBackend(b2, MsBackendDataFrame())
 test_tbl <- dbReadTable(test_con, "msdata")
 
 test_that("initializeBackend,MsBackendSqlDb works", {
@@ -142,7 +144,8 @@ test_that("smoothed,MsBackendSqlDb works", {
 
 test_that("tic,MsBackendSqlDb works", {
     expect_true(is(tic(test_be), "numeric"))
-    expect_identical(tic(test_be), tic(b1))
+    expect_identical(tic(test_be, initial = TRUE), tic(b2, initial = TRUE))
+    expect_identical(tic(test_be, initial = FALSE), tic(b2, initial = FALSE))
 })
 
 test_that("spectraVariables,MsBackendSqlDb works", {
@@ -150,7 +153,7 @@ test_that("spectraVariables,MsBackendSqlDb works", {
 })
 
 test_that("$,MsBackendSqlDb works", {
-  expect_true(is(test_be$msLevel, "integer"))
-  expect_identical(test_be$msLevel, b1$msLevel)
-  expect_identical(test_be$intensity, b1$intensity)
+    expect_true(is(test_be$msLevel, "integer"))
+    expect_identical(test_be$msLevel, b1$msLevel)
+    expect_identical(test_be$intensity, b1$intensity)
 })

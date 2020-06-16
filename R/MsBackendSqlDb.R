@@ -302,25 +302,7 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #' @exportMethod asDataFrame
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
-    dbfields <- dbListFields(object@dbcon, object@dbtable)
-    dbfields <- dbfields[!(dbfields %in% "_pkey")]
-    df_columns <- intersect(columns, dbfields)
-    res <- .get_db_data(object, columns)
-    other_columns <- setdiff(columns, dbfields)
-    if (length(other_columns)) {
-        other_res <- .get_db_data(object, other_columns)
-        names(other_res) <- other_columns
-        is_mz_int <- names(other_res) %in% c("mz", "intensity")
-        if (!all(is_mz_int))
-            res <- cbind(res, as(other_res[!is_mz_int], "DataFrame"))
-        if (any(names(other_res) == "mz"))
-            res$mz <- if (length(other_res$mz)) other_res$mz
-        else NumericList(compress = FALSE)
-        if (any(names(other_res) == "intensity"))
-            res$intensity <- if (length(other_res$intensity)) other_res$intensity
-        else NumericList(compress = FALSE)
-      }
-    res[, columns, drop = FALSE]
+             .get_db_data(object, columns)
 })
 
 #' @rdname hidden_aliases
@@ -354,10 +336,6 @@ setMethod("tic", "MsBackendSqlDb", function(object, initial = TRUE) {
 #' 
 setMethod("$", signature = "MsBackendSqlDb", 
           function(x, name) {
-    if (!is.null(.valid_db_table_has_columns(x@dbcon, 
-                                             x@dbtable, 
-                                             name)))
-    stop("spectra variable '", name, "' not available")
     if (length(name) == 1) {
         res <- .get_db_data(x, name)
         res }

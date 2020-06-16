@@ -149,7 +149,7 @@ MsBackendSqlDb <- function() {
             res[[i]] <- NumericList(res[[i]])
         res 
     } else {
-        print("Columns missing from database.")
+        return("Columns missing from database.")
     }
 }
 
