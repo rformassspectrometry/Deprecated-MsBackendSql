@@ -10,62 +10,55 @@ MsBackendSqlDb <- function() {
     new("MsBackendSqlDb")
 }
 
-#' @description
+#' Test if db table is available
 #'
-#' Check if SQLite table has all required columns.
-#' 
-#' @param dbcon a `DBIConnection` object to connect to the database.
-#' 
-#' @param dbtable `character(1)` the name of the database table with the data.
-#'     Defaults to `dbtable = "msdata"`.
-#'
+#' @param dbcon [`DBIConnection-class`] object
+#' @param dbtable `character(1)`, table name
+#' @author Johannes Rainer, Sebastian Gibb
 #' @noRd
-.valid_db_table_columns <- function(dbcon, dbtable, pkey = "_pkey") {
+.valid_db_table_exists <- function(dbcon, dbtable) {
     if (!dbExistsTable(dbcon, dbtable))
-        return(paste0("database table '", dbtable, "' not found"))
-    tmp <- dbGetQuery(dbcon, paste0("select * from ", dbtable, " limit 3"))
-    if (!any(colnames(tmp) == pkey))
-        return(paste0("required column '", pkey ,"' not found"))
-    req_cols <- c(dataStorage = "character",
-                  dataOrigin = "character",
-                  rtime = "numeric",
-                  msLevel = "integer")
-    if (!all(names(req_cols) %in% colnames(tmp)))
-        return(
-            paste0("required column(s) ",
-                   paste0(names(req_cols)[!names(req_cols) %in% colnames(tmp)],
-                          collapse = ", "), " not found"))
-    classes <- vapply(tmp[, names(req_cols)], class, character(1))
-    if (!all(classes == req_cols))
-        return(
-            paste0("required column(s) ",
-                   paste0(names(req_cols)[classes != req_cols], collapse = ", "),
-                   " have the wrong data type"))
-    if (!any(colnames(tmp) == "mz") || !any(colnames(tmp) == "intensity"))
-        return("required columns 'mz' and 'intensity' not found")
-    if (!is(tmp$mz, "blob") || !is(tmp$intensity, "blob"))
-        return("required columns 'mz' and 'intensity' have the wrong data type")
-    NULL
+        paste0("database table '", dbtable, "' not found")
+    else
+        NULL
 }
 
-#' @description
+#' Test for required columns in db table
 #'
-#' Check if SQLite table has the specified columns by the users.
-#' 
-#' @param dbcon a `DBIConnection` object to connect to the database.
-#' 
-#' @param dbtable `character(1)` the name of the database table with the data.
-#'     Defaults to `dbtable = "msdata"`.
-#'     
-#' @param columns `character` the names of the columns specified by the users.
+#' Checks whether all required columns are present and of the correct data type.
 #'
+#' @param dbcon [`DBIConnection-class`] object
+#' @param dbtable `character(1)`, table name
+#' @param columns `character`, user defined columns that have to be present (no
+#' type check available)
+#' @param pkey `character(1)`, name of the PRIMARY KEY column
+#'
+#' @author Johannes Rainer, Sebastian Gibb
 #' @noRd
-.valid_db_table_has_columns <- function(dbcon, dbtable, columns) {
-    tmp <- dbGetQuery(dbcon, paste0("select * from ", dbtable, " limit 3"))
-    if (!all(columns %in% colnames(tmp)))
-        return(paste0("columns ",
-                      paste(columns[!columns %in% colnames(tmp)],
-                            collapse = ", "), " not found in ", dbtable))
+.valid_db_table_columns <- function(dbcon, dbtable,
+                                    columns = character(), pkey = "_pkey") {
+    req_cols <- c("integer", # pkey
+                  dataStorage = "character",
+                  dataOrigin = "character",
+                  intensity = "blob",
+                  msLevel = "integer",
+                  mz = "blob",
+                  rtime = "numeric")
+    names(req_cols)[1L] <- pkey
+    cn <- unique(c(names(req_cols), columns))
+
+    r <- dbGetQuery(dbcon, paste0("SELECT * FROM ", dbtable, " LIMIT 0"))
+
+    if (!all(cn %in% names(r)))
+        return(paste0("required column(s) ",
+                      paste0(cn[!cn %in% names(r)], collapse = ","),
+                      " not found"))
+
+    isCorrectType <- mapply(is, object = r[names(req_cols)], class2 = req_cols)
+    if (!all(isCorrectType))
+        return(paste0("required column(s) ",
+                      paste0(names(req_cols)[!isCorrectType],
+                             collapse = ","), " has/have the wrong data type"))
     NULL
 }
 
