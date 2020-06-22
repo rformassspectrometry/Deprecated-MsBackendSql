@@ -124,7 +124,8 @@ MsBackendSqlDb <- function() {
     if (length(setdiff(columns, object@columns)) == 0) {
         qry <- dbSendQuery(object@dbcon,
                            paste0("select ", paste(columns, collapse = ","),
-                                  " from ", object@dbtable, " where _pkey = ?"))
+                                  " from ", object@dbtable, " where _pkey in (",
+                                  toString(object@index), ")"))
         qry <- dbBind(qry, list(object@rows))
         res <- dbFetch(qry)
         dbClearResult(qry)
@@ -193,9 +194,11 @@ MsBackendSqlDb <- function() {
 .subset_backend_SqlDb <- function(x, i) {
     if (missing(i))
         return(x)
-    i <- i2index(i, length(x), rownames(x@spectraData))
-    slot(x, "index", check = FALSE) <- i
-    x
+    if (length(x@index) > 0) {
+        i <- i2index(i, length(x), rownames(x@spectraData))
+        slot(x, "index", check = FALSE) <- x@index[i]
+    }
+    return(x)
 }
 
 #' @param x a `MsBackendSqlDb` object.

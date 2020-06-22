@@ -146,6 +146,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     object@query <- dbSendQuery(
         dbcon, paste0("select ? from ", dbtable, " where ",
                       pkey, "= ?"))
+    object@index <- seq_along(object)
     object
 })
 
@@ -173,7 +174,7 @@ setMethod("dataOrigin", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("dataStorage", "MsBackendSqlDb", function(object) {
-    rep("<db>", length(object))
+    rep("<db>", length(object@index))
 })
 
 #' @exportMethod intensity
@@ -220,7 +221,7 @@ setMethod("isolationWindowUpperMz", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("length", "MsBackendSqlDb", function(x) {
-    length(x@rows)
+    length(x@index)
 })
 
 #' @rdname hidden_aliases
