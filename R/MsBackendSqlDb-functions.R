@@ -146,6 +146,58 @@ MsBackendSqlDb <- function() {
     }
 }
 
+#' Parse user defined condtions to SQL statement, this function will create a
+#' intermediate SQLite View in the SQLite database, which has no impact on the
+#' real stored metadata table. Subset the original table *by rows*.
+#'
+#' @param i `integer`, `character` or `logical`.
+#' 
+#' @author Chong Tang
+#'
+#' @noRd
+.get_db_view <- function(object, i) {
+    dbExecute(object@dbcon, "DROP VIEW IF EXISTS subview")
+    if (missing(i)) {
+        sql1 <- paste0("CREATE VIEW subview AS SELECT * FROM ", 
+                       object@dbtable)
+        qry <- dbSendQuery(object@dbcon, sql1)
+        dbClearResult(qry)
+    } else {
+        i <- i2index(i, length(object), rownames(object))  # See issue 5
+        sql1 <- paste0("CREATE VIEW subview AS SELECT * FROM ", 
+                       object@dbtable, " WHERE _pkey IN (",
+                       toString(i), ")")
+        qry1 <- dbSendQuery(object@dbcon, sql1)
+        dbClearResult(qry1)
+    }
+}
+
+#' @description
+#'
+#' Subset the `MsBackendSqlDb` *by rows*, and store the row index of subsetting 
+#' result in the slot `index`.
+#'
+#' @param x `MsBackendDataFrame
+#'
+#' @param i `integer`, `character` or `logical`.
+#'
+#' @return Subsetted `x`
+#'
+#' @author Johannes Rainer
+#'
+#' @importFrom MsCoreUtils i2index
+#'
+#' @importFrom methods slot<-
+#'
+#' @noRd
+.subset_backend_SqlDb <- function(x, i) {
+    if (missing(i))
+        return(x)
+    i <- i2index(i, length(x), rownames(x@spectraData))
+    slot(x, "index", check = FALSE) <- i
+    x
+}
+
 #' @param x a `MsBackendSqlDb` object.
 #' 
 #' @noRd

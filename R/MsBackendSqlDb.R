@@ -52,6 +52,8 @@ NULL
 #'   to match between the database and the object.
 #' - `@rows` (`integer`): the indices (primary keys) of the data.
 #' - `@columns` (`character`): the names of the columns stored in the database.
+#' - `@index` (`integer`): the index of the rows, which has been labelled by
+#'   subsetting and filtering functions.
 #'
 #' @name MsBackendSqlDb
 #'
@@ -79,12 +81,14 @@ setClass("MsBackendSqlDb",
                    modCount = "integer",
                    rows = "integer",
                    columns = "character",
-                   query = "DBIResult"),
+                   query = "DBIResult",
+                   index = "list"),
          prototype = prototype(spectraData = "msdata",
                                readonly = FALSE,
                                modCount = 0L,
                                rows = integer(0),
                                columns = character(0),
+                               index = NULL,
                                version = "0.1"))
 
 setValidity("MsBackendSqlDb", function(object) {
@@ -357,4 +361,32 @@ setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
   .replace_db_table_columns(x, name, value)
   x@modCount <- x@modCount + 1L
   x
+})
+
+#### ---------------------------------------------------------------------------
+##
+##                      FILTERING AND SUBSETTING
+##
+#### ---------------------------------------------------------------------------
+
+#' @importMethodsFrom S4Vectors [
+#'
+#' @importFrom MsCoreUtils i2index
+#'
+#' @rdname hidden_aliases
+setMethod("[", "MsBackendSqlDb", function(x, i, j, ..., drop = FALSE) {
+    .subset_backend_SqlDb(x, i)
+})
+
+#' @rdname hidden_aliases
+setMethod("split", "MsBackendSqlDb", function(x, f, drop = FALSE, ...) {
+    if (!is.factor(f))
+        f <- as.factor(f)
+    idx <- split(seq_along(x), f, ...)
+    output <- vector(length = length(idx), mode = "list")
+    for (i in seq_along(idx)) {
+        slot(x, "index", check = FALSE) <- idx[i]
+        output[[i]] <- x
+    }
+    return(output)
 })

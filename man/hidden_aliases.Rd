@@ -35,6 +35,8 @@
 \alias{tic,MsBackendSqlDb-method}
 \alias{$,MsBackendSqlDb-method}
 \alias{$<-,MsBackendSqlDb-method}
+\alias{[,MsBackendSqlDb-method}
+\alias{split,MsBackendSqlDb,ANY-method}
 \title{Internal page for hidden aliases}
 \usage{
 \S4method{show}{MsBackendSqlDb}(object)
@@ -100,6 +102,10 @@
 \S4method{$}{MsBackendSqlDb}(x, name)
 
 \S4method{$}{MsBackendSqlDb}(x, name) <- value
+
+\S4method{[}{MsBackendSqlDb}(x, i, j, ..., drop = FALSE)
+
+\S4method{split}{MsBackendSqlDb,ANY}(x, f, drop = FALSE, ...)
 }
 \description{
 For S4 methods that require a documentation entry but only clutter the index.

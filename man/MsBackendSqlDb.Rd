@@ -61,6 +61,8 @@ would invalidate objects pointing to the same database. This number has
 to match between the database and the object.
 \item \verb{@rows} (\code{integer}): the indices (primary keys) of the data.
 \item \verb{@columns} (\code{character}): the names of the columns stored in the database.
+\item \verb{@index} (\code{integer}): the index of the rows, which has been labelled by
+subsetting and filtering functions.
 }
 }
 
