@@ -463,13 +463,42 @@ setMethod("filterPrecursorMz", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
-setMethod("filterPrecursorScan", "MsBackendDataFrame",
+setMethod("filterPrecursorScan", "MsBackendSqlDb",
           function(object, acquisitionNum = integer()) {
     if (length(acquisitionNum)) {
-        object[.filterSpectraHierarchy(acquisitionNum(object),
-                                       precScanNum(object),
-                                       acquisitionNum)]
+        object@index <- object@index[
+                            Spectra:::.filterSpectraHierarchy(
+                                           acquisitionNum(object),
+                                           precScanNum(object),
+                                           acquisitionNum)]
     } else object
+})
+
+#' @rdname hidden_aliases
+setMethod("filterRt", "MsBackendSqlDb",
+          function(object, rt = numeric(), msLevel. = unique(msLevel(object))) {
+    if (length(rt)) {
+        rt <- range(rt)
+        sel_ms <- msLevel(object) %in% msLevel.
+        sel_rt <- rtime(object) >= rt[1] &
+            rtime(object) <= rt[2] & sel_ms
+        object@index <- object@index[sel_rt | !sel_ms]
+    } else object
+})
+
+#' @rdname hidden_aliases
+setMethod("filterIntensity", "MsBackendSqlDb",
+          function(object, intensities = numeric()) {
+    if (length(intensities) == 1) {
+        sel_intensity <- intensity(object) >= intensities
+        object@index <- object@index[sel_intensity]
+    } else if (length(intensities) == 2) {
+        sel_intensity <- intensity(object) >= intensities[1] &
+            intensity(object) <= intensities[2]
+        object@index <- object@index[sel_intensity]
+    } else {
+        stop("intensities must be of length 1 or 2. See man page for details.")
+    }
 })
 
 #' Now it's not in use, need further modifications.
