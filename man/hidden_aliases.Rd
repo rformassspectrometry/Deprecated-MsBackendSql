@@ -37,6 +37,17 @@
 \alias{$<-,MsBackendSqlDb-method}
 \alias{[,MsBackendSqlDb-method}
 \alias{split,MsBackendSqlDb,ANY-method}
+\alias{filterAcquisitionNum,MsBackendSqlDb-method}
+\alias{filterDataOrigin,MsBackendSqlDb-method}
+\alias{filterDataStorage,MsBackendSqlDb-method}
+\alias{filterEmptySpectra,MsBackendSqlDb-method}
+\alias{filterIsolationWindow,MsBackendSqlDb-method}
+\alias{filterMsLevel,MsBackendSqlDb-method}
+\alias{filterPolarity,MsBackendSqlDb-method}
+\alias{filterPrecursorMz,MsBackendSqlDb-method}
+\alias{filterPrecursorScan,MsBackendSqlDb-method}
+\alias{filterRt,MsBackendSqlDb-method}
+\alias{filterIntensity}
 \title{Internal page for hidden aliases}
 \usage{
 \S4method{show}{MsBackendSqlDb}(object)
@@ -106,6 +117,38 @@
 \S4method{[}{MsBackendSqlDb}(x, i, j, ..., drop = FALSE)
 
 \S4method{split}{MsBackendSqlDb,ANY}(x, f, drop = FALSE, ...)
+
+\S4method{filterAcquisitionNum}{MsBackendSqlDb}(
+  object,
+  n = integer(),
+  dataStorage = character(),
+  dataOrigin = character()
+)
+
+\S4method{filterDataOrigin}{MsBackendSqlDb}(object, dataOrigin = character())
+
+\S4method{filterDataStorage}{MsBackendSqlDb}(object, dataStorage = character())
+
+\S4method{filterEmptySpectra}{MsBackendSqlDb}(object)
+
+\S4method{filterIsolationWindow}{MsBackendSqlDb}(object, mz = numeric(), ...)
+
+\S4method{filterMsLevel}{MsBackendSqlDb}(object, msLevel = integer())
+
+\S4method{filterPolarity}{MsBackendSqlDb}(object, polarity = integer())
+
+\S4method{filterPrecursorMz}{MsBackendSqlDb}(object, mz = numeric())
+
+\S4method{filterPrecursorScan}{MsBackendSqlDb}(object, acquisitionNum = integer())
+
+\S4method{filterRt}{MsBackendSqlDb}(object, rt = numeric(), msLevel. = unique(msLevel(object)))
+
+filterIntensity(x, intensities = numeric())
+}
+\arguments{
+\item{x}{a \code{MsBackendSqlDb} object.}
+
+\item{intensities}{a \code{numeric} vector either be length 1 or 2.}
 }
 \description{
 For S4 methods that require a documentation entry but only clutter the index.

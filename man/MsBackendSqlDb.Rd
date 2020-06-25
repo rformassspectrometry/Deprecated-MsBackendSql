@@ -50,8 +50,7 @@ specify the database table name that contains, or should contain the data.
 
 
 The \code{MsBackendSqlDb} defines the following slots which should not be
-accessed or changed by the user, which can be retrieved by \code{getter}
-functions:
+accessed or changed by the user.
 \itemize{
 \item \verb{@dbtable} (\code{character}): the name of the database table (or view)
 containing the data.
@@ -61,8 +60,6 @@ would invalidate objects pointing to the same database. This number has
 to match between the database and the object.
 \item \verb{@rows} (\code{integer}): the indices (primary keys) of the data.
 \item \verb{@columns} (\code{character}): the names of the columns stored in the database.
-\item \verb{@index} (\code{integer}): the index of the rows, which has been labelled by
-subsetting and filtering functions.
 }
 }
 
@@ -77,5 +74,5 @@ fls <- dir(system.file("sciex", package = "msdata"), full.names = TRUE,
 msb <- backendInitialize(MsBackendSqlDb(), dbcon = con, files = fls)
 }
 \author{
-Johannes Rainer, Chong Tang.
+Johannes Rainer
 }

@@ -124,8 +124,7 @@ MsBackendSqlDb <- function() {
     if (length(setdiff(columns, object@columns)) == 0) {
         qry <- dbSendQuery(object@dbcon,
                            paste0("select ", paste(columns, collapse = ","),
-                                  " from ", object@dbtable, " where _pkey in (",
-                                  toString(object@index), ")"))
+                                  " from ", object@dbtable, " where _pkey = ?"))
         qry <- dbBind(qry, list(object@rows))
         res <- dbFetch(qry)
         dbClearResult(qry)
@@ -147,46 +146,19 @@ MsBackendSqlDb <- function() {
     }
 }
 
-#' Parse user defined condtions to SQL statement, this function will create a
-#' intermediate SQLite View in the SQLite database, which has no impact on the
-#' real stored metadata table. Subset the original table *by rows*.
-#'
-#' @param i `integer`, `character` or `logical`.
-#' 
-#' @author Chong Tang
-#'
-#' @noRd
-.get_db_view <- function(object, i) {
-    dbExecute(object@dbcon, "DROP VIEW IF EXISTS subview")
-    if (missing(i)) {
-        sql1 <- paste0("CREATE VIEW subview AS SELECT * FROM ", 
-                       object@dbtable)
-        qry <- dbSendQuery(object@dbcon, sql1)
-        dbClearResult(qry)
-    } else {
-        i <- i2index(i, length(object), rownames(object))  # See issue 5
-        sql1 <- paste0("CREATE VIEW subview AS SELECT * FROM ", 
-                       object@dbtable, " WHERE _pkey IN (",
-                       toString(i), ")")
-        qry1 <- dbSendQuery(object@dbcon, sql1)
-        dbClearResult(qry1)
-    }
-}
 
 #' @description
 #'
 #' Subset the `MsBackendSqlDb` *by rows*, and store the row index of subsetting 
-#' result in the slot `index`.
+#' result in the slot rows.
 #'
-#' @param x `MsBackendDataFrame
+#' @param x `MsBackendSqlDb`
 #'
 #' @param i `integer`, `character` or `logical`.
 #'
-#' @return Subsetted `x`
+#' @return `x` with labelled index as rows.
 #'
-#' @author Johannes Rainer
-#'
-#' @importFrom MsCoreUtils i2index
+#' @author Johannes Rainer, Chong Tang
 #'
 #' @importFrom methods slot<-
 #'
@@ -194,47 +166,70 @@ MsBackendSqlDb <- function() {
 .subset_backend_SqlDb <- function(x, i) {
     if (missing(i))
         return(x)
-    if (length(x@index) > 0) {
-        i <- i2index(i, length(x), rownames(x@spectraData))
-        slot(x, "index", check = FALSE) <- x@index[i]
-    }
-    return(x)
+    i <- i2index(i, length(x))
+    slot(x, "rows", check = FALSE) <- x@rows[i]
+    x
 }
 
-#' @param x a `MsBackendSqlDb` object.
-#' 
+
+#' @description
+#'
+#' Helper to be used in the filter functions to select the file/origin in
+#' which the filtering should be performed.
+#'
+#' @param object `MsBackendSqlDb`
+#'
+#' @param dataStorage `character` or `integer` with either the names of the
+#'     `dataStorage` or their rows - indices (in `unique(object$dataStorage)`) 
+#'     in which the filtering should be performed.
+#'
+#' @param dataOrigin same as `dataStorage`, but for the `dataOrigin` spectra
+#'     variable.
+#'
+#' @return `logical` of length equal to the number of spectra in `object`.
+#'
 #' @noRd
-.getDbTable <- function(x) {
-    x@dbtable
+.sel_file_sql <- function(object, dataStorage = integer(), dataOrigin = integer()) {
+    if (length(dataStorage)) {
+        ## I do think this part can be avoid, it's not 
+        ## necessary to use SQL here.
+        lvls <- dbGetQuery(object@dbcon, 
+                           paste0("SELECT DISTINCT dataStorage FROM ", 
+                                  object@dbtable, 
+                                  " where _pkey in (",
+                                  toString(object@rows), ")"))
+        lvls <- as.character(lvls[, 1])
+        if (!(is.numeric(dataStorage) || is.character(dataStorage)))
+            stop("'dataStorage' has to be either an integer with the index of",
+                 " the data storage, or its name")
+        if (is.numeric(dataStorage)) {
+            if (dataStorage < 1 || dataStorage > length(lvls))
+                stop("'dataStorage' should be an integer between 1 and ",
+                     length(lvls))
+            dataStorage <- lvls[dataStorage]
+        }
+        dataStorage(object) %in% dataStorage
+    } else if (length(dataOrigin)) {
+        lvls <- dbGetQuery(object@dbcon, 
+                           paste0("SELECT DISTINCT dataOrigin FROM ", 
+                                  object@dbtable, 
+                                  " where _pkey in (",
+                                  toString(object@rows), ")"))
+        lvls <- as.character(lvls[, 1])
+        if (!(is.numeric(dataOrigin) || is.character(dataOrigin)))
+            stop("'dataOrigin' has to be either an integer with the index of",
+                 " the data origin, or its name")
+        if (is.numeric(dataOrigin)) {
+            if (dataOrigin < 1 || dataOrigin > length(lvls))
+                stop("'dataOrigin' should be an integer between 1 and ",
+                     length(lvls))
+            dataOrigin <- lvls[dataOrigin]
+        }
+        dataOrigin(object) %in% dataOrigin
+    } else rep(TRUE, length(object))
 }
 
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @noRd
-.getModCount <- function(x) {
-    x@modCount
-}
 
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @noRd
-.getRows <- function(x) {
-    x@rows
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @noRd
-.getColumns <- function(x) {
-    x@columns
-}
-
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @noRd
-.getQuery <- function(x) {
-    x@query
-}
 
 
 #' Replace the columns from the database and ensure the right data type can be 

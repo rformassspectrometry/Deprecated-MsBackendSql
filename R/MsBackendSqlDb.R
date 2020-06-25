@@ -41,8 +41,7 @@ NULL
 #' @section Implementation notes:
 #'
 #' The `MsBackendSqlDb` defines the following slots which should not be
-#' accessed or changed by the user, which can be retrieved by `getter` 
-#' functions:
+#' accessed or changed by the user.
 #'
 #' - `@dbtable` (`character`): the name of the database table (or view)
 #'   containing the data.
@@ -52,12 +51,10 @@ NULL
 #'   to match between the database and the object.
 #' - `@rows` (`integer`): the indices (primary keys) of the data.
 #' - `@columns` (`character`): the names of the columns stored in the database.
-#' - `@index` (`integer`): the index of the rows, which has been labelled by
-#'   subsetting and filtering functions.
 #'
 #' @name MsBackendSqlDb
 #'
-#' @author Johannes Rainer, Chong Tang.
+#' @author Johannes Rainer
 #'
 #' @export MsBackendSqlDb
 #'
@@ -81,14 +78,12 @@ setClass("MsBackendSqlDb",
                    modCount = "integer",
                    rows = "integer",
                    columns = "character",
-                   query = "DBIResult",
-                   index = "list"),
+                   query = "DBIResult"),
          prototype = prototype(spectraData = "msdata",
                                readonly = FALSE,
                                modCount = 0L,
                                rows = integer(0),
                                columns = character(0),
-                               index = NULL,
                                version = "0.1"))
 
 setValidity("MsBackendSqlDb", function(object) {
@@ -146,7 +141,6 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     object@query <- dbSendQuery(
         dbcon, paste0("select ? from ", dbtable, " where ",
                       pkey, "= ?"))
-    object@index <- seq_along(object)
     object
 })
 
@@ -174,7 +168,7 @@ setMethod("dataOrigin", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("dataStorage", "MsBackendSqlDb", function(object) {
-    rep("<db>", length(object@index))
+    rep("<db>", length(object@rows))
 })
 
 #' @exportMethod intensity
@@ -221,7 +215,7 @@ setMethod("isolationWindowUpperMz", "MsBackendSqlDb", function(object) {
 
 #' @rdname hidden_aliases
 setMethod("length", "MsBackendSqlDb", function(x) {
-    length(x@index)
+    length(x@rows)
 })
 
 #' @rdname hidden_aliases
@@ -341,12 +335,8 @@ setMethod("tic", "MsBackendSqlDb", function(object, initial = TRUE) {
 #' 
 setMethod("$", signature = "MsBackendSqlDb", 
           function(x, name) {
-    if (length(name) == 1) {
-        res <- .get_db_data(x, name)
-        res }
-    else {
-        res <- .get_db_data(x, name[1])
-        res }
+              res <- .get_db_data(x, name[1])
+              res 
 })
 
 
@@ -383,23 +373,36 @@ setMethod("[", "MsBackendSqlDb", function(x, i, j, ..., drop = FALSE) {
 setMethod("split", "MsBackendSqlDb", function(x, f, drop = FALSE, ...) {
     if (!is.factor(f))
         f <- as.factor(f)
-    idx <- split(seq_along(x@index), f, ...)
+    idx <- split(seq_along(x@rows), f, ...)
     output <- vector(length = length(idx), mode = "list")
     for (i in seq_along(idx)) {
-        slot(x, "index", check = FALSE) <- idx[i]
+        slot(x, "rows", check = FALSE) <- idx[[i]]
         output[[i]] <- x
     }
     return(output)
 })
 
 #' @rdname hidden_aliases
+setMethod("filterAcquisitionNum", "MsBackendSqlDb",
+          function(object, n = integer(), dataStorage = character(),
+                   dataOrigin = character()) {
+    if (!length(n) || !length(object)) return(object)
+    if (!is.integer(n)) stop("'n' has to be an integer representing the ",
+                                     "acquisition number(s) for sub-setting")
+    sel_file <- .sel_file_sql(object, dataStorage, dataOrigin)
+    sel_acq <- acquisitionNum(object) %in% n & sel_file
+    object@rows <- object@rows[sel_acq | !sel_file]
+    object        
+})
+
+#' @rdname hidden_aliases
 setMethod("filterDataOrigin", "MsBackendSqlDb",
           function(object, dataOrigin = character()) {
     if (length(dataOrigin)) {
-        object@index <- object@index[dataOrigin(object) %in% dataOrigin]
+        object@rows <- object@rows[dataOrigin(object) %in% dataOrigin]
         if (is.unsorted(dataOrigin))
-            object@index <- object@index[order(match(dataOrigin(object), 
-                                                     dataOrigin))]
+            object@rows <- object@rows[order(match(dataOrigin(object), 
+                                                   dataOrigin))]
         else object
     } else object
 })
@@ -408,10 +411,10 @@ setMethod("filterDataOrigin", "MsBackendSqlDb",
 setMethod("filterDataStorage", "MsBackendSqlDb",
           function(object, dataStorage = character()) {
     if (length(dataStorage)) {
-        object@index <- object@index[dataStorage(object) %in% dataStorage]
+        object@rows <- object@rows[dataStorage(object) %in% dataStorage]
         if (is.unsorted(dataStorage))
-            object@index <- object@index[order(match(dataStorage(object), 
-                                                     dataStorage))]
+            object@rows <- object@rows[order(match(dataStorage(object), 
+                                                   dataStorage))]
         else object
     } else object
 })
@@ -419,36 +422,40 @@ setMethod("filterDataStorage", "MsBackendSqlDb",
 #' @rdname hidden_aliases
 setMethod("filterEmptySpectra", "MsBackendSqlDb", function(object) {
     if (!length(object)) return(object)
-    object@index <- object@index[as.logical(lengths(object))]
+    object@rows <- object@rows[as.logical(lengths(object))]
+    object
 })
 
 #' @rdname hidden_aliases
 setMethod("filterIsolationWindow", "MsBackendSqlDb", {
-    function(object, mz = numeric(), ...) {
-        if (length(mz)) {
-            if (length(mz) > 1)
-                stop("'mz' is expected to be a single m/z value", call. = FALSE)
-            keep <- which(isolationWindowLowerMz(object) <= mz &
-                          isolationWindowUpperMz(object) >= mz)
-            object@index <- object@index[keep]
-        } else object
-    }
+  function(object, mz = numeric(), ...) {
+    if (length(mz)) {
+        if (length(mz) > 1)
+            stop("'mz' is expected to be a single m/z value", call. = FALSE)
+        keep <- which(isolationWindowLowerMz(object) <= mz &
+                      isolationWindowUpperMz(object) >= mz)
+        object@rows <- object@rows[keep]
+        object
+    } else object
+  }
 })
 
 #' @rdname hidden_aliases
 setMethod("filterMsLevel", "MsBackendSqlDb",
           function(object, msLevel = integer()) {
     if (length(msLevel)) {
-        object@index <- object@index[msLevel(object) %in% msLevel]
+        object@rows <- object@rows[msLevel(object) %in% msLevel]
+        object
     } else object
 })
 
 #' @rdname hidden_aliases
 setMethod("filterPolarity", "MsBackendSqlDb",
           function(object, polarity = integer()) {
-    if (length(polarity))
-        object@index <- object@index[polarity(object) %in% polarity]
-    else object
+    if (length(polarity)) {
+        object@rows <- object@rows[polarity(object) %in% polarity]
+        object
+    } else object
 })
 
 #' @rdname hidden_aliases
@@ -458,59 +465,63 @@ setMethod("filterPrecursorMz", "MsBackendSqlDb",
         mz <- range(mz)
         keep <- which(precursorMz(object) >= mz[1] &
                       precursorMz(object) <= mz[2])
-        object@index <- object@index[keep]
+        object@rows <- object@rows[keep]
+        object
     } else object
 })
+
+
 
 #' @rdname hidden_aliases
 setMethod("filterPrecursorScan", "MsBackendSqlDb",
           function(object, acquisitionNum = integer()) {
     if (length(acquisitionNum)) {
-        object@index <- object@index[
-                            Spectra:::.filterSpectraHierarchy(
-                                           acquisitionNum(object),
-                                           precScanNum(object),
-                                           acquisitionNum)]
+        object@rows <- object@rows[Spectra:::.filterSpectraHierarchy(
+                                       acquisitionNum(object),
+                                       precScanNum(object),
+                                       acquisitionNum)]
+        object
     } else object
 })
 
 #' @rdname hidden_aliases
 setMethod("filterRt", "MsBackendSqlDb",
-          function(object, rt = numeric(), msLevel. = unique(msLevel(object))) {
+          function(object, rt = numeric(), 
+                   msLevel. = unique(msLevel(object))) {
     if (length(rt)) {
         rt <- range(rt)
         sel_ms <- msLevel(object) %in% msLevel.
-        sel_rt <- rtime(object) >= rt[1] &
-            rtime(object) <= rt[2] & sel_ms
-        object@index <- object@index[sel_rt | !sel_ms]
+        sel_rt <- rtime(object) >= rt[1] & rtime(object) <= rt[2] & sel_ms
+        object@rows <- object@rows[sel_rt | !sel_ms]
+        object
     } else object
 })
 
+#' Filter the intensity values from a `MsBackendSqlDb` object.
+#' If only one numeric parameter is provided, the returned intensity will 
+#' keep any values larger than the parameter. If two values are provided,
+#' only the intensity values between the two parameters will be preserved.
+#'
+#' @param x a `MsBackendSqlDb` object.
+#' 
+#' @param intensities a `numeric` vector either be length 1 or 2.
+#' 
+#' @importFrom IRanges NumericList
+#' 
+#' @export
+#' 
 #' @rdname hidden_aliases
-setMethod("filterIntensity", "MsBackendSqlDb",
-          function(object, intensities = numeric()) {
+filterIntensity <- function(x, intensities = numeric()) {
     if (length(intensities) == 1) {
-        sel_intensity <- intensity(object) >= intensities
-        object@index <- object@index[sel_intensity]
+        filteredIntensity <- lapply(intensity(x), 
+                                    function(i) (i[i > intensities]))
+        filteredIntensity <- NumericList(filteredIntensity, compress = FALSE)
     } else if (length(intensities) == 2) {
-        sel_intensity <- intensity(object) >= intensities[1] &
-            intensity(object) <= intensities[2]
-        object@index <- object@index[sel_intensity]
+        filteredIntensity <- lapply(intensity(x), 
+                                    function(i) (i[i > intensities[1] &
+                                                   i < intensities[2]]))
+        filteredIntensity <- NumericList(filteredIntensity, compress = FALSE)
     } else {
         stop("intensities must be of length 1 or 2. See man page for details.")
     }
-})
-
-#' Now it's not in use, need further modifications.
-#'
-#' @rdname hidden_aliases
-setMethod("filterAcquisitionNum", "MsBackendSqlDb",
-          function(object, n = integer(), dataStorage = character(),
-                   dataOrigin = character()) {
-    if (!length(n) || !length(object)) return(object)
-    if (!is.integer(n)) stop("'n' has to be an integer representing the ",
-                             "acquisition number(s) for sub-setting")
-            sel_file <- .sel_file(object, dataStorage, dataOrigin)
-            sel_acq <- acquisitionNum(object) %in% n & sel_file
-            object[sel_acq | !sel_file]
-})
+}
