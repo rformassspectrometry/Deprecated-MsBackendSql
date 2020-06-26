@@ -1,14 +1,3 @@
-test_con <- dbConnect(SQLite(), "test.db")
-test_con1 <- dbConnect(SQLite(), "test1.db")
-dbExecute(test_con, "PRAGMA auto_vacuum = FULL")
-dbExecute(test_con1, "PRAGMA auto_vacuum = FULL")
-fl <- msdata::proteomics(full.names = TRUE)[4]
-test_be <- backendInitialize(MsBackendSqlDb(), test_con, fl)
-b1 <- Spectra::backendInitialize(MsBackendMzR(), files = fl)
-b2 <- Spectra(fl, backend = MsBackendMzR())
-b2 <- setBackend(b2, MsBackendDataFrame())
-test_tbl <- dbReadTable(test_con, "msdata")
-
 test_that("initializeBackend,MsBackendSqlDb works", {
     expect_error(backendInitialize(MsBackendSqlDb()))
     expect_error(backendInitialize(MsBackendSqlDb(), test_con1),
@@ -44,8 +33,8 @@ test_that("centroided, MsBackendSqlDb work", {
 })
 
 test_that("dataOrigin,MsBackendSqlDb works", {
-    expect_equal(gsub("\\\\", "/", dataOrigin(test_be)), 
-                  gsub("\\\\", "/", dataOrigin(b1)))
+    expect_equal(normalizePath(dataOrigin(test_be), winslash = "/"), 
+                 normalizePath(dataOrigin(b1), winslash = "/"))
     expect_true(is(dataOrigin(test_be), "character"))
 })
 
