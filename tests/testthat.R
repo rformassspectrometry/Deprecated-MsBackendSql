@@ -88,6 +88,7 @@ sql4_1 <- paste("INSERT INTO msdata4(",
                 paste(names(type4), collapse = ", "),
                 ", _pkey) ",
                 "SELECT * FROM temp_msdata4;")
+dbExecute(test_con3, sql4_1)
 dbExecute(test_con3, "DROP TABLE temp_msdata4;")
 
 ## We create another SQL data table, with all intenisy and mz values as 1
@@ -109,9 +110,27 @@ sql5_1 <- paste("INSERT INTO msdata5(",
                 paste(names(type5), collapse = ", "),
                 ", _pkey) ",
                 "SELECT * FROM temp_msdata5;")
+dbExecute(test_con3, sql5_1)
 dbExecute(test_con3, "DROP TABLE temp_msdata5;")
 
 rm(tmp_tbl, test_tbl1)
+
+## New test cases by Sebastian 
+msdf <- data.frame(
+    pkey = 1L:3L,
+    rtime = c(1.2, 3.4, 5.6),
+    msLevel = c(1L, 2L, 2L),
+    dataStorage = "<db>",
+    dataOrigin = "file.mzML",
+    stringsAsFactors = FALSE
+)
+msdf$mz <- lapply(1:3, serialize, NULL)
+msdf$intensity <- lapply(4:6, serialize, NULL)
+
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+on.exit(DBI::dbDisconnect(con))
+
+DBI::dbWriteTable(con, "msdata", msdf)
 
 
 test_check("MsBackendSql")

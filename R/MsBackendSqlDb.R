@@ -145,7 +145,8 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 })
 
 ## Data accessors
-
+#' @importMethodsFrom Spectra acquisitionNum
+#'
 #' @rdname hidden_aliases
 setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
   .get_db_data(object, "acquisitionNum")
@@ -198,6 +199,8 @@ setMethod("isEmpty", "MsBackendSqlDb", function(x) {
     lengths(intensity(x)) == 0
 })
 
+#' @importMethodsFrom Spectra isolationWindowLowerMz
+#' 
 #' @rdname hidden_aliases
 setMethod("isolationWindowLowerMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowLowerMz")
@@ -208,6 +211,8 @@ setMethod("isolationWindowTargetMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowTargetMz")
 })
 
+#' @importMethodsFrom Spectra isolationWindowUpperMz
+#'
 #' @rdname hidden_aliases
 setMethod("isolationWindowUpperMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowUpperMz")
@@ -223,6 +228,8 @@ setMethod("lengths", "MsBackendSqlDb", function(x, use.names = FALSE) {
     lengths(mz(x))
 })
 
+#' @importMethodsFrom Spectra msLevel
+#'
 #' @rdname hidden_aliases
 setMethod("msLevel", "MsBackendSqlDb", function(object, ...) {
     .get_db_data(object, "msLevel")
@@ -253,6 +260,8 @@ setMethod("polarity", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "polarity")
 })
 
+#' @importMethodsFrom Spectra precScanNum
+#'
 #' @rdname hidden_aliases
 setMethod("precScanNum", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precScanNum")
@@ -268,11 +277,15 @@ setMethod("precursorIntensity", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorIntensity")
 })
 
+#' @importMethodsFrom Spectra precursorMz
+#'
 #' @rdname hidden_aliases
 setMethod("precursorMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorMz")
 })
 
+#' @importMethodsFrom Spectra rtime
+#'
 #' @rdname hidden_aliases
 setMethod("rtime", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "rtime")
