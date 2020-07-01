@@ -41,7 +41,7 @@ Suggests:
     msdata,
     magrittr,
     mzR,
-    codecov,
+    covr,
     rmarkdown
 Remotes:
    RforMassSpectrometry/Spectra,
