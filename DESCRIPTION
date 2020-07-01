@@ -1,5 +1,5 @@
 Package: MsBackendSql
-Title: SQL Database-based Mass Spectrometry Data Backends
+Title: SQL Database-Based Mass Spectrometry Data Backends
 Version: 0.1.0
 Description: Mass spectrometry (MS) data backends storing all data
              in an SQL database.
@@ -27,6 +27,7 @@ Depends:
     Spectra (>= 0.5.0),
     ProtGenerics (>= 1.17.4)
 Imports:
+    RSQLite,
     methods,
     S4Vectors,
     IRanges,
@@ -38,7 +39,7 @@ Suggests:
     knitr (>= 1.1.0),
     BiocStyle (>= 2.5.19),
     msdata,
-    RSQLite,
+    magrittr,
     mzR,
     rmarkdown
 Remotes:
