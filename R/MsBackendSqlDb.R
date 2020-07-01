@@ -7,50 +7,63 @@ NULL
 #'
 #' @description
 #'
-#' The `MsBackendSqlDb` is an [MsBackend] backend which keeps all spectra data
-#' (metadata as well as m/z and intensity values) in a single database table.
-#' This object has a very low memory footprint because only primary keys of the
-#' database table are stored within the object hence making it ideal for
-#' representing very large mass spectrometry data sets on computers with limited
-#' resources.
+#' The `MsBackendSqlDb` is an [MsBackend] backend that keeps all
+#' metadata and spectra data (m/z and intensity values) in a single
+#' on-disk database table.  This object has a very low memory
+#' footprint because only primary keys of the database table are
+#' stored in memory, within the object hence making it ideal for
+#' representing very large mass spectrometry data sets on computers
+#' with limited resources.
+#'
+#' @section Creating an `MsBackendSqlDb` instance:
+#'
+#' Like all [MsBackend()] objects, `MsBackendSqlDb` have to be
+#' *initialized* with the `backendInitialize()` method that either
+#' fills the object with data from mass spectrometry files provided
+#' with the `files` parameter or checks if the pre-generated database
+#' contains all required data. A connection to a database (with write
+#' access) has to be provided with the `dbcon` parameter which expects
+#' a `DBIConnection` returned by a call to [dbConnect()]. To fill the
+#' database with MS data files (usually mzML files, but all files
+#' types supported by the `mzR` package are allowed), these have to be
+#' provided with the `files` parameter. Parameter `dbtable` can be
+#' used to optionally specify the database table name that contains,
+#' or should contain the data.
 #'
 #' @param object a `MsBackendSqlDb` object.
 #'
 #' @param dbcon a `DBIConnection` object to connect to the database.
 #'
-#' @param files `character` with the file names from which data should be
-#'     imported. Only required if the database to which `dbcon` connects does
-#'     not already contain the data.
+#' @param files `character` with the file names from which data should
+#'     be imported. Only required if the database to which `dbcon`
+#'     connects does not already contain the data.
 #'
-#' @param dbtable `character(1)` the name of the database table with the data.
-#'     Defaults to `dbtable = "msdata"`.
-#'
-#' @section Creating an `MsBackendSqlDb` instance:
-#'
-#' Like all [MsBackend()] objects, `MsBackendSqlDb` have to be *initialized*
-#' with the `backendInitialize` method that either fills the object with data
-#' from mass spectrometry files provided with the `files` parameter or checks
-#' if the pre-generated database contains all required data. A connection to
-#' a database (with write access) has to be provided with the `dbcon` parameter
-#' which expects a `DBIConnection` returned by a call to [dbConnect()]. To
-#' fill the database with MS data files (usually mzML files, but all files
-#' types supported by the `mzR` package are allowed), these have to be provided
-#' with the `files` parameter. Parameter `dbtable` can be used to optionally
-#' specify the database table name that contains, or should contain the data.
+#' @param dbtable `character(1)` the name of the database table with
+#'     the data.  Defaults to `dbtable = "msdata"`.
 #'
 #' @section Implementation notes:
 #'
-#' The `MsBackendSqlDb` defines the following slots which should not be
-#' accessed or changed by the user.
+#' The `MsBackendSqlDb` defines the following slots which should not
+#' be accessed or changed by the user.
 #'
-#' - `@dbtable` (`character`): the name of the database table (or view)
-#'   containing the data.
-#' - `@dbcon` (`DBIConnection`): the connection to the database.
-#' - `@modCount` (`integer`): keeps track of each database writing cycle which
-#'   would invalidate objects pointing to the same database. This number has
-#'   to match between the database and the object.
-#' - `@rows` (`integer`): the indices (primary keys) of the data.
-#' - `@columns` (`character`): the names of the columns stored in the database.
+#' @slot dbtable A `character(1)` with the name of the database table
+#'     (or view) containing the data.
+#' 
+#' @slot dbcon A `DBIConnection` with the connection to the database.
+#' 
+#' @slot modCount An `integer()` that keeps track of each database
+#'     writing cycle which would invalidate objects pointing to the
+#'     same database. This number has to match between the database
+#'     and the object.
+#' 
+#' @slot rows An `integer()` with the indices (primary keys) of the
+#'     data.
+#' 
+#' @slot columns A `character()` containing the names of the columns
+#'     stored in the database.
+#'
+#' @slot `query` A `DBIResults` object containing SQL query against
+#'     the backend.
 #'
 #' @name MsBackendSqlDb
 #'
@@ -148,26 +161,36 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' @importMethodsFrom Spectra acquisitionNum
 #'
 #' @rdname hidden_aliases
+#' 
+#' @importMethodsFrom ProtGenerics acquisitionNum
 setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
   .get_db_data(object, "acquisitionNum")
 })
 
 #' @rdname hidden_aliases
+#' 
+#' @importMethodsFrom ProtGenerics centroided
 setMethod("centroided", "MsBackendSqlDb", function(object) {
     as.logical(.get_db_data(object, "centroided"))
 })
 
 #' @rdname hidden_aliases
+#' 
+#' @importMethodsFrom ProtGenerics collisionEnergy
 setMethod("collisionEnergy", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "collisionEnergy")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics dataOrigin
 setMethod("dataOrigin", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "dataOrigin")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics dataStorage
 setMethod("dataStorage", "MsBackendSqlDb", function(object) {
     rep("<db>", length(object@rows))
 })
@@ -184,17 +207,23 @@ setMethod("intensity", "MsBackendSqlDb", function(object) {
 #' @rdname hidden_aliases
 #' 
 #' @importFrom MsCoreUtils vapply1d
+#'
+#' @importMethodsFrom ProtGenerics ionCount
 setMethod("ionCount", "MsBackendSqlDb", function(object) {
     vapply1d(intensity(object), sum, na.rm = TRUE)
 })
 
 #' @rdname hidden_aliases
 #' @importFrom MsCoreUtils vapply1l
+#'
+#' @importMethodsFrom ProtGenerics isCentroided
 setMethod("isCentroided", "MsBackendSqlDb", function(object, ...) {
     vapply1l(as.list(object), Spectra:::.peaks_is_centroided)
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom S4Vectors isEmpty
 setMethod("isEmpty", "MsBackendSqlDb", function(x) {
     lengths(intensity(x)) == 0
 })
@@ -202,11 +231,15 @@ setMethod("isEmpty", "MsBackendSqlDb", function(x) {
 #' @importMethodsFrom Spectra isolationWindowLowerMz
 #' 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics isolationWindowLowerMz
 setMethod("isolationWindowLowerMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowLowerMz")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics isolationWindowTargetMz
 setMethod("isolationWindowTargetMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowTargetMz")
 })
@@ -214,6 +247,8 @@ setMethod("isolationWindowTargetMz", "MsBackendSqlDb", function(object) {
 #' @importMethodsFrom Spectra isolationWindowUpperMz
 #'
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics isolationWindowUpperMz
 setMethod("isolationWindowUpperMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowUpperMz")
 })
@@ -231,6 +266,8 @@ setMethod("lengths", "MsBackendSqlDb", function(x, use.names = FALSE) {
 #' @importMethodsFrom Spectra msLevel
 #'
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics msLevel
 setMethod("msLevel", "MsBackendSqlDb", function(object, ...) {
     .get_db_data(object, "msLevel")
 })
@@ -256,6 +293,8 @@ setMethod("as.list", "MsBackendSqlDb", function(x) {
 
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics polarity
 setMethod("polarity", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "polarity")
 })
@@ -263,16 +302,22 @@ setMethod("polarity", "MsBackendSqlDb", function(object) {
 #' @importMethodsFrom Spectra precScanNum
 #'
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics precScanNum
 setMethod("precScanNum", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precScanNum")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics precursorCharge
 setMethod("precursorCharge", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorCharge")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics precursorIntensity
 setMethod("precursorIntensity", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorIntensity")
 })
@@ -280,6 +325,8 @@ setMethod("precursorIntensity", "MsBackendSqlDb", function(object) {
 #' @importMethodsFrom Spectra precursorMz
 #'
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics precursorMz
 setMethod("precursorMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorMz")
 })
@@ -287,16 +334,22 @@ setMethod("precursorMz", "MsBackendSqlDb", function(object) {
 #' @importMethodsFrom Spectra rtime
 #'
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics rtime
 setMethod("rtime", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "rtime")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics scanIndex
 setMethod("scanIndex", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "scanIndex")
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics smoothed
 setMethod("smoothed", "MsBackendSqlDb", function(object) {
     as.logical(.get_db_data(object, "smoothed"))
 })
@@ -318,9 +371,10 @@ setMethod("asDataFrame", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
-setMethod("spectraNames", "MsBackendSqlDb", function(object) {
-    rep(NA_real_, times = length(object))
-})
+#'
+#' @importMethodsFrom ProtGenerics spectraNames
+setMethod("spectraNames", "MsBackendSqlDb",
+          function(object) NULL)
 
 #' @importMethodsFrom ProtGenerics spectraVariables
 #' 
@@ -336,6 +390,8 @@ setMethod("spectraVariables", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics tic
 setMethod("tic", "MsBackendSqlDb", function(object, initial = TRUE) {
     if (initial) {
       if (any(dbListFields(object@dbcon, object@dbtable) == "totIonCurrent"))
@@ -345,7 +401,6 @@ setMethod("tic", "MsBackendSqlDb", function(object, initial = TRUE) {
 })
 
 #' @rdname hidden_aliases
-#' 
 setMethod("$", signature = "MsBackendSqlDb", 
           function(x, name) {
               res <- .get_db_data(x, name[1])
@@ -396,6 +451,8 @@ setMethod("split", "MsBackendSqlDb", function(x, f, drop = FALSE, ...) {
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterAcquisitionNum
 setMethod("filterAcquisitionNum", "MsBackendSqlDb",
           function(object, n = integer(), dataStorage = character(),
                    dataOrigin = character()) {
@@ -409,6 +466,8 @@ setMethod("filterAcquisitionNum", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterDataOrigin
 setMethod("filterDataOrigin", "MsBackendSqlDb",
           function(object, dataOrigin = character()) {
     if (length(dataOrigin)) {
@@ -421,6 +480,8 @@ setMethod("filterDataOrigin", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterDataStorage
 setMethod("filterDataStorage", "MsBackendSqlDb",
           function(object, dataStorage = character()) {
     if (length(dataStorage)) {
@@ -433,6 +494,8 @@ setMethod("filterDataStorage", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterEmptySpectra
 setMethod("filterEmptySpectra", "MsBackendSqlDb", function(object) {
     if (!length(object)) return(object)
     object@rows <- object@rows[as.logical(lengths(object))]
@@ -440,6 +503,8 @@ setMethod("filterEmptySpectra", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterIsolationWindow
 setMethod("filterIsolationWindow", "MsBackendSqlDb", {
   function(object, mz = numeric(), ...) {
     if (length(mz)) {
@@ -454,6 +519,8 @@ setMethod("filterIsolationWindow", "MsBackendSqlDb", {
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterMsLevel
 setMethod("filterMsLevel", "MsBackendSqlDb",
           function(object, msLevel = integer()) {
     if (length(msLevel)) {
@@ -463,6 +530,8 @@ setMethod("filterMsLevel", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterPolarity
 setMethod("filterPolarity", "MsBackendSqlDb",
           function(object, polarity = integer()) {
     if (length(polarity)) {
@@ -472,6 +541,8 @@ setMethod("filterPolarity", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterPrecursorMz
 setMethod("filterPrecursorMz", "MsBackendSqlDb",
           function(object, mz = numeric()) {
     if (length(mz)) {
@@ -486,6 +557,8 @@ setMethod("filterPrecursorMz", "MsBackendSqlDb",
 
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterPrecursorScan
 setMethod("filterPrecursorScan", "MsBackendSqlDb",
           function(object, acquisitionNum = integer()) {
     if (length(acquisitionNum)) {
@@ -498,6 +571,8 @@ setMethod("filterPrecursorScan", "MsBackendSqlDb",
 })
 
 #' @rdname hidden_aliases
+#'
+#' @importMethodsFrom ProtGenerics filterRt
 setMethod("filterRt", "MsBackendSqlDb",
           function(object, rt = numeric(), 
                    msLevel. = unique(msLevel(object))) {
@@ -510,10 +585,13 @@ setMethod("filterRt", "MsBackendSqlDb",
     } else object
 })
 
-#' Filter the intensity values from a `MsBackendSqlDb` object.
-#' If only one numeric parameter is provided, the returned intensity will 
-#' keep any values larger than the parameter. If two values are provided,
-#' only the intensity values between the two parameters will be preserved.
+
+
+#' Filter the intensity values from a `MsBackendSqlDb` object.  If
+#' only one numeric parameter is provided, the returned intensity will
+#' keep any values larger than the parameter. If two values are
+#' provided, only the intensity values between the two parameters will
+#' be preserved.
 #'
 #' @param x a `MsBackendSqlDb` object.
 #' 
