@@ -1,10 +1,14 @@
 ---
-title: "Usage of MsBackendSqlDb"
-author: "Chong Tang"
-date: "6/25/2020"
+title: "Description and usage of MsBackendSqlDb"
 output: 
     BiocStyle::html_document:
         toc_float: true
+vignette: >
+    %\VignetteIndexEntry{Description and usage of MsBackendSqlDb}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+    %\VignettePackage{MsBackendSql}
+    %\VignetteDepends{Spectra,mzR,BiocStyle,msdata}
 ---
 
 
@@ -12,10 +16,16 @@ output:
 BiocStyle::markdown()
 ```
 
+**Package**: `r Biocpkg("MsBackendSql")`<br />
+**Authors**: `r packageDescription("MsBackendSql")[["Author"]] `<br />
+**Last modified:** `r file.info("MsBackendSqlDb.Rmd")$mtime`<br />
+**Compiled**: `r date()`
+
 
 # Introduction
-This vignette will briefly introduce the usage of new SQLite based backend 
-`MsBackendSqlDb`. I will also compare `MsBackendSqlDb` to 
+
+This vignette will briefly introduce the usage of new SQLite based
+backend `MsBackendSqlDb`. I will also compare `MsBackendSqlDb` to
 `MsBackendDataFrame` to illustrate the similarities.
 
 # Usage
@@ -30,6 +40,7 @@ library(MsBackendSql)
 ```
 
 # Creating `MsBackendDataFrame` and `MsBackendSqlDb` objects
+
 We will use a small sciex to create the backend objects.
 
 ```{r usage1}
