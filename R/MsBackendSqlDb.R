@@ -360,9 +360,8 @@ setMethod("asDataFrame", "MsBackendSqlDb",
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics spectraNames
-setMethod("spectraNames", "MsBackendSqlDb", function(object) {
-    rep(NA_real_, times = length(object))
-})
+setMethod("spectraNames", "MsBackendSqlDb",
+          function(object) NULL)
 
 #' @importMethodsFrom ProtGenerics spectraVariables
 #' 
