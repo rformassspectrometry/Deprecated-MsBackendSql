@@ -8,7 +8,7 @@ vignette: >
     %\VignetteEngine{knitr::rmarkdown}
     %\VignetteEncoding{UTF-8}
     %\VignettePackage{MsBackendSql}
-    %\VignetteDepends{Spectra,mzR,BiocStyle,msdata}
+    %\VignetteDepends{Spectra,mzR,BiocStyle,msdata,magrittr}
 ---
 
 
@@ -24,93 +24,106 @@ BiocStyle::markdown()
 
 # Introduction
 
-This vignette will briefly introduce the usage of new SQLite based
+This vignette will briefly introduce the usage of new SQLite-based
 backend `MsBackendSqlDb`. I will also compare `MsBackendSqlDb` to
-`MsBackendDataFrame` to illustrate the similarities.
+other backends to illustrate similarities and differences.
 
 # Usage
 
 Firstly, we load the relevant packages:
 
 ```{r env, message = FALSE}
-library(Spectra)
-library(RSQLite)
-library(msdata)
-library(MsBackendSql)
+library("Spectra")
+library("RSQLite")
+library("msdata")
+library("MsBackendSql")
+library("magrittr")
 ```
 
-# Creating `MsBackendDataFrame` and `MsBackendSqlDb` objects
+# Creating `Spectra` objects with an `MsBackendSqlDb` backend
 
 We will use a small sciex to create the backend objects.
 
-```{r usage1}
+```{r backend-df}
 fls <- dir(system.file("sciex", package = "msdata"), full.names = TRUE)
-b1 <- Spectra(fls, backend = MsBackendMzR())
-b1 <- setBackend(b1, MsBackendDataFrame())
-b1
+sp_mzr <- Spectra(fls, backend = MsBackendMzR())
+sp_mzr
 ```
 
 For `MsBackendSqlDb` backend, we have to create a `connection` object:
 
-```{r usage2}
-conn2 <- dbConnect(SQLite(), "b2.db")
-b2 <- backendInitialize(MsBackendSqlDb(), dbcon = conn2, files = fls)
-b2
+```{r backend-sql}
+conn <- dbConnect(SQLite(), "msdata.db")
+be_sql <- backendInitialize(MsBackendSqlDb(), dbcon = conn, files = fls)
+sp_sql <- Spectra(backend = be_sql)
+sp_sql
 ```
 
 Can we load the mz and intensity values from the both backends?
 
-```{r comparison1}
-mz1 <- mz(b1)
-mz2 <- mz(b2)
+```{r comp-mz}
+mz1 <- mz(sp_mzr)
+mz2 <- mz(sp_sql)
 identical(mz1, mz1)
 ```
 
 
-```{r comparison2}
-intensity1 <- intensity(b1)
-intensity2 <- intensity(b2)
+```{r comp-int}
+intensity1 <- intensity(sp_mzr)
+intensity2 <- intensity(sp_sql)
 identical(intensity1, intensity2)
 ```
 
 Now we want to check the subsetting functions:
 
-```{r comparison3}
-sub1 <- b1[5:20]
-sub2 <- b2[5:20]
-sub1
-sub2
+```{r comp-subset}
+sp_mzr[5:20]
+sp_sql[5:20]
 ```
 
-We can reproduce the example from `Spectra` vignette:
+Below, we reproduce and example from the `Spectra` vignette, where
+spectra originating from the second file and acquired between 175 and
+189 seconds are retained:
 
-```{r comparison4}
-b2[b2$dataOrigin == fls[2] &
-          b2$rtime >= 175 &
-          b2$rtime <= 189]
+
+```{r filtering-mzr}
+sp_mzr %>%
+    filterDataOrigin(fls[2]) %>%
+    filterRt(c(175, 189))
 ```
 
-```{r comparison5}
-fls <- unique(dataOrigin(b2))
-file_2 <- filterDataOrigin(b2, dataOrigin = fls[2])
-length(file_2)
+
+```{r filtering-sql}
+sp_sql %>%
+    filterDataOrigin(fls[2]) %>%
+    filterRt(c(175, 189))
 ```
 
-```{r comparison6}
-sps_sub <- filterRt(file_2, rt = c(175, 189))
-length(sps_sub)
+If we now compare the memory footprint of the `Spectra` objects with
+the respective backends. `sp_mzr` uses the `MsBackendMzR` backend that
+stored the metadata in memory, and accessed the raw data (m/z and
+intensities) on demand directly in the `mzML` files.
+
+```{r}
+print(object.size(sp_mzr), units = "Kb")
 ```
 
-We can also filter intensity values:
+`sp_sql` uses the `MsBackendSqlDb` backend that stored neither in
+memory. The metadata and the raw data are stored in a SQLite file
+(`msdata.db` defined above), and thus further minimses the memory
+footprint.
 
-```{r comparison7}
-filtering1 <- filterIntensity(b2, 1000)
-filtering1[[3]]
+```{r}
+print(object.size(sp_sql), units = "Kb")
 ```
 
-```{r comparison8}
-filtering1 <- filterIntensity(b2, c(1000, 2000))
-filtering1[[3]]
+Both these backends are implemented to minimise memory usage, as
+opposed to a full in-memory backend that stores all data and metadata
+in RAM:
+
+```{r}
+sp_df <- setBackend(sp_mzr, MsBackendDataFrame())
+print(object.size(sp_df), units = "Mb")
 ```
 
 # Session information
