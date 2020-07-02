@@ -157,6 +157,26 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     object
 })
 
+#' 
+#'
+#' @param processingQueue For `Spectra`: optional `list` of
+#'     [ProcessingStep-class] objects.
+#'     
+#' @param metadata For `Spectra`: optional `list` with metadata information.
+#' 
+#' @param backend For `Spectra`: [MsBackend-class] to be used as backend. 
+#'
+#' @importClassesFrom Spectra Spectra
+#'
+#' @rdname MsBackendSqlDb
+setMethod("Spectra", "MsBackendSqlDb", function(object, processingQueue = list(),
+                                           metadata = list(), ...,
+                                           dbcon = dbcon,
+                                           backend = MsBackendSqlDb()) {
+    new("Spectra", metadata = metadata, processingQueue = processingQueue,
+         backend = backendInitialize(backend, ...))
+})
+
 ## Data accessors
 #' @importMethodsFrom Spectra acquisitionNum
 #'
