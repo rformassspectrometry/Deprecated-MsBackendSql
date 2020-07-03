@@ -6,6 +6,7 @@
 \alias{MsBackendSqlDb-class}
 \alias{backendInitialize,MsBackendSqlDb-method}
 \alias{Spectra,character-method}
+\alias{Spectra,MsBackendSqlDb-method}
 \title{SQL database based mass spectrometry data backend}
 \usage{
 MsBackendSqlDb(dbcon)
@@ -13,9 +14,11 @@ MsBackendSqlDb(dbcon)
 \S4method{backendInitialize}{MsBackendSqlDb}(object, dbcon, files = character(), dbtable = "msdata")
 
 \S4method{Spectra}{character}(object, processingQueue = list(), metadata = list(), backend, ...)
+
+\S4method{Spectra}{MsBackendSqlDb}(object, processingQueue = list(), metadata = list(), ...)
 }
 \arguments{
-\item{dbcon}{a \code{DBIConnection} object to connect to the database.}
+\item{dbcon}{A \code{DBIConnection} with the connection to the database.}
 
 \item{object}{a \code{MsBackendSqlDb} object.}
 

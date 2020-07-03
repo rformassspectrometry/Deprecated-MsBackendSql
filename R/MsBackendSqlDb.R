@@ -182,6 +182,19 @@ setMethod("Spectra", "character", function(object, processingQueue = list(),
         backend = be)
 })
 
+#' `Spectra` constructor function for `MsBackendSqlDb`
+#' 
+#' @param dbcon A `DBIConnection` with the connection to the database.
+#' 
+#' @rdname MsBackendSqlDb
+setMethod("Spectra", "MsBackendSqlDb", function(object, processingQueue = list(),
+                                           metadata = list(), 
+                                           ...) {
+    be <- backendInitialize(object, object@dbcon)
+    new("Spectra", metadata = metadata, processingQueue = processingQueue,
+        backend = be)
+})
+
 ## Data accessors
 #' @importMethodsFrom Spectra acquisitionNum
 #'
