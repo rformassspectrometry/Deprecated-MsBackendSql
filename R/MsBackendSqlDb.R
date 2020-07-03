@@ -157,7 +157,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     object
 })
 
-#' 
+#' `Spectra` constructor function for `MsBackendSqlDb`
 #'
 #' @param processingQueue For `Spectra`: optional `list` of
 #'     [ProcessingStep-class] objects.
@@ -165,16 +165,21 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' @param metadata For `Spectra`: optional `list` with metadata information.
 #' 
 #' @param backend For `Spectra`: [MsBackend-class] to be used as backend. 
+#' 
+#' @param additional arguments can be passed to the backend's
+#' [backendInitialize()] method, i.e. `MsBackendSqlDb` in this
+#' package.
 #'
 #' @importClassesFrom Spectra Spectra
-#'
+#' 
 #' @rdname MsBackendSqlDb
-setMethod("Spectra", "MsBackendSqlDb", function(object, processingQueue = list(),
-                                           metadata = list(), ...,
-                                           dbcon = dbcon,
-                                           backend = MsBackendSqlDb()) {
+setMethod("Spectra", "character", function(object, processingQueue = list(),
+                                           metadata = list(),
+                                           backend,
+                                           ...) {
+    be <- backendInitialize(backend, backend@dbcon, object)
     new("Spectra", metadata = metadata, processingQueue = processingQueue,
-         backend = backendInitialize(backend, ...))
+        backend = be)
 })
 
 ## Data accessors

@@ -12,18 +12,11 @@ MsBackendSqlDb <- function(dbcon) {
     if (!requireNamespace("DBI", quietly = TRUE))
         stop("The use of 'MsBackendSqlDb' requires package 'DBI'. Please ",
              "install with 'install.packages(\"DBI\")'")
-    dbtable <- "msdata"
-    modCount <- 0L
-    rows <- integer(0)
-    columns <- character(0)
-    query <- dbSendQuery(dbcon, "DROP TABLE IF EXISTS msdata")
-    new("MsBackendSqlDb", 
-        dbtable = dbtable, 
-        dbcon = dbcon,
-        modCount = modCount, 
-        rows = rows,
-        columns = columns,
-        query = query)
+    if (missing(dbcon))
+        return(new("MsBackendSqlDb"))
+    x <- new("MsBackendSqlDb")
+    slot(x, "dbcon", check = FALSE) <- dbcon
+    return(x)
 }
 
 #' Test if db table is available

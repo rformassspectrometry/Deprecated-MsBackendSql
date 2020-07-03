@@ -5,21 +5,14 @@
 \alias{class:MsBackendSqlDb}
 \alias{MsBackendSqlDb-class}
 \alias{backendInitialize,MsBackendSqlDb-method}
-\alias{Spectra,MsBackendSqlDb-method}
+\alias{Spectra,character-method}
 \title{SQL database based mass spectrometry data backend}
 \usage{
 MsBackendSqlDb(dbcon)
 
 \S4method{backendInitialize}{MsBackendSqlDb}(object, dbcon, files = character(), dbtable = "msdata")
 
-\S4method{Spectra}{MsBackendSqlDb}(
-  object,
-  processingQueue = list(),
-  metadata = list(),
-  ...,
-  dbcon = dbcon,
-  backend = MsBackendSqlDb()
-)
+\S4method{Spectra}{character}(object, processingQueue = list(), metadata = list(), backend, ...)
 }
 \arguments{
 \item{dbcon}{a \code{DBIConnection} object to connect to the database.}
@@ -39,6 +32,10 @@ the data.  Defaults to \code{dbtable = "msdata"}.}
 \item{metadata}{For \code{Spectra}: optional \code{list} with metadata information.}
 
 \item{backend}{For \code{Spectra}: \linkS4class{MsBackend} to be used as backend.}
+
+\item{additional}{arguments can be passed to the backend's
+\code{\link[=backendInitialize]{backendInitialize()}} method, i.e. \code{MsBackendSqlDb} in this
+package.}
 }
 \description{
 The \code{MsBackendSqlDb} is an \link{MsBackend} backend that keeps all
