@@ -13,7 +13,15 @@ MsBackendSqlDb(dbcon)
 
 \S4method{backendInitialize}{MsBackendSqlDb}(object, dbcon, files = character(), dbtable = "msdata")
 
-\S4method{Spectra}{character}(object, processingQueue = list(), metadata = list(), backend, ...)
+\S4method{Spectra}{character}(
+  object,
+  processingQueue = list(),
+  metadata = list(),
+  source = MsBackendMzR(),
+  backend = MsBackendSqlDb(),
+  ...,
+  BPPARAM = bpparam()
+)
 
 \S4method{Spectra}{MsBackendSqlDb}(object, processingQueue = list(), metadata = list(), ...)
 }
@@ -34,11 +42,20 @@ the data.  Defaults to \code{dbtable = "msdata"}.}
 
 \item{metadata}{For \code{Spectra}: optional \code{list} with metadata information.}
 
-\item{backend}{For \code{Spectra}: \linkS4class{MsBackend} to be used as backend.}
+\item{source}{For \code{Spectra}: instance of \linkS4class{MsBackend} that can be used
+to import spectrum data from the provided files. See section \emph{Creation
+of objects, conversion and changing the backend} for more details.}
 
-\item{additional}{arguments can be passed to the backend's
-\code{\link[=backendInitialize]{backendInitialize()}} method, i.e. \code{MsBackendSqlDb} in this
-package.}
+\item{backend}{For \code{Spectra}: \linkS4class{MsBackend} to be used as backend. See
+section on creation of \code{Spectra} objects for details. For \code{setBackend}:
+instance of \linkS4class{MsBackend}. See section on creation of \code{Spectra}
+objects for details.}
+
+\item{...}{Additional arguments.}
+
+\item{BPPARAM}{Parallel setup configuration. See \code{\link[=bpparam]{bpparam()}} for more
+information. This is passed directly to the \code{\link[=backendInitialize]{backendInitialize()}} method
+of the \linkS4class{MsBackend}.}
 }
 \description{
 The \code{MsBackendSqlDb} is an \link{MsBackend} backend that keeps all

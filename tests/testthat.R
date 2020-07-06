@@ -5,15 +5,21 @@ library("RSQLite")
 
 ## Provide a valid DBIConnection from SQLite 
 test_con <- dbConnect(SQLite(), "test.db")
+on.exit(DBI::dbDisconnect(test_con))
 test_con1 <- dbConnect(SQLite(), "test1.db")
+on.exit(DBI::dbDisconnect(test_con1))
 
 ## Activate `VACUUM` mode of SQLite DB,
 dbExecute(test_con, "PRAGMA auto_vacuum = FULL")
 dbExecute(test_con1, "PRAGMA auto_vacuum = FULL")
 
-## Proivde a raw `mzML` file for unit tests
+## Proivde raw `mzML` files for unit tests
 fl <- msdata::proteomics(full.names = TRUE, 
                          pattern = "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01-20141210.mzML.gz")
+sciex_file <- dir(system.file("sciex", package = "msdata"), full.names = TRUE)
+
+## Initialize a `MsBackendMzR` object containing `sciex_file`
+sciex_mzr <- backendInitialize(MsBackendMzR(), files = sciex_file)
 
 ## Initialize a `MsBackendSqlDb` for test 
 test_be <- backendInitialize(MsBackendSqlDb(), test_con, fl)
@@ -29,7 +35,9 @@ test_tbl <- dbReadTable(test_con, "msdata")
 
 ## Provide a valid DBIConnection from SQLite 
 test_con2 <- dbConnect(SQLite(), "test2.db")
+on.exit(DBI::dbDisconnect(test_con2))
 test_con3 <- dbConnect(SQLite(), "test3.db")
+on.exit(DBI::dbDisconnect(test_con3))
 
 ## Activate `VACUUM` mode of SQLite DB,
 dbExecute(test_con2, "PRAGMA auto_vacuum = FULL")

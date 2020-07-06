@@ -112,14 +112,16 @@ setValidity("MsBackendSqlDb", function(object) {
 #' 
 #' @rdname hidden_aliases
 setMethod("show", "MsBackendSqlDb", function(object) {
-    spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
-    cat(class(object), "with", nrow(spd), "spectra\n")
-    if (nrow(spd)) {
-      txt <- capture.output(print(spd))
-      cat(txt[-1], sep = "\n")
-      sp_cols <- spectraVariables(object)
-      cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
-    }
+    if (length(object@rows) == 0) {
+        cat(class(object), "with", length(object@rows), "spectra\n")
+    } else {
+        spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
+        cat(class(object), "with", nrow(spd), "spectra\n")
+        txt <- capture.output(print(spd))
+        cat(txt[-1], sep = "\n")
+        sp_cols <- spectraVariables(object)
+        cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
+     }
 })
 
 #' @rdname MsBackendSqlDb
@@ -164,22 +166,44 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #'     
 #' @param metadata For `Spectra`: optional `list` with metadata information.
 #' 
-#' @param backend For `Spectra`: [MsBackend-class] to be used as backend. 
+#' @param source For `Spectra`: instance of [MsBackend-class] that can be used
+#'     to import spectrum data from the provided files. See section *Creation
+#'     of objects, conversion and changing the backend* for more details.
+#'     
+#' @param backend For `Spectra`: [MsBackend-class] to be used as backend. See
+#'     section on creation of `Spectra` objects for details. For `setBackend`:
+#'     instance of [MsBackend-class]. See section on creation of `Spectra`
+#'     objects for details.
 #' 
-#' @param additional arguments can be passed to the backend's
-#' [backendInitialize()] method, i.e. `MsBackendSqlDb` in this
-#' package.
+#' @param ... Additional arguments.
+#' 
+#' @param BPPARAM Parallel setup configuration. See [bpparam()] for more
+#'     information. This is passed directly to the [backendInitialize()] method
+#'     of the [MsBackend-class].
 #'
-#' @importClassesFrom Spectra Spectra
+#' @importMethodsFrom Spectra Spectra
+#' 
+#' @importFrom Spectra MsBackendMzR setBackend
+#' 
+#' @importFrom BiocParallel bpparam
 #' 
 #' @rdname MsBackendSqlDb
-setMethod("Spectra", "character", function(object, processingQueue = list(),
-                                           metadata = list(),
-                                           backend,
-                                           ...) {
-    be <- backendInitialize(backend, backend@dbcon, object)
-    new("Spectra", metadata = metadata, processingQueue = processingQueue,
-        backend = be)
+setMethod("Spectra",  "character", 
+          function(object, processingQueue = list(), 
+                   metadata = list(), source = MsBackendMzR(),
+                   backend = MsBackendSqlDb(), ..., BPPARAM = bpparam()) {
+            if (class(backend) == "MsBackendSqlDb") {
+                be <- backendInitialize(backend, backend@dbcon, object)
+                new("Spectra", metadata = metadata, 
+                    processingQueue = processingQueue, backend = be)
+            } else {
+                be <- backendInitialize(source, object, ..., BPPARAM = BPPARAM)
+                sp <- new("Spectra", metadata = metadata, 
+                          processingQueue = processingQueue, backend = be)
+                if (class(source) != class(backend))
+                    setBackend(sp, backend, ..., BPPARAM = BPPARAM)
+                else sp
+            }
 })
 
 #' `Spectra` constructor function for `MsBackendSqlDb`
@@ -202,7 +226,7 @@ setMethod("Spectra", "MsBackendSqlDb", function(object, processingQueue = list()
 #' 
 #' @importMethodsFrom ProtGenerics acquisitionNum
 setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
-  .get_db_data(object, "acquisitionNum")
+    .get_db_data(object, "acquisitionNum")
 })
 
 #' @rdname hidden_aliases

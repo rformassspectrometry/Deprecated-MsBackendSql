@@ -27,8 +27,8 @@ test_that(".valid_db_table_columns works", {
     
     msdf2 <- msdf
     msdf2$msLevel <- as.character(msdf2$msLevel)
-    DBI::dbWriteTable(con, "msdata2", msdf2)
-    expect_match(.valid_db_table_columns(con, "msdata2", pkey = "pkey"),
+    DBI::dbWriteTable(con, "msdata2test", msdf2)
+    expect_match(.valid_db_table_columns(con, "msdata2test", pkey = "pkey"),
                  "wrong data type")
 })
 

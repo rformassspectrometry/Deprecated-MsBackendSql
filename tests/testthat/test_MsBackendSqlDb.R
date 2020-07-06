@@ -1,4 +1,8 @@
 test_that("initializeBackend,MsBackendSqlDb works", {
+    be <- MsBackendSqlDb()
+    expect_true(is(be, "MsBackendSqlDb"))
+    show(be)
+    
     expect_error(backendInitialize(MsBackendSqlDb()))
     expect_error(backendInitialize(MsBackendSqlDb(), test_con1),
                  "no such table: msdata")
@@ -145,4 +149,31 @@ test_that("$,MsBackendSqlDb works", {
     expect_true(is(test_be$msLevel, "integer"))
     expect_identical(test_be$msLevel, b1$msLevel)
     expect_identical(test_be$intensity, b1$intensity)
+})
+
+test_that("show,MsBackendSqlDb works", {
+    be <- MsBackendDataFrame()
+    show(be)
+    show(test_be)
+    test_be
+})
+
+test_that("Spectra,character works", {
+    conn1 <- dbConnect(SQLite(), "sciex.db")
+    on.exit(DBI::dbDisconnect(conn1))
+    res <- Spectra(sciex_file, backend = MsBackendSqlDb(conn1))
+    expect_true(is(res@backend, "MsBackendSqlDb"))
+    expect_equal(unique(res@backend$dataStorage), "<db>")
+    expect_identical(rtime(res), rtime(sciex_mzr))
+    show(res)
+})
+
+test_that("Spectra,MsBackendSqlDb works", {
+    conn2 <- dbConnect(SQLite(), "sciex.db")
+    on.exit(DBI::dbDisconnect(conn2))
+    res <- Spectra(MsBackendSqlDb(conn2))
+    expect_true(length(res) == length(sciex_mzr))
+    expect_identical(mz(res), mz(sciex_mzr))
+    expect_true(is(res@backend, "MsBackendSqlDb"))
+    show(res)
 })
