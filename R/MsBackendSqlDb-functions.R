@@ -12,11 +12,15 @@ MsBackendSqlDb <- function(dbcon) {
     if (!requireNamespace("DBI", quietly = TRUE))
         stop("The use of 'MsBackendSqlDb' requires package 'DBI'. Please ",
              "install with 'install.packages(\"DBI\")'")
-    if (missing(dbcon))
-        return(new("MsBackendSqlDb"))
-    x <- new("MsBackendSqlDb")
-    slot(x, "dbcon", check = FALSE) <- dbcon
-    return(x)
+    if (missing(dbcon)) {
+        x <- new("MsBackendSqlDb")
+        slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), tempfile(fileext = ".db"))
+        return(x)
+    } else {
+      x <- new("MsBackendSqlDb")
+      slot(x, "dbcon", check = FALSE) <- dbcon
+      return(x)
+    }
 }
 
 #' Test if db table is available

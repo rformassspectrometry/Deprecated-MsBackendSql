@@ -114,6 +114,37 @@ setValidity("MsBackendSqlDb", function(object) {
 setMethod("show", "MsBackendSqlDb", function(object) {
     if (length(object@rows) == 0) {
         cat(class(object), "with", length(object@rows), "spectra\n")
+    } else if (length(object@rows) > 6) {
+      ## get the first 3 and last 3 rows, and print them
+        columns <- c("msLevel", "rtime", "scanIndex")
+        if (length(setdiff(columns, object@columns)) == 0) {
+            qry <- dbSendQuery(object@dbcon,
+                       paste0("select msLevel, rtime, scanIndex",
+                      " from ", object@dbtable, " where _pkey = ?"))
+            rows_print <- c(head(object@rows,3), tail(object@rows, 3))
+            qry <- dbBind(qry, list(rows_print))
+            res <- dbFetch(qry)
+            dbClearResult(qry)
+            res <- DataFrame(res)
+            cat(class(object), "with", length(object@rows), "spectra\n")
+            txt <- capture.output(print(res))
+            ## Use ellipses to split the head and tails of output string
+            txt_prt <- c(txt[-1][1:5],
+                         "...     ...       ...       ...",
+                         txt[-1][6:8])
+            ## Replace the index numbers with correct row numbers
+            txt_prt[7] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 2), 
+                               txt_prt[7])
+            txt_prt[8] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 1), 
+                               txt_prt[8])
+            txt_prt[9] <- gsub("^[0-9]\\s\\s\\s", toString(length(object)), 
+                               txt_prt[9])
+            cat(txt_prt, sep = "\n")
+            sp_cols <- spectraVariables(object)
+            cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
+          } else {
+              return("Columns missing from database.")
+            }
     } else {
         spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
         cat(class(object), "with", nrow(spd), "spectra\n")
@@ -133,77 +164,33 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 #' @exportMethod backendInitialize
 setMethod("backendInitialize", signature = "MsBackendSqlDb",
           function(object, dbcon, files = character(), dbtable = "msdata") {
-    if (missing(dbcon) || !dbIsValid(dbcon))
-        stop("A valid connection to a database has to be provided",
-             " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
-             " information.")
+    if (missing(dbcon) || !dbIsValid(dbcon)) {
+        object@dbcon <- object@dbcon
+    } else { 
+        object@dbcon <- dbcon
+    }
     pkey <- "_pkey"
-    object@dbcon <- dbcon
     object@dbtable <- dbtable
     if (length(files)) {
-        idx <- lapply(files, FUN = .write_mzR_to_db, con = dbcon,
+        ## Drop dbtable if it has already been written into SQLite database
+        dbExecute(object@dbcon, paste0("DROP TABLE IF EXISTS ", dbtable))
+        idx <- lapply(files, FUN = .write_mzR_to_db, con = object@dbcon,
                       dbtable = dbtable)
         object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
     } else {
         object@rows <- dbGetQuery(
-            dbcon, paste0("select ", pkey, " from ", dbtable))[, pkey]
+            object@dbcon, paste0("select ", pkey, " from ", 
+                                 object@dbcon))[, pkey]
     }
-    msg <- .valid_db_table_columns(dbcon, dbtable)
+    msg <- .valid_db_table_columns(object@dbcon, dbtable)
     if (length(msg)) stop(msg)
-    cns <- colnames(dbGetQuery(dbcon, paste0("select * from ",
+    cns <- colnames(dbGetQuery(object@dbcon, paste0("select * from ",
                                              dbtable, " limit 2")))
     object@columns <- cns[cns != pkey]
     object@query <- dbSendQuery(
-        dbcon, paste0("select ? from ", dbtable, " where ",
+        object@dbcon, paste0("select ? from ", dbtable, " where ",
                       pkey, "= ?"))
     object
-})
-
-#' `Spectra` constructor function for `MsBackendSqlDb`
-#'
-#' @param processingQueue For `Spectra`: optional `list` of
-#'     [ProcessingStep-class] objects.
-#'     
-#' @param metadata For `Spectra`: optional `list` with metadata information.
-#' 
-#' @param source For `Spectra`: instance of [MsBackend-class] that can be used
-#'     to import spectrum data from the provided files. See section *Creation
-#'     of objects, conversion and changing the backend* for more details.
-#'     
-#' @param backend For `Spectra`: [MsBackend-class] to be used as backend. See
-#'     section on creation of `Spectra` objects for details. For `setBackend`:
-#'     instance of [MsBackend-class]. See section on creation of `Spectra`
-#'     objects for details.
-#' 
-#' @param ... Additional arguments.
-#' 
-#' @param BPPARAM Parallel setup configuration. See [bpparam()] for more
-#'     information. This is passed directly to the [backendInitialize()] method
-#'     of the [MsBackend-class].
-#'
-#' @importMethodsFrom Spectra Spectra
-#' 
-#' @importFrom Spectra MsBackendMzR setBackend
-#' 
-#' @importFrom BiocParallel bpparam
-#' 
-#' @rdname MsBackendSqlDb
-setMethod("Spectra",  "character", 
-          function(object, processingQueue = list(), 
-                   metadata = list(), source = MsBackendMzR(),
-                   backend = MsBackendSqlDb(), ..., BPPARAM = bpparam()) {
-            if (class(backend) == "MsBackendSqlDb") {
-                be <- backendInitialize(backend, backend@dbcon, object)
-                new("Spectra", metadata = metadata, 
-                    processingQueue = processingQueue, backend = be)
-            } else {
-                be <- backendInitialize(source, object, ..., BPPARAM = BPPARAM)
-                sp <- new("Spectra", metadata = metadata, 
-                          processingQueue = processingQueue, backend = be)
-                if (class(source) != class(backend))
-                    setBackend(sp, backend, ..., BPPARAM = BPPARAM)
-                else sp
-            }
 })
 
 #' `Spectra` constructor function for `MsBackendSqlDb`
