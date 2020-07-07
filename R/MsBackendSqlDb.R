@@ -114,7 +114,7 @@ setValidity("MsBackendSqlDb", function(object) {
 setMethod("show", "MsBackendSqlDb", function(object) {
     if (length(object@rows) == 0) {
         cat(class(object), "with", length(object@rows), "spectra\n")
-    } else if (length(object@rows) > 6) {
+    } else if (length(object@rows) > 10) {
       ## get the first 3 and last 3 rows, and print them
         columns <- c("msLevel", "rtime", "scanIndex")
         if (length(setdiff(columns, object@columns)) == 0) {
