@@ -10,7 +10,15 @@
 \usage{
 MsBackendSqlDb(dbcon)
 
-\S4method{backendInitialize}{MsBackendSqlDb}(object, dbcon, files = character(), dbtable = "msdata")
+\S4method{backendInitialize}{MsBackendSqlDb}(
+  object,
+  files = character(),
+  data = DataFrame(),
+  ...,
+  dbcon,
+  dbtable = "msdata",
+  BPPARAM = SerialParam()
+)
 
 \S4method{Spectra}{MsBackendSqlDb}(object, processingQueue = list(), metadata = list(), ...)
 }

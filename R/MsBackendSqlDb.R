@@ -163,7 +163,8 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 #'
 #' @exportMethod backendInitialize
 setMethod("backendInitialize", signature = "MsBackendSqlDb",
-          function(object, dbcon, files = character(), dbtable = "msdata") {
+          function(object, files = character(), data = DataFrame(), 
+                   ..., dbcon, dbtable = "msdata", BPPARAM = SerialParam()) {
     if (missing(dbcon) || !dbIsValid(dbcon)) {
         object@dbcon <- object@dbcon
     } else { 
@@ -171,17 +172,35 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     }
     pkey <- "_pkey"
     object@dbtable <- dbtable
+    if (nrow(data)) {
+        .write_data_to_db(data, object@dbcon, dbtable = dbtable)
+        ## Since we use `dbAppendTable` to write new data into SQLite db,
+        ## The newly appended data will be at the end of the `msdata` table,
+        ## The code below uses SQL statement to fetch the last `nrow(data)`
+        ## _pkey as object@rows
+        res <- dbGetQuery(object@dbcon, paste0("SELECT * FROM (SELECT ",
+                          pkey, " FROM ", dbtable, " ORDER BY ", pkey, 
+                          " DESC LIMIT ", nrow(data), ") ORDER BY ", pkey,
+                          " ASC"))
+        ## res is a data frame, we convert it into integer vector
+        object@rows <- as.integer(res[, 1])
+        } else {
     if (length(files)) {
-        ## Drop dbtable if it has already been written into SQLite database
-        dbExecute(object@dbcon, paste0("DROP TABLE IF EXISTS ", dbtable))
         idx <- lapply(files, FUN = .write_mzR_to_db, con = object@dbcon,
                       dbtable = dbtable)
-        object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
+        ## We sum up all the numbers from idx list
+        sum_idx <- Reduce("+", idx)
+        ## Use the same way to fetch the last `sum_idx` _pkeys
+        res <- dbGetQuery(object@dbcon, paste0("SELECT * FROM (SELECT ",
+                          pkey, " FROM ", dbtable, " ORDER BY ", pkey, 
+                          " DESC LIMIT ", sum_idx, ") ORDER BY ", pkey,
+                          " ASC"))
+        object@rows <- as.integer(res[, 1])
     } else {
         object@rows <- dbGetQuery(
             object@dbcon, paste0("select ", pkey, " from ", 
-                                 object@dbcon))[, pkey]
-    }
+                                 dbtable))[, pkey]
+    } }
     msg <- .valid_db_table_columns(object@dbcon, dbtable)
     if (length(msg)) stop(msg)
     cns <- colnames(dbGetQuery(object@dbcon, paste0("select * from ",
