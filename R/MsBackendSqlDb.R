@@ -212,6 +212,25 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     object
 })
 
+#' `backendMerge` method for `MsBackendSqlDb` class. When a `dbcon` is provided,
+#' a new `MsBackendSqlDb` instance will be created; the dbtable from `object` 
+#' will be inserted into the newly created `MsBackendSqlDb` instance, using 
+#' `ATTACH` SQL statement. Or if `dbcon` is missing, the dbtable from other 
+#' `object` will be inserted into this `object` using the same schema migration
+#' mechanism.
+#' 
+#' @param cbdbcon a `DBIConnection` object to connect to the database.
+#' 
+#' @importMethodsFrom Spectra backendMerge
+#'
+#' @rdname hidden_aliases
+setMethod("backendMerge", "MsBackendSqlDb", function(object, cbdbcon, ...) {
+    object <- unname(c(object, ...))
+    object <- object[lengths(object) > 0]
+    res <- .combine_backend_SqlDb(object, cbdbcon)
+    res
+})
+
 #' `Spectra` constructor function for `MsBackendSqlDb`
 #' 
 #' @param dbcon A `DBIConnection` with the connection to the database.

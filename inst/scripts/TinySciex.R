@@ -31,7 +31,7 @@ pks <- pks[1:10]
 hdr <- hdr[1:10, ]
 
 ## Write the data to a mzML file.
-out_file <- data.ramus <- "../extdata/sciex_subset1.mzML"
+out_file <- "../extdata/sciex_subset1.mzML"
 writeMSData(object = pks, file = out_file, header = hdr)
 
 
@@ -41,14 +41,14 @@ pks <- spectra(ms_fl)
 hdr <- header(ms_fl)
 pks <- pks[1:10]
 hdr <- hdr[1:10, ]
-out_file <- data.ramus <- "../extdata/sciex_subset2.mzML"
+out_file <- "../extdata/sciex_subset2.mzML"
 writeMSData(object = pks, file = out_file, header = hdr)
 
 
-##
+## We can also create small SQLite files for the 2 subsetted files
 conn1 <- dbConnect(SQLite(), "../extdata/sciex_subset1.db")
 conn2 <- dbConnect(SQLite(), "../extdata/sciex_subset2.db")
-sciex_be1 <- backendInitialize(MsBackendSqlDb(), conn1, 
-                               normalizePath("../extdata/sciex_subset1.mzML"))
-sciex_be2 <- backendInitialize(MsBackendSqlDb(), conn2, 
-                               normalizePath("../extdata/sciex_subset2.mzML"))
+sciex_be1 <- backendInitialize(MsBackendSqlDb(conn1),
+                               files = normalizePath("../extdata/sciex_subset1.mzML"))
+sciex_be2 <- backendInitialize(MsBackendSqlDb(conn2),  
+                               files = normalizePath("../extdata/sciex_subset2.mzML"))

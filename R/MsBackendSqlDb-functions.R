@@ -243,6 +243,64 @@ MsBackendSqlDb <- function(dbcon) {
     } else rep(TRUE, length(object))
 }
 
+#' Helper function to combine backends that base on [MsBackendSqlDb()].
+#'
+#' @param objects `list` of `MsBackend` objects.
+#' 
+#' @param dbcon a `DBIConnection` object to connect to the database.
+#'
+#' @return [MsBackend()] object with combined content.
+#'
+#' @author Johannes Rainer, Chong Tang
+#'
+#' @importFrom MsCoreUtils vapply1c 
+#'
+#' @noRd
+.combine_backend_SqlDb <- function(objects, cbdbcon) {
+    if (length(objects) == 1)
+        return(objects[[1]])
+    if (!all(vapply1c(objects, class) == "MsBackendSqlDb"))
+        stop("Can only merge backends of the same type: MsBackendSqlDb")
+    ## If `cbdbcon` is missing, we will create an empty `MsBackendSqlDb` 
+    ## Instance with its '.db' file stored in `tempdir()`.
+    if (missing(dbcon)) {
+        res <- MsBackendSqlDb()
+    } else {
+        res <- MsBackendSqlDb(cbdbcon)
+    }
+    ## If `dbtable` existed in the provided `cbdbcon` database, we remove it
+    dbExecute(res@dbcon, paste0("DROP TABLE IF EXISTS ", objects[[1]]@dbtable))
+    
+  suppressWarnings(
+    res@spectraData <- do.call(
+      rbindFill, lapply(objects, function(z) z@spectraData))
+  )
+  res
+}
+
+#' Helper function for schema migration, which will use `ATTACH` statement
+#' to transfer a SQLite table to another SQLite database, then use `DETACH`
+#' statement to remove the attached database.
+#' 
+#' @param x [MsBackendSqlDb()] object will hold the migrated table.
+#' 
+#' @param y [MsBackendSqlDb()] object will be attached to `x`.
+#' 
+#' @author Chong Tang
+#' 
+.attach_migration <- function(x, y) {
+    if (!identical(spectraVariables(x) ,spectraVariables(y)))
+        stop("Can only merge backends with the same spectra variables.")
+    dbExecute(x@dbcon, paste0("ATTACH DATABASE '",
+                             y@dbcon@dbname, "' AS toMerge"))
+    dbExecute(x@dbcon, paste0("insert into msdata (", 
+                               paste(spectraVariables(x), 
+                                     collapse = ", "), ") ",
+                               "select ", paste(spectraVariables(b2), 
+                                                collapse = ", "), 
+                               " from toMerge.msdata"))
+  
+}
 
 
 
