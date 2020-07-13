@@ -4,6 +4,7 @@
 \name{hidden_aliases}
 \alias{hidden_aliases}
 \alias{show,MsBackendSqlDb-method}
+\alias{backendMerge,MsBackendSqlDb-method}
 \alias{acquisitionNum,MsBackendSqlDb-method}
 \alias{centroided,MsBackendSqlDb-method}
 \alias{collisionEnergy,MsBackendSqlDb-method}
@@ -51,6 +52,8 @@
 \title{Internal page for hidden aliases}
 \usage{
 \S4method{show}{MsBackendSqlDb}(object)
+
+\S4method{backendMerge}{MsBackendSqlDb}(object, dbcon, ...)
 
 \S4method{acquisitionNum}{MsBackendSqlDb}(object)
 
@@ -149,6 +152,8 @@ filterIntensity(x, intensities = numeric())
 \item{x}{a \code{MsBackendSqlDb} object.}
 
 \item{intensities}{a \code{numeric} vector either be length 1 or 2.}
+
+\item{cbdbcon}{a \code{DBIConnection} object to connect to the database.}
 }
 \description{
 For S4 methods that require a documentation entry but only clutter the index.

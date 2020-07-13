@@ -97,21 +97,35 @@ MsBackendSqlDb <- function(dbcon) {
     .write_data_to_db(hdr, con = con, dbtable = dbtable)
 }
 
-#' @importFrom DBI dbExecute dbAppendTable dbExistsTable dbDataType
+#' Helper function: will initiate a SQLite table `dbtable` in the SQLite 
+#' database with defined column types. SQLite database uses a dynamic type 
+#' system, which means if we simply copy a SQLite table into another SQLite 
+#' database, the column types will be lost. So we have to create the column 
+#' types for the copied table.
+#' 
+#' @param x data used to initiate a SQLite table in the database,
+#'  `data.frame` format.
+#' 
+#' @param con [SQLiteConnection] object linking to the SQLite database file.
+#' 
+#' @param dbtale character vector containing SQLite table name.
+#'
+#' @importFrom DBI dbExecute dbExistsTable dbDataType
 #'
 #' @importFrom MsCoreUtils vapply1l
+#' 
+#' @author Johannes Rainer, Chong Tang
 #'
 #' @noRd
-.write_data_to_db <- function(x, con, dbtable = "msdata") {
+.initiate_data_to_table <- function(x, con, dbtable = "msdata") {
     basic_type <- c("integer", "numeric", "logical", "factor", "character")
     is_blob <- which(!vapply1l(x, inherits, basic_type))
     for (i in is_blob) {
         x[[i]] <- lapply(x[[i]], base::serialize, NULL)
     }
     if (!dbExistsTable(con, dbtable)) {
-        x <- as.data.frame(x)
         flds <- dbDataType(con, x)
-        if (inherits(con, "SQLiteConnection"))
+        if (inherits(con, "SQLiteConnection")) 
             flds <- c(flds, `_pkey` = "INTEGER PRIMARY KEY")
         else stop(class(con)[1], " connections are not yet supported.")
         ## mysql INT AUTO_INCREMENT
@@ -120,6 +134,13 @@ MsBackendSqlDb <- function(dbcon) {
                            collapse = ", "), ")")
         res <- dbExecute(conn = con, qr)
     }
+}
+
+#' @importFrom DBI dbAppendTable
+#'
+#' @noRd
+.write_data_to_db <- function(x, con, dbtable = "msdata") {
+    .initiate_data_to_table(x, con, dbtable)
     dbAppendTable(conn = con, name = dbtable, x)
 }
 
@@ -243,39 +264,33 @@ MsBackendSqlDb <- function(dbcon) {
     } else rep(TRUE, length(object))
 }
 
-#' Helper function to combine backends that base on [MsBackendSqlDb()].
+#' Helper function to combine backends that base on [MsBackendSqlDb()]. If 
+#' `dbcon` is provided, the merged `MsBackendSqlDb` instance will be initiated
+#' by this `dbcon`. If `dbcon` is missing, the merged object will be stored in
+#' `tempdir()` directory.
 #'
 #' @param objects `list` of `MsBackend` objects.
 #' 
-#' @param dbcon a `DBIConnection` object to connect to the database.
-#'
-#' @return [MsBackend()] object with combined content.
-#'
-#' @author Johannes Rainer, Chong Tang
-#'
+#' @param dbcon a `DBIConnection` object used to initiate a new 
+#' `MsBackendSqlDb` instance, as the merged SQLite backend result.
+#' 
 #' @importFrom MsCoreUtils vapply1c 
 #'
+#' @return [MsBackendSqlDb()] object with combined content.
+#'
+#' @author Chong Tang
+#'
 #' @noRd
-.combine_backend_SqlDb <- function(objects, cbdbcon) {
+.combine_backend_SqlDb <- function(objects, dbcon) {
     if (length(objects) == 1)
         return(objects[[1]])
     if (!all(vapply1c(objects, class) == "MsBackendSqlDb"))
         stop("Can only merge backends of the same type: MsBackendSqlDb")
-    ## If `cbdbcon` is missing, we will create an empty `MsBackendSqlDb` 
-    ## Instance with its '.db' file stored in `tempdir()`.
-    if (missing(dbcon)) {
-        res <- MsBackendSqlDb()
-    } else {
-        res <- MsBackendSqlDb(cbdbcon)
+    res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
+    for (i in 2:length(objects)) {
+        res <- .attach_migration(res, objects[[i]])
     }
-    ## If `dbtable` existed in the provided `cbdbcon` database, we remove it
-    dbExecute(res@dbcon, paste0("DROP TABLE IF EXISTS ", objects[[1]]@dbtable))
-    
-  suppressWarnings(
-    res@spectraData <- do.call(
-      rbindFill, lapply(objects, function(z) z@spectraData))
-  )
-  res
+    res
 }
 
 #' Helper function for schema migration, which will use `ATTACH` statement
@@ -286,52 +301,153 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @param y [MsBackendSqlDb()] object will be attached to `x`.
 #' 
+#' @importFrom DBI dbGetQuery dbExecute dbSendStatement dbClearResult
+#' 
 #' @author Chong Tang
 #' 
+#' @noRd
 .attach_migration <- function(x, y) {
     if (!identical(spectraVariables(x) ,spectraVariables(y)))
         stop("Can only merge backends with the same spectra variables.")
-    dbExecute(x@dbcon, paste0("ATTACH DATABASE '",
-                             y@dbcon@dbname, "' AS toMerge"))
-    dbExecute(x@dbcon, paste0("insert into msdata (", 
-                               paste(spectraVariables(x), 
-                                     collapse = ", "), ") ",
-                               "select ", paste(spectraVariables(b2), 
-                                                collapse = ", "), 
-                               " from toMerge.msdata"))
-  
+    ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
+    if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
+        identical(x@dbtable, y@dbtable)) {
+        x@rows <- c(x@rows, y@rows)
+        x@modCount <- unlist(c(x@modCount, y@modCount),
+                             use.names = FALSE)
+        return(x) } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
+        (!identical(x@dbtable, y@dbtable))) {
+        ## We want to know the length (row numbers) of x@dbtable
+        x_length <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", 
+                                               x@dbtable))
+        x_length <- x_length[, 1]
+        ## Insert y@dbtable into x@dbtable, they have the same dbcon obj
+        qry <- dbSendStatement(x@dbcon, paste0("INSERT INTO ", x@dbtable, " (", 
+                                               paste(spectraVariables(x), 
+                                                     collapse = ", "), ") ",
+                                               " SELECT ", 
+                                               paste(spectraVariables(y), 
+                                                     collapse = ", "), 
+                                               " FROM ", y@dbtable))
+        dbClearResult(qry)
+        ## modify X@rows, the inserted rows will be added
+        ## into the tail of x@rows
+        x@rows <- unlist(c(x@rows, y@rows + x_length))
+        x@modCount <- unlist(c(x@modCount, y@modCount),
+                             use.names = FALSE)
+        return(x) } else {
+        ## While x and y have different db files.
+        ## We want to know the length (row numbers) of x@dbtable
+        x_length <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", 
+                                               x@dbtable))
+        x_length <- x_length[, 1]
+        ## Use `ATTACH` statement to migrate y@dbtable to the db file of x
+        dbExecute(x@dbcon, paste0("ATTACH DATABASE '",
+                                  y@dbcon@dbname, "' AS toMerge"))
+        st <- dbSendStatement(x@dbcon, paste0("insert into ", x@dbtable, " (", 
+                                              paste(spectraVariables(x), 
+                                              collapse = ", "), ") ",
+                                        "select ", paste(spectraVariables(y), 
+                                              collapse = ", "), 
+                                            " from toMerge.", y@dbtable))
+        suppressWarnings(dbExecute(x@dbcon, "DETACH DATABASE toMerge"))
+        ## modify X@rows, the inserted rows will be added
+        ## into the tail of x@rows
+        x@rows <- unlist(c(x@rows, y@rows + x_length))
+        x@modCount <- unlist(c(x@modCount, y@modCount),
+                             use.names = FALSE)
+        return(x) 
+       }
 }
 
-
+#' Helper function to clone a `MsBackendSqlDb` instance.
+#' 
+#' @param x [MsBackendSqlDb()] object to be cloned.
+#' 
+#' @importFrom DBI dbGetQuery dbExecute dbClearResult dbSendQuery
+#' 
+#' @author Chong Tang
+#' 
+#' @noRd
+.clone_MsBackendSqlDb <- function(x, dbcon) {
+    ## If `cbdbcon` is missing, we will create an empty `MsBackendSqlDb` 
+    ## Instance with its '.db' file in `tempdir()`.
+    if (missing(dbcon) || !dbIsValid(dbcon)) {
+        res <- MsBackendSqlDb()
+    } else {
+        res <- MsBackendSqlDb(dbcon)
+    }
+    slot(res, "dbtable", check = FALSE) <- x@dbtable
+    slot(res, "modCount", check = FALSE) <- x@modCount
+    slot(res, "rows", check = FALSE) <- x@rows
+    slot(res, "columns", check = FALSE) <- x@columns
+    slot(res, "readonly", check = FALSE) <- x@readonly
+    slot(res, "version", check = FALSE) <- x@version
+    ## If `dbtable` existed in the provided `dbcon` related database, remove it
+    if (!missing(dbcon) && dbIsValid(dbcon))
+        dbExecute(res@dbcon, paste0("DROP TABLE IF EXISTS ", res@dbtable))
+    ## Now we want to clone the SQLite table in `x`
+    if (length(x@dbtable)) 
+        ## Fetch the 1st row from `x@table`, we want to fetch the column types
+        row_1 <- dbGetQuery(x@dbcon, 
+                            paste0("SELECT * FROM ", x@dbtable, 
+                                   " WHERE _pkey = 1"))
+        ## remove the column:`_pkey`
+        row_1[names(row_1) %in% "_pkey"] <- NULL
+        ## initiate a SQLite table in the new `MsBackendSqlDb` instance 
+        ## with the same column types in x@dbtable
+        .initiate_data_to_table(row_1, res@dbcon, res@dbtable)
+        ## Now we copy `x@dbtable` to the SQLite database of `res`
+        dbExecute(res@dbcon, paste0("ATTACH DATABASE '",
+                                   x@dbcon@dbname, "' AS toMerge"))
+        dbExecute(res@dbcon, paste0("insert into ", res@dbtable, " (", 
+                                   paste(spectraVariables(x), 
+                                         collapse = ", "), ") ",
+                                   "select ", paste(spectraVariables(x), 
+                                                    collapse = ", "), 
+                                   " from toMerge.", x@dbtable))
+        suppressWarnings(dbExecute(res@dbcon, "DETACH DATABASE toMerge"))
+        res@query <- dbSendQuery(res@dbcon, paste0("select ? from ", 
+                                                   res@dbtable, 
+                                                   " where _pkey = ?"))
+        return(res)
+}
 
 #' Replace the columns from the database and ensure the right data type can be 
 #'   returned. 
+#'  
+#'  
+#' @param x [MsBackendSqlDb()] object.
+#' 
+#' @column column will be replaced.
+#' 
+#' @value vector with values to replace the `column`.
 #'
 #' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable
 #'
 #' @noRd
-.replace_db_table_columns <- function(object, column, value) {
-    str1 <- object@columns[object@columns != column]
+.replace_db_table_columns <- function(x, column, value) {
+    str1 <- x@columns[x@columns != column]
     sql1 <- paste0("CREATE VIEW metaview AS SELECT ",
-                   toString(str1), " FROM ", object@dbtable)
-    qry <- dbSendQuery(object@dbcon, sql1)
+                   toString(str1), " FROM ", x@dbtable)
+    qry <- dbSendQuery(x@dbcon, sql1)
     dbClearResult(qry)
     sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "_pkey",
-                   " FROM ", object@dbtable)
-    qry2 <- dbSendQuery(object@dbcon, sql2)
+                   " FROM ", x@dbtable)
+    qry2 <- dbSendQuery(x@dbcon, sql2)
     dbClearResult(qry2)
-    metapkey <- dbReadTable(object@dbcon, 'metakey')
-    dbWriteTable(object@dbcon, 'token', 
+    metapkey <- dbReadTable(x@dbcon, 'metakey')
+    dbWriteTable(x@dbcon, 'token', 
                  data.frame(value, pkey = metapkey))
     sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
-                   "INNER JOIN token on token._pkey = metaview1._pkey")
-    dbExecute(object@dbcon, sql3)
-    dbExecute(object@dbcon, paste0("ALTER TABLE ", object@dbtable,
+                   "INNER JOIN token on token.X_pkey = metaview._pkey")
+    dbExecute(x@dbcon, sql3)
+    dbExecute(x@dbcon, paste0("ALTER TABLE ", object@dbtable,
                                     " RENAME TO _msdata_old"))
-    dbExecute(object@dbcon, "ALTER TABLE msdata1 RENAME TO ", 
-              object@dbtable)
-    dbExecute(object@dbcon, "DROP TABLE IF EXISTS _msdata_old")
+    dbExecute(x@dbcon, "ALTER TABLE msdata1 RENAME TO ", 
+              x@dbtable)
+    dbExecute(x@dbcon, "DROP TABLE IF EXISTS _msdata_old")
     ## Drop View
-    dbExecute(object@dbcon, "DROP TABLE IF EXISTS token")
-    dbExecute(object@dbcon, "DROP VIEW IF EXISTS metaview")
+    dbExecute(x@dbcon, "DROP TABLE IF EXISTS token")
+    dbExecute(x@dbcon, "DROP VIEW IF EXISTS metaview")
 }

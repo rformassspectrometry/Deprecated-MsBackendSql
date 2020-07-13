@@ -224,10 +224,10 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' @importMethodsFrom Spectra backendMerge
 #'
 #' @rdname hidden_aliases
-setMethod("backendMerge", "MsBackendSqlDb", function(object, cbdbcon, ...) {
+setMethod("backendMerge", "MsBackendSqlDb", function(object, dbcon, ...) {
     object <- unname(c(object, ...))
     object <- object[lengths(object) > 0]
-    res <- .combine_backend_SqlDb(object, cbdbcon)
+    res <- suppressWarnings(.combine_backend_SqlDb(object, dbcon))
     res
 })
 
@@ -498,15 +498,15 @@ setMethod("$", signature = "MsBackendSqlDb",
 #' @rdname hidden_aliases
 #' 
 setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
-  if (!(length(list(x@rows)) == length(value)))
-  stop("Provided values has different length than the column.")
-  basic_type <- c("integer", "numeric", "logical", "factor", "character")
-  if (is.list(value) && any(c("mz", "intensity") == name) && 
-       inherits(value, basic_type))
+    if (!(length(x@rows) == length(value)))
+    stop("Provided values has different length than the column.")
+    basic_type <- c("integer", "numeric", "logical", "factor", "character")
+    if (is.list(value) && any(c("mz", "intensity") == name) && 
+        inherits(value, basic_type))
     value <- lapply(value, base::serialize, NULL)
-  .replace_db_table_columns(x, name, value)
-  x@modCount <- x@modCount + 1L
-  x
+    .replace_db_table_columns(x, name, value)
+    x@modCount <- x@modCount + 1L
+    x
 })
 
 #### ---------------------------------------------------------------------------
