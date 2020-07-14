@@ -423,9 +423,9 @@ MsBackendSqlDb <- function(dbcon) {
 #'  
 #' @param x [MsBackendSqlDb()] object.
 #' 
-#' @name A `character(1)` with the name of the column will be replaced.
+#' @param name A `character(1)` with the name of the column will be replaced.
 #' 
-#' @value vector with values to replace the `name`.
+#' @param value vector with values to replace the `name`.
 #'
 #' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable dbListFields
 #'
@@ -468,21 +468,22 @@ MsBackendSqlDb <- function(dbcon) {
 #'  
 #' @param x [MsBackendSqlDb()] object.
 #' 
-#' @name A `character(1)` with the name of the column will be replaced.
+#' @param name A `character(1)` with the name of the column will be replaced.
 #' 
-#' @value vector with values to replace the `name`.
+#' @param  value vector with values to replace the `name`.
 #'
 #' @importFrom DBI dbExecute dbSendStatement dbWriteTable dbClearResult
 #'
 #' @noRd
 .update_db_table_columns <- function(x, name, value) {
-    table_y <- data.frame(name = value, pkey = x@row)
+    table_y <- data.frame(name = value, pkey = x@rows)
     colnames(table_y) <- c(name, "pkey")
     dbWriteTable(x@dbcon, 'table_y', table_y)
     state1 <- dbSendStatement(x@dbcon, paste0("UPDATE ", x@dbtable, " SET ",
                                        name, " = (SELECT ", name, 
                                        " FROM table_y WHERE pkey = _pkey)"))
     dbExecute(x@dbcon, "DROP TABLE IF EXISTS table_y")
+    x
 }
 
 #' Insert values to a SQLite table as a new column, and ensure the right data
@@ -490,20 +491,20 @@ MsBackendSqlDb <- function(dbcon) {
 #'  
 #' @param x [MsBackendSqlDb()] object.
 #' 
-#' @name A `character(1)` with the name of the column will be replaced.
+#' @param name A `character(1)` with the name of the column will be replaced.
 #' 
-#' @value vector with values to replace the `name`.
+#' @param value vector with values to replace the `name`.
 #'
 #' @importFrom DBI dbExecute dbSendStatement dbWriteTable dbClearResult
 #'
 #' @noRd
 .insert_db_table_columns <- function(x, name, value) {
-    newType <- typedbDataType(x@dbcon, value)
+    newType <- dbDataType(x@dbcon, value)
     ## Use ALTER statement to insert a new column in the table
     state1 <- dbSendStatement(x@dbcon, paste0("ALTER TABLE ", x@dbtable,
                                               " ADD ", name, " ", 
                                               newType))
-    table_y <- data.frame(name = value, pkey = x@row)
+    table_y <- data.frame(name = value, pkey = x@rows)
     colnames(table_y) <- c(name, "pkey")
     dbWriteTable(x@dbcon, 'table_y', table_y)
     ## UPDATE the rows of new column - "name", where _pkey = x@rows
@@ -511,4 +512,6 @@ MsBackendSqlDb <- function(dbcon) {
                                               name, " = (SELECT ", name, 
                                               " FROM table_y WHERE pkey = _pkey)"))
     dbExecute(x@dbcon, "DROP TABLE IF EXISTS table_y")
+    slot(x, "columns", check = FALSE) <- c(x@columns, name)
+    x
 }

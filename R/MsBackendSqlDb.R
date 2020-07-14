@@ -500,11 +500,12 @@ setMethod("$", signature = "MsBackendSqlDb",
 setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
     if (!(length(value) == length(x)))
         stop("Provided values has different length than the object.") 
-    if (!(name %in% spectraVariables(x))) {
-        .update_db_table_columns(x, name, value)
+    if (name %in% spectraVariables(x)) {
+        x <- .update_db_table_columns(x, name, value)
     } else {
-        .insert_db_table_columns(x, name, value)
+        x <- .insert_db_table_columns(x, name, value)
     }
+    x
 })
 
 #### ---------------------------------------------------------------------------
