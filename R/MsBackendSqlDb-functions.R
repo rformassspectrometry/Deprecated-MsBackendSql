@@ -124,6 +124,7 @@ MsBackendSqlDb <- function(dbcon) {
         x[[i]] <- lapply(x[[i]], base::serialize, NULL)
     }
     if (!dbExistsTable(con, dbtable)) {
+        x <- as.data.frame(x)
         flds <- dbDataType(con, x)
         if (inherits(con, "SQLiteConnection")) 
             flds <- c(flds, `_pkey` = "INTEGER PRIMARY KEY")

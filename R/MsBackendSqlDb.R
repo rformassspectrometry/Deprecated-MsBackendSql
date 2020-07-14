@@ -224,7 +224,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' @importMethodsFrom Spectra backendMerge
 #'
 #' @rdname hidden_aliases
-setMethod("backendMerge", "MsBackendSqlDb", function(object, dbcon, ...) {
+setMethod("backendMerge", "list", function(object, dbcon, ...) {
     object <- unname(c(object, ...))
     object <- object[lengths(object) > 0]
     res <- suppressWarnings(.combine_backend_SqlDb(object, dbcon))

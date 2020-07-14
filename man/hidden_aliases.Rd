@@ -4,7 +4,7 @@
 \name{hidden_aliases}
 \alias{hidden_aliases}
 \alias{show,MsBackendSqlDb-method}
-\alias{backendMerge,MsBackendSqlDb-method}
+\alias{backendMerge,list-method}
 \alias{acquisitionNum,MsBackendSqlDb-method}
 \alias{centroided,MsBackendSqlDb-method}
 \alias{collisionEnergy,MsBackendSqlDb-method}
@@ -53,7 +53,7 @@
 \usage{
 \S4method{show}{MsBackendSqlDb}(object)
 
-\S4method{backendMerge}{MsBackendSqlDb}(object, dbcon, ...)
+\S4method{backendMerge}{list}(object, dbcon, ...)
 
 \S4method{acquisitionNum}{MsBackendSqlDb}(object)
 
