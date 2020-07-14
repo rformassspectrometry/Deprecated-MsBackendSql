@@ -149,11 +149,11 @@
 filterIntensity(x, intensities = numeric())
 }
 \arguments{
+\item{dbcon}{a \code{DBIConnection} object to connect to the database.}
+
 \item{x}{a \code{MsBackendSqlDb} object.}
 
 \item{intensities}{a \code{numeric} vector either be length 1 or 2.}
-
-\item{cbdbcon}{a \code{DBIConnection} object to connect to the database.}
 }
 \description{
 For S4 methods that require a documentation entry but only clutter the index.

@@ -219,7 +219,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' `object` will be inserted into this `object` using the same schema migration
 #' mechanism.
 #' 
-#' @param cbdbcon a `DBIConnection` object to connect to the database.
+#' @param dbcon a `DBIConnection` object to connect to the database.
 #' 
 #' @importMethodsFrom Spectra backendMerge
 #'
@@ -498,15 +498,13 @@ setMethod("$", signature = "MsBackendSqlDb",
 #' @rdname hidden_aliases
 #' 
 setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
-    if (!(length(x@rows) == length(value)))
-    stop("Provided values has different length than the column.")
-    basic_type <- c("integer", "numeric", "logical", "factor", "character")
-    if (is.list(value) && any(c("mz", "intensity") == name) && 
-        inherits(value, basic_type))
-    value <- lapply(value, base::serialize, NULL)
-    .replace_db_table_columns(x, name, value)
-    x@modCount <- x@modCount + 1L
-    x
+    if (!(length(value) == length(x)))
+        stop("Provided values has different length than the object.") 
+    if (!(name %in% spectraVariables(x))) {
+        .update_db_table_columns(x, name, value)
+    } else {
+        .insert_db_table_columns(x, name, value)
+    }
 })
 
 #### ---------------------------------------------------------------------------

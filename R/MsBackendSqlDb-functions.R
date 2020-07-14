@@ -134,13 +134,14 @@ MsBackendSqlDb <- function(dbcon) {
                            collapse = ", "), ")")
         res <- dbExecute(conn = con, qr)
     }
+    x
 }
 
 #' @importFrom DBI dbAppendTable
 #'
 #' @noRd
 .write_data_to_db <- function(x, con, dbtable = "msdata") {
-    .initiate_data_to_table(x, con, dbtable)
+    x <- .initiate_data_to_table(x, con, dbtable)
     dbAppendTable(conn = con, name = dbtable, x)
 }
 
@@ -400,7 +401,8 @@ MsBackendSqlDb <- function(dbcon) {
         ## Now we copy `x@dbtable` to the SQLite database of `res`
         dbExecute(res@dbcon, paste0("ATTACH DATABASE '",
                                    x@dbcon@dbname, "' AS toMerge"))
-        dbExecute(res@dbcon, paste0("insert into ", res@dbtable, " (", 
+        st <- dbSendStatement(res@dbcon, paste0("insert into ", res@dbtable,
+                                                " (", 
                                    paste(spectraVariables(x), 
                                          collapse = ", "), ") ",
                                    "select ", paste(spectraVariables(x), 
@@ -413,21 +415,25 @@ MsBackendSqlDb <- function(dbcon) {
         return(res)
 }
 
-#' Replace the columns from the database and ensure the right data type can be 
-#'   returned. 
+#' Replace the values of a SQLite table column, and ensure the right data type
+#'  can be returned. 
+#'  I kept this function, since replacing column values in huge database is
+#'  extremely time consuming. It's more efficient to use the strategy here.
 #'  
 #'  
 #' @param x [MsBackendSqlDb()] object.
 #' 
-#' @column column will be replaced.
+#' @name A `character(1)` with the name of the column will be replaced.
 #' 
-#' @value vector with values to replace the `column`.
+#' @value vector with values to replace the `name`.
 #'
-#' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable
+#' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable dbListFields
 #'
 #' @noRd
-.replace_db_table_columns <- function(x, column, value) {
-    str1 <- x@columns[x@columns != column]
+.replace_db_table_columns <- function(x, name, value) {
+    flds <- dbListFields(x@dbcon, "msdata")
+    str1 <- dbListFields(x@dbcon, "msdata")[dbListFields(x@dbcon, 
+                                                       "msdata") != name]
     sql1 <- paste0("CREATE VIEW metaview AS SELECT ",
                    toString(str1), " FROM ", x@dbtable)
     qry <- dbSendQuery(x@dbcon, sql1)
@@ -437,17 +443,72 @@ MsBackendSqlDb <- function(dbcon) {
     qry2 <- dbSendQuery(x@dbcon, sql2)
     dbClearResult(qry2)
     metapkey <- dbReadTable(x@dbcon, 'metakey')
-    dbWriteTable(x@dbcon, 'token', 
-                 data.frame(value, pkey = metapkey))
+    token <- data.frame(name = value, pkey = metapkey)
+    colnames(token) <- c(name, "pkey")
+    dbWriteTable(x@dbcon, 'token', token)
     sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
-                   "INNER JOIN token on token.X_pkey = metaview._pkey")
+                   "INNER JOIN token on token.pkey = metaview._pkey")
     dbExecute(x@dbcon, sql3)
-    dbExecute(x@dbcon, paste0("ALTER TABLE ", object@dbtable,
-                                    " RENAME TO _msdata_old"))
-    dbExecute(x@dbcon, "ALTER TABLE msdata1 RENAME TO ", 
-              x@dbtable)
+    dbExecute(x@dbcon, paste0("ALTER TABLE ", x@dbtable,
+                              " RENAME TO _msdata_old"))
+    ## We have to sort `str2` into ordinary metadata order
+    sql2 <- paste0("CREATE TABLE msdata AS SELECT ",
+                   toString(flds), " FROM msdata1")
+    qry2 <- dbSendQuery(x@dbcon, sql2)
+    dbClearResult(qry2)
     dbExecute(x@dbcon, "DROP TABLE IF EXISTS _msdata_old")
+    dbExecute(x@dbcon, "DROP TABLE IF EXISTS msdata1")
     ## Drop View
     dbExecute(x@dbcon, "DROP TABLE IF EXISTS token")
     dbExecute(x@dbcon, "DROP VIEW IF EXISTS metaview")
+    dbExecute(x@dbcon, "DROP VIEW IF EXISTS metakey")
+}
+
+#' Replace the values of a SQLite table column.
+#'  
+#' @param x [MsBackendSqlDb()] object.
+#' 
+#' @name A `character(1)` with the name of the column will be replaced.
+#' 
+#' @value vector with values to replace the `name`.
+#'
+#' @importFrom DBI dbExecute dbSendStatement dbWriteTable dbClearResult
+#'
+#' @noRd
+.update_db_table_columns <- function(x, name, value) {
+    table_y <- data.frame(name = value, pkey = x@row)
+    colnames(table_y) <- c(name, "pkey")
+    dbWriteTable(x@dbcon, 'table_y', table_y)
+    state1 <- dbSendStatement(x@dbcon, paste0("UPDATE ", x@dbtable, " SET ",
+                                       name, " = (SELECT ", name, 
+                                       " FROM table_y WHERE pkey = _pkey)"))
+    dbExecute(x@dbcon, "DROP TABLE IF EXISTS table_y")
+}
+
+#' Insert values to a SQLite table as a new column, and ensure the right data
+#' type can be returned. 
+#'  
+#' @param x [MsBackendSqlDb()] object.
+#' 
+#' @name A `character(1)` with the name of the column will be replaced.
+#' 
+#' @value vector with values to replace the `name`.
+#'
+#' @importFrom DBI dbExecute dbSendStatement dbWriteTable dbClearResult
+#'
+#' @noRd
+.insert_db_table_columns <- function(x, name, value) {
+    newType <- typedbDataType(x@dbcon, value)
+    ## Use ALTER statement to insert a new column in the table
+    state1 <- dbSendStatement(x@dbcon, paste0("ALTER TABLE ", x@dbtable,
+                                              " ADD ", name, " ", 
+                                              newType))
+    table_y <- data.frame(name = value, pkey = x@row)
+    colnames(table_y) <- c(name, "pkey")
+    dbWriteTable(x@dbcon, 'table_y', table_y)
+    ## UPDATE the rows of new column - "name", where _pkey = x@rows
+    state2 <- dbSendStatement(x@dbcon, paste0("UPDATE ", x@dbtable, " SET ",
+                                              name, " = (SELECT ", name, 
+                                              " FROM table_y WHERE pkey = _pkey)"))
+    dbExecute(x@dbcon, "DROP TABLE IF EXISTS table_y")
 }
