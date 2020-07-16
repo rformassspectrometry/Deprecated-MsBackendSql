@@ -229,10 +229,13 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' @param dbcon a `DBIConnection` object to connect to the database.
 #' 
 #' @importMethodsFrom Spectra backendMerge
+#' 
+#' @exportMethod backendMerge
 #'
 #' @rdname hidden_aliases
-setMethod("backendMerge", "MsBackendSqlDb", function(object, dbcon, ...) {
+setMethod("backendMerge", "MsBackendSqlDb", function(object, ..., dbcon) {
     object <- unname(c(object, ...))
+    ## If `MsBackendSqlDb` has no mz values, the list will not merge it
     object <- object[lengths(object) > 0]
     res <- suppressWarnings(.combine_backend_SqlDb(object, dbcon))
     res

@@ -53,7 +53,7 @@
 \usage{
 \S4method{show}{MsBackendSqlDb}(object)
 
-\S4method{backendMerge}{MsBackendSqlDb}(object, dbcon, ...)
+\S4method{backendMerge}{MsBackendSqlDb}(object, ..., dbcon)
 
 \S4method{acquisitionNum}{MsBackendSqlDb}(object)
 

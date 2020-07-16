@@ -294,8 +294,8 @@ MsBackendSqlDb <- function(dbcon) {
 .combine_backend_SqlDb <- function(objects, dbcon) {
     if (length(objects) == 1)
         return(objects[[1]])
-    if (!all(vapply1c(objects, class) == "MsBackendSqlDb"))
-        stop("Can only merge backends of the same type: MsBackendSqlDb")
+    if (!all(vapply1c(objects, class) == class(objects[[1]])))
+        stop("Can only merge backends of the same type: ", class(objects[[1]]))
     res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
     for (i in 2:length(objects)) {
         res <- .attach_migration(res, objects[[i]])
