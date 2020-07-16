@@ -107,6 +107,8 @@ setValidity("MsBackendSqlDb", function(object) {
 })
 
 #' @importMethodsFrom methods show
+#' 
+#' @importMethodsFrom S4Vectors head tail
 #'
 #' @importFrom utils capture.output
 #' 
@@ -121,7 +123,8 @@ setMethod("show", "MsBackendSqlDb", function(object) {
             qry <- dbSendQuery(object@dbcon,
                        paste0("select msLevel, rtime, scanIndex",
                       " from ", object@dbtable, " where _pkey = ?"))
-            rows_print <- c(head(object@rows,3), tail(object@rows, 3))
+            rows_print <- c(head(object@rows, 3), 
+                            tail(object@rows, 3))
             qry <- dbBind(qry, list(rows_print))
             res <- dbFetch(qry)
             dbClearResult(qry)
@@ -164,7 +167,7 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 #' @exportMethod backendInitialize
 setMethod("backendInitialize", signature = "MsBackendSqlDb",
           function(object, files = character(), data = DataFrame(), 
-                   ..., dbcon, dbtable = "msdata", BPPARAM = SerialParam()) {
+                   ..., dbcon, dbtable = "msdata") {
     if (missing(dbcon) || !dbIsValid(dbcon)) {
         object@dbcon <- object@dbcon
     } else { 
@@ -224,7 +227,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #' @importMethodsFrom Spectra backendMerge
 #'
 #' @rdname hidden_aliases
-setMethod("backendMerge", "list", function(object, dbcon, ...) {
+setMethod("backendMerge", "MsBackendSqlDb", function(object, dbcon, ...) {
     object <- unname(c(object, ...))
     object <- object[lengths(object) > 0]
     res <- suppressWarnings(.combine_backend_SqlDb(object, dbcon))
@@ -234,6 +237,8 @@ setMethod("backendMerge", "list", function(object, dbcon, ...) {
 #' `Spectra` constructor function for `MsBackendSqlDb`
 #' 
 #' @param dbcon A `DBIConnection` with the connection to the database.
+#' 
+#' @importFrom  Spectra Spectra
 #' 
 #' @rdname MsBackendSqlDb
 setMethod("Spectra", "MsBackendSqlDb", function(object, processingQueue = list(),
@@ -454,7 +459,19 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #' @exportMethod asDataFrame
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
-             .get_db_data(object, columns)
+    res <- .get_db_data(object, columns)
+    ## According to the limitation of SQLite, some of the column types
+    ## are missing from the returning values, such as boolean/logical values
+    ## We have to change these column types to the correct ones.
+    colsToChange <- names(res)[names(res) %in% 
+                                 names(Spectra:::.SPECTRA_DATA_COLUMNS)]
+    colsToChange <- colsToChange[!colsToChange %in% c("mz", "intensity")]
+    for(i in colsToChange){
+        class(res[, i]) <- Spectra:::.SPECTRA_DATA_COLUMNS[i]
+        if (Spectra:::.SPECTRA_DATA_COLUMNS[i] == "logical")
+            res[, i] <- ifelse(res[, i] == 0, FALSE, TRUE)
+    }
+    res
 })
 
 #' @rdname hidden_aliases

@@ -6,6 +6,10 @@ NULL
 #' @rdname MsBackendSqlDb
 #'
 #' @importFrom methods is new
+#' 
+#' @importMethodsFrom DBI dbConnect 
+#' 
+#' @importFrom RSQLite SQLite
 #'
 #' @export MsBackendSqlDb
 MsBackendSqlDb <- function(dbcon) {
@@ -14,7 +18,8 @@ MsBackendSqlDb <- function(dbcon) {
              "install with 'install.packages(\"DBI\")'")
     if (missing(dbcon)) {
         x <- new("MsBackendSqlDb")
-        slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), tempfile(fileext = ".db"))
+        slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
+                                               tempfile(fileext = ".db"))
         return(x)
     } else {
       x <- new("MsBackendSqlDb")
@@ -26,8 +31,11 @@ MsBackendSqlDb <- function(dbcon) {
 #' Test if db table is available
 #'
 #' @param dbcon [`DBIConnection-class`] object
+#' 
 #' @param dbtable `character(1)`, table name
+#' 
 #' @author Johannes Rainer, Sebastian Gibb
+#' 
 #' @noRd
 .valid_db_table_exists <- function(dbcon, dbtable) {
     if (!dbExistsTable(dbcon, dbtable))

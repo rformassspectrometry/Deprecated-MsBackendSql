@@ -25,7 +25,6 @@ Authors@R:
 Depends:
     R (>= 3.5.0),
     Spectra (>= 0.5.0),
-    BiocParallel,
     ProtGenerics (>= 1.17.4)
 Imports:
     RSQLite,

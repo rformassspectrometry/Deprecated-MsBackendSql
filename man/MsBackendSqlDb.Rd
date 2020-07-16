@@ -16,8 +16,7 @@ MsBackendSqlDb(dbcon)
   data = DataFrame(),
   ...,
   dbcon,
-  dbtable = "msdata",
-  BPPARAM = SerialParam()
+  dbtable = "msdata"
 )
 
 \S4method{Spectra}{MsBackendSqlDb}(object, processingQueue = list(), metadata = list(), ...)
