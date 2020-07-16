@@ -2,16 +2,47 @@ library("testthat")
 library("MsBackendSql")
 library("RSQLite")
 
+## Load pre-subsetted test dataset
+sciexSubset1 <- system.file("extdata/sciex_subset1.db", 
+                             package="MsBackendSql")
+sciexSubset2 <- system.file("extdata/sciex_subset2.db", 
+                             package="MsBackendSql")
+sciexConn1 <- dbConnect(SQLite(), sciexSubset1)
+sciexConn2 <- dbConnect(SQLite(), sciexSubset1)
+
+## Create `MsBackendSqlDb` instances for preloaded datasets
+sciexSQL1 <- backendInitialize(MsBackendSqlDb(sciexConn1))
+sciexSQL2 <- backendInitialize(MsBackendSqlDb(sciexConn2))
+
+## Subsetted mzML files
+sciexmzML1 <- system.file("extdata/sciex_subset1.mzML", 
+                            package="MsBackendSql")
+sciexmzML2 <- system.file("extdata/sciex_subset2.mzML", 
+                          package="MsBackendSql")
+
+## New test cases by Sebastian 
+## His method can reduce the loading size of the package
+msdf <- data.frame(
+    pkey = 1L:3L,
+    rtime = c(1.2, 3.4, 5.6),
+    msLevel = c(1L, 2L, 2L),
+    dataStorage = "<db>",
+    dataOrigin = "file.mzML",
+    stringsAsFactors = FALSE
+)
+msdf$mz <- lapply(1:3, serialize, NULL)
+msdf$intensity <- lapply(4:6, serialize, NULL)
+
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+on.exit(DBI::dbDisconnect(con))
+
+DBI::dbWriteTable(con, "msdata", msdf)
 
 ## Provide a valid DBIConnection from SQLite 
 test_con <- dbConnect(SQLite(), "test.db")
 on.exit(DBI::dbDisconnect(test_con))
 test_con1 <- dbConnect(SQLite(), "test1.db")
 on.exit(DBI::dbDisconnect(test_con1))
-
-## Activate `VACUUM` mode of SQLite DB,
-dbExecute(test_con, "PRAGMA auto_vacuum = FULL")
-dbExecute(test_con1, "PRAGMA auto_vacuum = FULL")
 
 ## Proivde raw `mzML` files for unit tests
 fl <- msdata::proteomics(full.names = TRUE, 
@@ -38,10 +69,6 @@ test_con2 <- dbConnect(SQLite(), "test2.db")
 on.exit(DBI::dbDisconnect(test_con2))
 test_con3 <- dbConnect(SQLite(), "test3.db")
 on.exit(DBI::dbDisconnect(test_con3))
-
-## Activate `VACUUM` mode of SQLite DB,
-dbExecute(test_con2, "PRAGMA auto_vacuum = FULL")
-dbExecute(test_con3, "PRAGMA auto_vacuum = FULL")
 
 ## Initialize a `MsBackendSqlDb` for test 
 test_be2 <- backendInitialize(MsBackendSqlDb(), test_con2, fl)
