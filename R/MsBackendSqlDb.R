@@ -159,6 +159,10 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname MsBackendSqlDb
+#' 
+#' @param data For `backendInitialize`: `DataFrame` with spectrum
+#'     metadata/data. This parameter can be empty for `MsBackendMzR` backends
+#'     but needs to be provided for `MsBackendDataFrame` backends.
 #'
 #' @importMethodsFrom Spectra backendInitialize
 #'
@@ -237,6 +241,13 @@ setMethod("backendMerge", "MsBackendSqlDb", function(object, dbcon, ...) {
 #' `Spectra` constructor function for `MsBackendSqlDb`
 #' 
 #' @param dbcon A `DBIConnection` with the connection to the database.
+#' 
+#' @param processingQueue For `Spectra`: optional `list` of
+#'     [ProcessingStep-class] objects.
+#'     
+#' @param metadata For `Spectra`: optional `list` with metadata information.
+#' 
+#' @param ... Additional arguments.
 #' 
 #' @importFrom  Spectra Spectra
 #' 

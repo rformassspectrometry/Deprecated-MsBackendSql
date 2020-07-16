@@ -30,8 +30,19 @@ MsBackendSqlDb(dbcon)
 be imported. Only required if the database to which \code{dbcon}
 connects does not already contain the data.}
 
+\item{data}{For \code{backendInitialize}: \code{DataFrame} with spectrum
+metadata/data. This parameter can be empty for \code{MsBackendMzR} backends
+but needs to be provided for \code{MsBackendDataFrame} backends.}
+
+\item{...}{Additional arguments.}
+
 \item{dbtable}{\code{character(1)} the name of the database table with
 the data.  Defaults to \code{dbtable = "msdata"}.}
+
+\item{processingQueue}{For \code{Spectra}: optional \code{list} of
+\linkS4class{ProcessingStep} objects.}
+
+\item{metadata}{For \code{Spectra}: optional \code{list} with metadata information.}
 }
 \description{
 The \code{MsBackendSqlDb} is an \link{MsBackend} backend that keeps all
