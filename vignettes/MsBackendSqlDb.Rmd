@@ -17,7 +17,7 @@ BiocStyle::markdown()
 ```
 
 **Package**: `r Biocpkg("MsBackendSql")`<br />
-**Authors**: `r packageDescription("MsBackendSql")[["Author"]] `<br />
+**Authors**: `r packageDescription("MsBackendSql")[["Author"]]  `<br />
 **Last modified:** `r file.info("MsBackendSqlDb.Rmd")$mtime`<br />
 **Compiled**: `r date()`
 
@@ -44,18 +44,23 @@ library("magrittr")
 
 We will use a small sciex to create the backend objects.
 
-```{r backend-df}
+```{r backend-df, message = FALSE}
 fls <- dir(system.file("sciex", package = "msdata"), full.names = TRUE)
 sp_mzr <- Spectra(fls, backend = MsBackendMzR())
 sp_mzr
 ```
 
-For `MsBackendSqlDb` backend, we have to create a `connection` object:
+For `MsBackendSqlDb` backend, we can choose either to create a `connection`
+object or to use the internal embedded `connection` object with a path in
+`tempdir()` to initialize a `Spectra` instance. In the following example, 
+we will create a `Spectra` object with a new `MsBackendSqlDb` backend. Usually, 
+SQLite allows at most one writer to proceed concurrently, hence we will 
+use non-parallel execution to create the new `Spectra` object:
 
 ```{r backend-sql}
 conn <- dbConnect(SQLite(), "msdata.db")
-be_sql <- backendInitialize(MsBackendSqlDb(), dbcon = conn, files = fls)
-sp_sql <- Spectra(backend = be_sql)
+sp_sql <- Spectra(fls, backend = MsBackendSqlDb(dbcon = conn),
+                  BPPARAM = SerialParam())
 sp_sql
 ```
 
@@ -77,11 +82,11 @@ identical(intensity1, intensity2)
 Now we want to check the subsetting functions:
 
 ```{r comp-subset}
-sp_mzr[5:20]
-sp_sql[5:20]
+sp_mzr[6:20]
+sp_sql[6:20]
 ```
 
-Below, we reproduce and example from the `Spectra` vignette, where
+Below, we reproduce the example from the `Spectra` vignette, where
 spectra originating from the second file and acquired between 175 and
 189 seconds are retained:
 
@@ -122,7 +127,7 @@ opposed to a full in-memory backend that stores all data and metadata
 in RAM:
 
 ```{r}
-sp_df <- setBackend(sp_mzr, MsBackendDataFrame())
+sp_df <- setBackend(sp_sql, MsBackendDataFrame())
 print(object.size(sp_df), units = "Mb")
 ```
 
