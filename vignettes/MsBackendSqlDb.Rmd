@@ -131,6 +131,44 @@ sp_df <- setBackend(sp_sql, MsBackendDataFrame())
 print(object.size(sp_df), units = "Mb")
 ```
 
+We can also create a merged `Spectra` object by using several
+small `MsBackendSqlDb` backends. Firstly, we can create 2 distinct
+`Spectra` instances with `MsBackendMzR` backends:
+
+```{r merge-sql1}
+sp_mzr1 <- sp_mzr %>% filterDataOrigin(fls[1])
+sp_mzr2 <- sp_mzr %>% filterDataOrigin(fls[2])
+```
+
+We switch the backends to `MsBackendSqlDb`:
+
+```{r merge-sql2}
+sp_sql1 <- setBackend(sp_mzr1, MsBackendSqlDb())
+sp_sql2 <- setBackend(sp_mzr2, MsBackendSqlDb())
+```
+Now we want to merge these 2 smaller `Spectra` objects into one
+`Spectra` object with `MsBackendSqlDb` backend:
+
+```{r merge-sql3}
+mergedBackendSql <- backendMerge(sp_sql1@backend, sp_sql2@backend)
+sp_sql_merged <- Spectra(backend = mergedBackendSql)
+sp_sql_merged
+```
+The merged `Spectra` object has its SQLite database file in the 
+`tempdir()` directory.
+
+```{r merge-sql4}
+identical(sp_sql_merged$mz, sp_sql$mz)
+identical(sp_sql_merged$intensity, sp_sql$intensity)
+identical(sp_sql_merged$dataOrigin, sp_sql$dataOrigin)
+```
+The `MsBackendSqlDb` also provides writing functionality to users:
+
+```{r write-sql1}
+sp_sql_merged$dataOrigin <- rep("DDUV", length(sp_sql_merged))
+print(unique(sp_sql_merged$dataOrigin))
+```
+
 # Session information
 
 ```{r}
