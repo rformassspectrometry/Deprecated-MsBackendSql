@@ -7,18 +7,40 @@ sciexSubset1 <- system.file("extdata/sciex_subset1.db",
                              package="MsBackendSql")
 sciexSubset2 <- system.file("extdata/sciex_subset2.db", 
                              package="MsBackendSql")
+sciexAll <- system.file("extdata/sciex_subsetCombined.db", 
+                        package="MsBackendSql")
 sciexConn1 <- dbConnect(SQLite(), sciexSubset1)
-sciexConn2 <- dbConnect(SQLite(), sciexSubset1)
+sciexConn2 <- dbConnect(SQLite(), sciexSubset2)
+sciexConn <- dbConnect(SQLite(), sciexAll)
 
 ## Create `MsBackendSqlDb` instances for preloaded datasets
 sciexSQL1 <- backendInitialize(MsBackendSqlDb(sciexConn1))
 sciexSQL2 <- backendInitialize(MsBackendSqlDb(sciexConn2))
+sciexCombined <- backendInitialize(MsBackendSqlDb(sciexConn))
+
+## Read back the metadata table from the `MsBackendSqlDb` object
+testTbl <- dbReadTable(sciexSQL1@dbcon, "msdata")
 
 ## Subsetted mzML files
 sciexmzML1 <- system.file("extdata/sciex_subset1.mzML", 
                             package="MsBackendSql")
 sciexmzML2 <- system.file("extdata/sciex_subset2.mzML", 
                           package="MsBackendSql")
+
+## Create `MsBackendMzR` for test
+sciex_mzR1 <- Spectra::backendInitialize(MsBackendMzR(), files = sciexmzML1)
+
+## Create a `MsBackendSql` object with its `dbtable` only has 3
+## columns: "acquisitionNum", "intensity", "_pkey" as Primary Key
+testSQL1 <- MsBackendSql:::.clone_MsBackendSqlDb(sciexSQL1)
+##
+res <- dbSendQuery(testSQL1@dbcon, "CREATE TABLE msdata2 AS 
+                                    SELECT acquisitionNum, intensity, _pkey
+                                    FROM msdata")
+res <- dbSendStatement(testSQL1@dbcon, "DROP TABLE IF EXISTS msdata")
+res <- dbSendStatement(testSQL1@dbcon, "ALTER TABLE msdata2
+                                        RENAME TO msdata")
+testSQL1@columns <- c("acquisitionNum", "intensity")
 
 ## New test cases by Sebastian 
 ## His method can reduce the loading size of the package
@@ -59,9 +81,6 @@ test_be <- backendInitialize(MsBackendSqlDb(), test_con, fl)
 b1 <- Spectra::backendInitialize(MsBackendMzR(), files = fl)
 b2 <- Spectra(fl, backend = MsBackendMzR())
 b2 <- setBackend(b2, MsBackendDataFrame())
-
-## Read back the metadata table from the `MsBackendSqlDb` object
-test_tbl <- dbReadTable(test_con, "msdata")
 
 
 ## Provide a valid DBIConnection from SQLite 

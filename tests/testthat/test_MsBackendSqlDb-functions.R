@@ -14,6 +14,8 @@ test_that(".valid_db_table_exists works", {
     expect_match(.valid_db_table_exists(sql@dbcon, "msdata"), 
                  "database table 'msdata' not found") 
     expect_null(.valid_db_table_exists(sciexSQL1@dbcon, "msdata"))
+    expect_match(.valid_db_table_exists(sciexSQL1@dbcon, "foobar"), 
+                 "not found")
 })
 
 test_that(".valid_db_table_columns works", {
@@ -89,75 +91,159 @@ test_that(".write_data_to_db works", {
 })
 
 test_that(".get_db_data works", {
-    expect_match(.get_db_data(test_be2, "Random"),
+    expect_match(.get_db_data(sciexSQL1, "Random"),
                  "Columns missing from database")
-    expect_equal(.get_db_data(test_be2, "totIonCurrent"), 
-                 test_tbl$totIonCurrent) 
-    expect_equal(.get_db_data(test_be2, "acquisitionNum"), 
-                 test_tbl$acquisitionNum)
+    expect_equal(.get_db_data(sciexSQL1, "totIonCurrent"), 
+                 testTbl$totIonCurrent) 
+    expect_equal(.get_db_data(sciexSQL1, "highMZ"), 
+                 testTbl$highMZ)
+    expect_true(is(.get_db_data(sciexSQL1, c("highMZ","mz", "intensity")), 
+                   "DFrame"))
+    expect_true(is(.get_db_data(sciexSQL1, "mz"),
+                   "SimpleNumericList"))
 })
-
-test_that(".valid_db_table_exists works", {
-    expect_null(.valid_db_table_exists(con, "msdata"))
-    expect_match(.valid_db_table_exists(con, "foobar"), "not found")
-})
-
-##
-##    Tests for subsetting and filtering
-##
 
 test_that(".subset_backend_SqlDb works", {
-    expect_identical(.subset_backend_SqlDb(test_be), test_be)
-    res <- .subset_backend_SqlDb(test_be, 13)
-    expect_true(is(res, "MsBackendSqlDb"))
-    expect_equal(res@rows, test_be@rows[13])
+    ## If missing "i"
+    sql0 <- .subset_backend_SqlDb(sciexSQL1)
+    ## `sql0`` shall be equal to `sciexSQL1`
+    expect_identical(sql0@rows, sciexSQL1@rows)
+    
+    ## While `i` is provided as integer()
+    sql1 <- .subset_backend_SqlDb(sciexSQL1, c(4, 1, 3))
+    expect_identical(length(sql1), 3L)
+    expect_identical(sql1@rows, c(4L, 1L, 3L))
+    
+    ## While `i` is provided as logical vector
+    logI <- c(rep(c(TRUE, FALSE), 3), FALSE, FALSE, FALSE, TRUE)
+    sql2 <- .subset_backend_SqlDb(sciexSQL1, logI)
+    expect_identical(length(sql2), 4L)
+    expect_identical(sql2@rows, c(1L, 3L, 5L, 10L))
 })
 
-test_that(".sel_file works", {
-    df <- data.frame(msLevel = 1L,
-                     dataOrigin = c("a", "a", "a", "a", "b", "c"),
-                     dataStorage = rep("<db>", 6),
-                     pkey = 1L:6L)
-    DBI::dbWriteTable(test_con, "msdf", df)
-    ## The following SQL statement are used to rename `pkey` to `_pkey`
-    dbExecute(test_con,
-              "ALTER TABLE msdf RENAME TO temp_msdf;")
-    type <- dbDataType(test_con, df)[-length(df)]
-    str <- paste(names(type), type, sep = " ")
-    str <- paste(str, collapse=', ')
-    sql <- paste("CREATE TABLE msdf (",
-                  str,
-                  ", _pkey INT PRIMARY KEY);", sep = "")
-    dbExecute(test_con, sql)
-    sql_1 <- paste("INSERT INTO msdf(", 
-                    paste(names(type), collapse = ", "),
-                    ", _pkey) ",
-                    "SELECT * FROM temp_msdf;")
-    dbExecute(test_con, sql_1)
-    dbExecute(test_con, "DROP TABLE temp_msdf;")
+test_that(".sel_file_sql works", {
+    ## The case of `dataStorage` is omitted here
+    ## The current values of `dataStorage` is `<db>`
     
-    ## We don't have to compare the results of dataStorage
-    ## It will be a permanent address "<db>"
-    ## We may change this behavior after using parallel processing
-    sdb <- test_be
-    sdb@dbtable <- "msdf"
-    sdb@rows <- 1:6
-    sdb@columns <- c("msLevel", "dataOrigin", "dataStorage")
-    res <- .sel_file_sql(sdb)
-    expect_identical(res, rep(TRUE, length(sdb)))
-    res <- .sel_file_sql(sdb, dataStorage = c("c", "a"))
-    expect_identical(res, rep(FALSE, length(sdb)))
+    dataOriginLog <- rep(c(TRUE, FALSE), 5)
+    expect_error(.sel_file_sql(sciexSQL1, dataOrigin = dataOriginLog),
+                 "'dataOrigin' has to be either an integer .*, or its name")
+    expect_error(.sel_file_sql(sciexSQL1, dataOrigin = 0.5),
+                 "'dataOrigin' should be an integer between *.")
+    expect_error(.sel_file_sql(sciexCombined, dataOrigin = 3),
+                 "'dataOrigin' should be an integer between 1 and 2")
+    ## Correct case: Only the 2nd file is selected
+    expect_identical(.sel_file_sql(sciexCombined, dataOrigin = 2),
+                 c(rep(FALSE, 10), rep(TRUE, 10)))
+    ## Both file 1 and 2 are selected
+    expect_identical(.sel_file_sql(sciexCombined, dataOrigin = c(1, 2)),
+                     rep(TRUE, 20))
+})
+
+test_that(".combine_backend_SqlDb works", {
+    expect_error(.combine_backend_SqlDb(c(sciexSQL1, sciex_mzR1)),
+                 "Can only merge backends of the same type: MsBackendSqlDb")
+    testSQL <- .combine_backend_SqlDb(c(sciexSQL1))
+    expect_true(is(testSQL, "MsBackendSqlDb"))
+    expect_identical(testSQL$mz, sciexSQL1$mz)
+    expect_identical(testSQL$intensity, sciexSQL1$intensity)
+    expect_identical(testSQL@dbtable, sciexSQL1@dbtable)
     
-    res <- .sel_file_sql(sdb, dataOrigin = c("c", "a"))
-    expect_identical(res, c(TRUE, TRUE, TRUE, TRUE, FALSE, TRUE))
-    res <- .sel_file_sql(sdb, dataOrigin = "z")
-    expect_identical(res, rep(FALSE, length(sdb)))
-    res <- .sel_file_sql(sdb, dataOrigin = 3)
-    expect_identical(res, c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE))
-    res <- .sel_file_sql(sdb, dataOrigin = NA_character_)
-    expect_identical(res, rep(FALSE, length(sdb)))
-    expect_error(.sel_file_sql(sdb, dataOrigin = TRUE), 
-                 "integer with the index")
-    res <- .sel_file_sql(sdb, dataOrigin = c("b", "z"))
-    expect_identical(res, c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE))
+    ## Test the case while we merge `sciexSQL1` and `sciexSQL2`
+    testSQLMer <- .combine_backend_SqlDb(c(sciexSQL1, sciexSQL2))
+    expect_identical(testSQLMer$mz, sciexCombined$mz)
+    expect_identical(testSQLMer$intensity, sciexCombined$intensity)
+    expect_identical(testSQLMer@dbtable, sciexCombined@dbtable)
+})
+
+test_that(".attach_migration works", {
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    testSQL2 <- .clone_MsBackendSqlDb(sciexSQL2)
+    testSQL1$random <- rep(1, length(testSQL1))
+    expect_error(.attach_migration(testSQL1, testSQL2),
+                 "Can only merge backends with the same spectra variables.")
+    
+    ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
+    testSQL3 <- testSQL2
+    testSQL4 <- testSQL2
+    testSQL3@rows <- seq(1L, 10L, 2L)
+    testSQL4@rows <- seq(2L, 10L, 2L)
+    testSQL5 <- .attach_migration(testSQL3, testSQL4)
+    expect_true(identical(setdiff(testSQL2@rows, testSQL5@rows), 
+                          setdiff(testSQL5@rows, testSQL2@rows)))
+    rm(testSQL5)
+    
+    ## If `x` and `y` are sharing the same dbfile, and using different dbtable
+    rm(testSQL1)
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    ## We put testSQL2's SQLite table into testSQL1@dbcon
+    dbExecute(testSQL1@dbcon, paste0("ATTACH DATABASE '",
+                                     testSQL2@dbcon@dbname, "' AS toMerge"))
+    res <- dbSendQuery(testSQL1@dbcon, "CREATE TABLE msdata2 AS
+                                        SELECT *
+                                        FROM toMerge.msdata")
+    suppressWarnings(dbExecute(testSQL1@dbcon, "DETACH DATABASE toMerge"))
+    ## `MsBackendSqlDb` object `testSQL6` shares the same dbfile with
+    ## testSQL1, but using a differetnt SQLite table `msdata2`
+    testSQL6 <- testSQL1
+    testSQL6@dbtable <- "msdata2"
+    ## testSQL5 is actually the merged result of `sciexSQL1` and `sciexSQL2`
+    testSQL5 <- .attach_migration(testSQL1, testSQL6)
+    expect_identical(length(testSQL5), 20L)
+    expect_identical(testSQL5$mz, sciexCombined$mz)
+    expect_identical(testSQL5$intensity, sciexCombined$intensity)
+    expect_identical(testSQL5$basePeakIntensity, 
+                     sciexCombined$basePeakIntensity)
+    rm(testSQL1, testSQL5)
+    
+    ## While x and y have different db files:
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    testSQL5 <- .attach_migration(testSQL1, testSQL2)
+    expect_identical(length(testSQL5), 20L)
+    expect_identical(testSQL5$mz, sciexCombined$mz)
+    expect_identical(testSQL5$intensity, sciexCombined$intensity)
+    expect_identical(testSQL5$basePeakIntensity, 
+                     sciexCombined$basePeakIntensity)
+})
+
+test_that(".clone_MsBackendSqlDb works", {
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    expect_identical(length(testSQL1), length(sciexSQL1))
+    expect_identical(testSQL1$mz, sciexSQL1$mz)
+    expect_identical(testSQL1$intensity, sciexSQL1$intensity)
+    expect_identical(testSQL1$basePeakIntensity, 
+                     sciexSQL1$basePeakIntensity)
+    expect_false(identical(testSQL1@dbcon@dbname,
+                           sciexSQL1@dbcon@dbname))
+})
+
+test_that(".update_db_table_columns works", {
+    ## Clone `MsBackendSqlDb` instance `sciexSQL1`
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    testSQL1 <- .update_db_table_columns(testSQL1, "msLevel", 
+                                         rep("testLevel", length(testSQL1)))
+    testSQL1 <- .update_db_table_columns(testSQL1, "mz", 
+                                         mz(sciexSQL2))
+    testSQL1 <- .update_db_table_columns(testSQL1, "intensity", 
+                                         intensity(sciexSQL2))
+    expect_identical(testSQL1$msLevel, rep("testLevel", length(testSQL1)))
+    expect_identical(testSQL1$mz, sciexSQL2$mz)
+    expect_identical(testSQL1$intensity, sciexSQL2$intensity)
+})
+
+test_that(".insert_db_table_columns works", {
+    ## Clone `MsBackendSqlDb` instance `sciexSQL1`
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    mz2 <- mz(sciexSQL2)
+    origin2 <- dataOrigin(sciexSQL2)
+    rtime2 <- rtime(sciexSQL2)
+    
+    testSQL1 <- .insert_db_table_columns(testSQL1, "mzTest", mz2)
+    testSQL1 <- .insert_db_table_columns(testSQL1, "originTest", origin2)
+    testSQL1 <- .insert_db_table_columns(testSQL1, "rtimeTest", rtime2)
+    
+    ## expect_identical(testSQL1$mzTest, mz2) failed,
+    ## it requires modifications of `.get_db_data`
+    expect_identical(testSQL1$originTest, origin2)
+    expect_identical(testSQL1$rtimeTest, rtime2)
 })
