@@ -327,6 +327,7 @@ MsBackendSqlDb <- function(dbcon) {
                              use.names = FALSE)
         return(x) } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         (!identical(x@dbtable, y@dbtable))) {
+        ## If `x` and `y` are sharing the same dbfile, and using different dbtable
         ## We want to know the length (row numbers) of x@dbtable
         x_length <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", 
                                                x@dbtable))
@@ -425,7 +426,7 @@ MsBackendSqlDb <- function(dbcon) {
 }
 
 #' Replace the values of a SQLite table column, and ensure the right data type
-#'  can be returned. 
+#'  can be returned. It's temporarily not in use.
 #'  I kept this function, since replacing column values in huge database is
 #'  extremely time consuming. It's more efficient to use the strategy here.
 #'  
@@ -485,7 +486,14 @@ MsBackendSqlDb <- function(dbcon) {
 #'
 #' @noRd
 .update_db_table_columns <- function(x, name, value) {
-    table_y <- data.frame(name = value, pkey = x@rows)
+    ## Fetch the table info: including column names and column types
+    typeTbl <- dbGetQuery(x@dbcon, "PRAGMA table_info(msdata)")
+    ## Check whether arg - `name` has type `BLOB` in SQLite table
+    ## The original design is to use any type to replace a column
+    ## e.g. the `mz`:BLOB column can even be replaced by integer()
+    if (name %in% typeTbl[typeTbl$type %in% "BLOB", ]$name)
+        value <- lapply(value, base::serialize, NULL)
+    table_y <- data.frame(name = I(value), pkey = x@rows)
     colnames(table_y) <- c(name, "pkey")
     dbWriteTable(x@dbcon, 'table_y', table_y)
     state1 <- dbSendStatement(x@dbcon, paste0("UPDATE ", x@dbtable, " SET ",
@@ -508,12 +516,18 @@ MsBackendSqlDb <- function(dbcon) {
 #'
 #' @noRd
 .insert_db_table_columns <- function(x, name, value) {
-    newType <- dbDataType(x@dbcon, value)
+    if (is(value, "NumericList")) {
+        value <- lapply(value, base::serialize, NULL)
+        newType <- "BLOB"
+    } else {
+        newType <- dbDataType(x@dbcon, value)
+    }
     ## Use ALTER statement to insert a new column in the table
     state1 <- dbSendStatement(x@dbcon, paste0("ALTER TABLE ", x@dbtable,
                                               " ADD ", name, " ", 
                                               newType))
-    table_y <- data.frame(name = value, pkey = x@rows)
+    
+    table_y <- data.frame(name = I(value), pkey = x@rows)
     colnames(table_y) <- c(name, "pkey")
     dbWriteTable(x@dbcon, 'table_y', table_y)
     ## UPDATE the rows of new column - "name", where _pkey = x@rows
