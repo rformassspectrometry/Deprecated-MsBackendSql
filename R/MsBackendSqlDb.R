@@ -38,6 +38,10 @@ NULL
 #'     be imported. Only required if the database to which `dbcon`
 #'     connects does not already contain the data.
 #'
+#' @param data For `backendInitialize`: `DataFrame` with spectrum
+#'     metadata/data. This parameter can be empty for `MsBackendMzR` backends
+#'     but needs to be provided for `MsBackendDataFrame` backends.
+#'
 #' @param dbtable `character(1)` the name of the database table with
 #'     the data.  Defaults to `dbtable = "msdata"`.
 #'
@@ -114,9 +118,8 @@ setValidity("MsBackendSqlDb", function(object) {
 #' 
 #' @rdname hidden_aliases
 setMethod("show", "MsBackendSqlDb", function(object) {
-    if (length(object@rows) == 0) {
-        cat(class(object), "with", length(object@rows), "spectra\n")
-    } else if (length(object@rows) > 10) {
+    cat(class(object), "with", length(object@rows), "spectra\n")
+    if (length(object@rows) > 10) {
       ## get the first 3 and last 3 rows, and print them
         columns <- c("msLevel", "rtime", "scanIndex")
         if (length(setdiff(columns, object@columns)) == 0) {
@@ -129,7 +132,6 @@ setMethod("show", "MsBackendSqlDb", function(object) {
             res <- dbFetch(qry)
             dbClearResult(qry)
             res <- DataFrame(res)
-            cat(class(object), "with", length(object@rows), "spectra\n")
             txt <- capture.output(print(res))
             ## Use ellipses to split the head and tails of output string
             txt_prt <- c(txt[-1][1:5],
@@ -150,7 +152,6 @@ setMethod("show", "MsBackendSqlDb", function(object) {
             }
     } else {
         spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
-        cat(class(object), "with", nrow(spd), "spectra\n")
         txt <- capture.output(print(spd))
         cat(txt[-1], sep = "\n")
         sp_cols <- spectraVariables(object)
@@ -159,10 +160,6 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 })
 
 #' @rdname MsBackendSqlDb
-#' 
-#' @param data For `backendInitialize`: `DataFrame` with spectrum
-#'     metadata/data. This parameter can be empty for `MsBackendMzR` backends
-#'     but needs to be provided for `MsBackendDataFrame` backends.
 #'
 #' @importMethodsFrom Spectra backendInitialize
 #'
@@ -179,7 +176,13 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     }
     pkey <- "_pkey"
     object@dbtable <- dbtable
+    ## `data` can also be a `data.frame`
     if (nrow(data)) {
+        if (is.data.frame(data))
+            data <- DataFrame(data)
+        if (!is(data, "DataFrame"))
+            stop("'data' is supposed to be a 'DataFrame' with ",
+                 "spectrum data")
         .write_data_to_db(data, object@dbcon, dbtable = dbtable)
         ## Since we use `dbAppendTable` to write new data into SQLite db,
         ## The newly appended data will be at the end of the `msdata` table,
