@@ -317,8 +317,6 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @noRd
 .attach_migration <- function(x, y) {
-    if (!identical(spectraVariables(x) ,spectraVariables(y)))
-        stop("Can only merge backends with the same spectra variables.")
     ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
     if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         identical(x@dbtable, y@dbtable)) {

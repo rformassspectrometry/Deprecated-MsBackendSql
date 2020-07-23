@@ -40,7 +40,8 @@ NULL
 #'
 #' @param data For `backendInitialize`: `DataFrame` with spectrum
 #'     metadata/data. This parameter can be empty for `MsBackendMzR` backends
-#'     but needs to be provided for `MsBackendDataFrame` backends.
+#'     but needs to be provided for `MsBackendDataFrame` and `MsBackendSqlDb` 
+#'     backends.
 #'
 #' @param dbtable `character(1)` the name of the database table with
 #'     the data.  Defaults to `dbtable = "msdata"`.
@@ -174,15 +175,15 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     } else { 
         object@dbcon <- dbcon
     }
+    if (is.data.frame(data))
+        data <- DataFrame(data)
+    if (!is(data, "DataFrame"))
+        stop("'data' is supposed to be a 'DataFrame' with ",
+             "spectrum data")
     pkey <- "_pkey"
     object@dbtable <- dbtable
     ## `data` can also be a `data.frame`
     if (nrow(data)) {
-        if (is.data.frame(data))
-            data <- DataFrame(data)
-        if (!is(data, "DataFrame"))
-            stop("'data' is supposed to be a 'DataFrame' with ",
-                 "spectrum data")
         .write_data_to_db(data, object@dbcon, dbtable = dbtable)
         ## Since we use `dbAppendTable` to write new data into SQLite db,
         ## The newly appended data will be at the end of the `msdata` table,
@@ -237,6 +238,8 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #'
 #' @rdname hidden_aliases
 setMethod("backendMerge", "MsBackendSqlDb", function(object, ..., dbcon) {
+    if (!identical(spectraVariables(x) ,spectraVariables(y)))
+        stop("Can only merge backends with the same spectra variables.")
     object <- unname(c(object, ...))
     ## If `MsBackendSqlDb` has no mz values, the list will not merge it
     object <- object[lengths(object) > 0]
