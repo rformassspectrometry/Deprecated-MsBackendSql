@@ -119,45 +119,48 @@ setValidity("MsBackendSqlDb", function(object) {
 #' 
 #' @rdname hidden_aliases
 setMethod("show", "MsBackendSqlDb", function(object) {
-    cat(class(object), "with", length(object@rows), "spectra\n")
-    if (length(object@rows) > 10) {
-      ## get the first 3 and last 3 rows, and print them
-        columns <- c("msLevel", "rtime", "scanIndex")
-        if (length(setdiff(columns, object@columns)) == 0) {
-            qry <- dbSendQuery(object@dbcon,
-                       paste0("select msLevel, rtime, scanIndex",
-                      " from ", object@dbtable, " where _pkey = ?"))
-            rows_print <- c(head(object@rows, 3), 
-                            tail(object@rows, 3))
-            qry <- dbBind(qry, list(rows_print))
-            res <- dbFetch(qry)
-            dbClearResult(qry)
-            res <- DataFrame(res)
-            txt <- capture.output(print(res))
-            ## Use ellipses to split the head and tails of output string
-            txt_prt <- c(txt[-1][1:5],
-                         "...     ...       ...       ...",
-                         txt[-1][6:8])
-            ## Replace the index numbers with correct row numbers
-            txt_prt[7] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 2), 
-                               txt_prt[7])
-            txt_prt[8] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 1), 
-                               txt_prt[8])
-            txt_prt[9] <- gsub("^[0-9]\\s\\s\\s", toString(length(object)), 
-                               txt_prt[9])
-            cat(txt_prt, sep = "\n")
-            sp_cols <- spectraVariables(object)
-            cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
-          } else {
-              return("Columns missing from database.")
-            }
+    if (length(object@rows) == 0) {
+        cat(class(object), "with", 0, "spectra\n")
+  } else if (length(object@rows) > 10) {
+    ## get the first 3 and last 3 rows, and print them
+    columns <- c("msLevel", "rtime", "scanIndex")
+    if (length(setdiff(columns, object@columns)) == 0) {
+        qry <- dbSendQuery(object@dbcon,
+                           paste0("select msLevel, rtime, scanIndex",
+                                " from ", object@dbtable, " where _pkey = ?"))
+        rows_print <- c(head(object@rows, 3), 
+                        tail(object@rows, 3))
+        qry <- dbBind(qry, list(rows_print))
+        res <- dbFetch(qry)
+        dbClearResult(qry)
+        res <- DataFrame(res)
+        cat(class(object), "with", length(object@rows), "spectra\n")
+        txt <- capture.output(print(res))
+        ## Use ellipses to split the head and tails of output string
+        txt_prt <- c(txt[-1][1:5],
+                     "...     ...       ...       ...",
+                     txt[-1][6:8])
+        ## Replace the index numbers with correct row numbers
+        txt_prt[7] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 2), 
+                           txt_prt[7])
+        txt_prt[8] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 1), 
+                           txt_prt[8])
+        txt_prt[9] <- gsub("^[0-9]\\s\\s\\s", toString(length(object)), 
+                           txt_prt[9])
+        cat(txt_prt, sep = "\n")
+        sp_cols <- spectraVariables(object)
+        cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
+    } else {
+        return("Columns missing from database.")
+      }
     } else {
         spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
+        cat(class(object), "with", nrow(spd), "spectra\n")
         txt <- capture.output(print(spd))
         cat(txt[-1], sep = "\n")
         sp_cols <- spectraVariables(object)
         cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
-     }
+    }
 })
 
 #' @rdname MsBackendSqlDb
@@ -238,35 +241,11 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
 #'
 #' @rdname hidden_aliases
 setMethod("backendMerge", "MsBackendSqlDb", function(object, ..., dbcon) {
-    if (!identical(spectraVariables(x) ,spectraVariables(y)))
-        stop("Can only merge backends with the same spectra variables.")
     object <- unname(c(object, ...))
     ## If `MsBackendSqlDb` has no mz values, the list will not merge it
     object <- object[lengths(object) > 0]
     res <- suppressWarnings(.combine_backend_SqlDb(object, dbcon))
     res
-})
-
-#' `Spectra` constructor function for `MsBackendSqlDb`
-#' 
-#' @param dbcon A `DBIConnection` with the connection to the database.
-#' 
-#' @param processingQueue For `Spectra`: optional `list` of
-#'     [ProcessingStep-class] objects.
-#'     
-#' @param metadata For `Spectra`: optional `list` with metadata information.
-#' 
-#' @param ... Additional arguments.
-#' 
-#' @importFrom  Spectra Spectra
-#' 
-#' @rdname MsBackendSqlDb
-setMethod("Spectra", "MsBackendSqlDb", function(object, processingQueue = list(),
-                                           metadata = list(), 
-                                           ...) {
-    be <- backendInitialize(object, object@dbcon)
-    new("Spectra", metadata = metadata, processingQueue = processingQueue,
-        backend = be)
 })
 
 ## Data accessors

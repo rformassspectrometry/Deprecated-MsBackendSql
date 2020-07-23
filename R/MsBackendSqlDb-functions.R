@@ -296,6 +296,9 @@ MsBackendSqlDb <- function(dbcon) {
         return(objects[[1]])
     if (!all(vapply1c(objects, class) == class(objects[[1]])))
         stop("Can only merge backends of the same type: ", class(objects[[1]]))
+    spcVar <- lapply(objects, function(z) spectraVariables(z))
+    if (!length(unique(spcVar)) == 1)
+        stop("Can only merge backends with the same spectra variables.")
     res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
     for (i in 2:length(objects)) {
         res <- .attach_migration(res, objects[[i]])

@@ -32,7 +32,8 @@ connects does not already contain the data.}
 
 \item{data}{For \code{backendInitialize}: \code{DataFrame} with spectrum
 metadata/data. This parameter can be empty for \code{MsBackendMzR} backends
-but needs to be provided for \code{MsBackendDataFrame} backends.}
+but needs to be provided for \code{MsBackendDataFrame} and \code{MsBackendSqlDb}
+backends.}
 
 \item{...}{Additional arguments.}
 

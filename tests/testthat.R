@@ -45,20 +45,20 @@ testSQL1@columns <- c("acquisitionNum", "intensity")
 ## New test cases by Sebastian 
 ## His method can reduce the loading size of the package
 msdf <- data.frame(
-    pkey = 1L:3L,
     rtime = c(1.2, 3.4, 5.6),
     msLevel = c(1L, 2L, 2L),
+    scanIndex = 4:6,
     dataStorage = "<db>",
     dataOrigin = "file.mzML",
     stringsAsFactors = FALSE
 )
-msdf$mz <- lapply(1:3, serialize, NULL)
-msdf$intensity <- lapply(4:6, serialize, NULL)
+msdf$mz <- sciexSQL1$mz[1:3]
+msdf$intensity <- sciexSQL1$intensity[1:3]
 
-con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
-on.exit(DBI::dbDisconnect(con))
+## con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+## on.exit(DBI::dbDisconnect(con))
 
-DBI::dbWriteTable(con, "msdata", msdf)
+## DBI::dbWriteTable(con, "msdata", msdf)
 
 ## Provide a valid DBIConnection from SQLite 
 test_con <- dbConnect(SQLite(), "test.db")
