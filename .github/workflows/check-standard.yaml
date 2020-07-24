@@ -35,12 +35,6 @@ jobs:
           r-version: ${{ matrix.config.r }}
 
       - uses: r-lib/actions/setup-pandoc@master
-
-      - name: Install netcdf (macOS)
-        if: matrix.config.os == 'macOS-latest'
-        run: |
-          brew tap brewsci/science
-          brew install netcdf --with-fortran
       
       - name: Install netcdf (Linux)
         if: matrix.config.os == 'ubuntu-latest'
