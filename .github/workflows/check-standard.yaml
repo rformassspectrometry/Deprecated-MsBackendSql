@@ -30,13 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup R release
-        if: matrix.config.r == 'release'
-        uses: r-lib/actions/setup-r@master
-  
-      - name: Setup R devel
-        if: matrix.config.r == 'devel'
-        uses: r-lib/actions/setup-r@devel
+      - uses: r-lib/actions/setup-r@devel
+      - uses: r-lib/actions/setup-r@master
 
       - uses: r-lib/actions/setup-pandoc@master
       
