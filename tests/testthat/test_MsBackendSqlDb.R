@@ -163,66 +163,143 @@ test_that("isEmpty,MsBackendSqlDb works", {
 })
 
 test_that("isolationWindowLowerMz,MsBackendSqlDb works", {
-  expect_true(is(isolationWindowLowerMz(test_be), "numeric"))
-  expect_identical(isolationWindowLowerMz(test_be), isolationWindowLowerMz(b1))
+    df <- DataFrame(msdf)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_match(isolationWindowLowerMz(be),
+                 "Columns missing from database.")
+    
+    df$isolationWindowLowerMz <- c(NA_real_, 2, 3)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_identical(isolationWindowLowerMz(be), c(NA_real_, 2, 3))
+    expect_true(is(isolationWindowLowerMz(be), "numeric"))
 })
-
-test_that("as.list,MsBackendSqlDb works", {
-    expect_identical(as.list(test_be), as.list(b1))
-})
-
-
 
 test_that("isolationWindowTargetMz,MsBackendSqlDb works", {
-    expect_true(is(isolationWindowTargetMz(test_be), "numeric"))
-    expect_identical(isolationWindowTargetMz(test_be), 
-                     isolationWindowTargetMz(b1))
+    df <- DataFrame(msdf)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_match(isolationWindowTargetMz(be),
+                 "Columns missing from database.")
+    df$isolationWindowTargetMz <- c(NA_real_, 2, 3)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_identical(isolationWindowTargetMz(be), c(NA_real_, 2, 3))
+    expect_true(is(isolationWindowTargetMz(be), "numeric"))
 })
 
 test_that("isolationWindowUpperMz,MsBackendSqlDb works", {
-    expect_true(is(isolationWindowUpperMz(test_be), "numeric"))
-    expect_identical(isolationWindowUpperMz(test_be), 
-                     isolationWindowUpperMz(b1))
+    df <- DataFrame(msdf)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_match(isolationWindowUpperMz(be),
+                 "Columns missing from database.")
+    
+    df$isolationWindowUpperMz <- c(NA_real_, 2, 3)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_identical(isolationWindowUpperMz(be), c(NA_real_, 2, 3))
+    expect_true(is(isolationWindowUpperMz(be), "numeric"))
 })
 
 test_that("length,MsBackendSqlDb works", {
+    df <- DataFrame(msdf)
     be <- MsBackendSqlDb()
-    expect_equal(length(be), 0)
-    expect_equal(length(test_be), nrow(test_tbl))
+    be <- backendInitialize(be, data = df)
+    expect_equal(length(be), 3)
+    expect_equal(length(sciexSQL1), 10)
 })
 
 test_that("msLevel,MsBackendSqlDb works", {
-    expect_true(is(msLevel(test_be), "integer"))
-    expect_identical(msLevel(test_be), msLevel(b1))
+    df <- DataFrame(msdf)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_equal(msLevel(be), c(1L, 2L, 2L))
+    expect_true(is(msLevel(be), "integer"))
+    
+    df$msLevel <- NULL
+    be <- MsBackendSqlDb()
+    expect_error(backendInitialize(be, data = df),
+                 "msLevel not found")
 })
 
 test_that("mz,MsBackendSqlDb works", {
-    expect_true(is(mz(test_be), "NumericList"))
-    expect_identical(mz(test_be), mz(b1))
+    df <- DataFrame(msdf)
+    be <- MsBackendSqlDb()
+    be <- backendInitialize(be, data = df)
+    expect_equal(mz(be), sciexSQL1$mz[1:3])
+    
+    df$mz <- NULL
+    expect_error(backendInitialize(MsBackendSqlDb(), data = df),
+                 "mz not found")
+})
+
+test_that("as.list,MsBackendSqlDb works", {
+    expect_true(is(as.list(sciexSQL1), "list"))
+  
+    df <- DataFrame(msdf)
+    df$mz <- list(1:3, c(2.1), c(3.5, 6.7, 12.3))
+    df$intensity <- list(1:3, 4, c(6, 15, 19))
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(as.list(be), list(cbind(mz = 1:3, intensity = 1:3),
+                                   cbind(mz = 2.1, intensity = 4),
+                                   cbind(mz = c(3.5, 6.7, 12.3),
+                                         intensity = c(6, 15, 19))))
 })
 
 test_that("lengths,MsBackendDataFrame works", {
-    expect_identical(lengths(test_be), lengths(b1))
-    expect_true(is(lengths(test_be), "integer"))
+    expect_true(is(lengths(sciexSQL1), "integer"))
+  
+    df <- DataFrame(msdf)
+    df$mz <- list(1:3, c(2.1), c(3.5, 6.7, 12.3))
+    df$intensity <- list(1:3, 4, c(6, 15, 19))
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(lengths(be), c(3L, 1L, 3L))
+    
+    df$mz <- list(numeric(0), numeric(0), numeric(0))
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(lengths(be), c(0, 0, 0))
 })
 
 test_that("polarity,MsBackendSqlDb works", {
-    expect_true(is(polarity(test_be), "integer"))
-    expect_identical(polarity(test_be), polarity(b1))
+    expect_true(is(polarity(sciexSQL1), "integer"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_match(polarity(be), "Columns missing from database.")
+    
+    df$polarity <- 5:7
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(polarity(be), 5:7)
 })
 
 test_that("precScanNum,MsBackendSqlDb works", {
-    expect_true(is(precScanNum(test_be), "integer"))
-    expect_identical(precScanNum(test_be), precScanNum(b1))
+    expect_true(is(precScanNum(sciexSQL1), "integer"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_match(precScanNum(be), "Columns missing from database.")
+    
+    df$precScanNum <- c(5L, 1L, 7L)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(precScanNum(be), c(5L, 1L, 7L))
 })
 
 test_that("precursorCharge,MsBackendSqlDb works", {
-    expect_true(is(precursorCharge(test_be), "integer"))
-    expect_identical(precursorCharge(test_be), precursorCharge(b1))
+    expect_true(is(precursorCharge(sciexSQL1), "integer"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_match(precursorCharge(be), "Columns missing from database.")
+    
+    df$precursorCharge <- c(-1L, 1L, 0L)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(precursorCharge(be), c(-1L, 1L, 0L))
 })
 
 test_that("precursorIntensity,MsBackendSqlDb works", {
-    expect_true(is(precursorIntensity(test_be), "numeric"))
+    expect_true(is(precursorIntensity(sciexSQL1), "numeric"))
     expect_identical(precursorIntensity(test_be), precursorIntensity(b1))
 })
 
