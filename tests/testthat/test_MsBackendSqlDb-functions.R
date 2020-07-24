@@ -28,10 +28,18 @@ test_that(".valid_db_table_columns works", {
                                          columns = "foo", pkey = "_pkey"),
                  "required .* foo not found")
     
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
+    msdf$mz <- c(1.5, 3.6, 8.3)
+    msdf$intensity <- c(5.0, 9, 15)
+    DBI::dbWriteTable(con, "msdata", msdf)
+    
     msdf2 <- msdf
     msdf2$msLevel <- as.character(msdf2$msLevel)
+    msdf2$pkey <- c(1L, 2L, 3L)
     DBI::dbWriteTable(con, "msdata2test", msdf2)
-    expect_match(.valid_db_table_columns(con, "msdata2test", pkey = "pkey"),
+    dbSendQuery(con, "ALTER TABLE msdata2test RENAME COLUMN pkey to _pkey")
+    expect_match(.valid_db_table_columns(con, "msdata2test", pkey = "_pkey"),
                  "wrong data type")
 })
 
@@ -125,7 +133,8 @@ test_that(".sel_file_sql works", {
     ## The case of `dataStorage` is omitted here
     ## The current values of `dataStorage` is `<db>`
     
-    dataOriginLog <- rep(c(TRUE, FALSE), 5)
+    dataOriginLog <- c(TRUE, FALSE, TRUE, FALSE, TRUE,
+                       FALSE, TRUE, FALSE, TRUE, FALSE)
     expect_error(.sel_file_sql(sciexSQL1, dataOrigin = dataOriginLog),
                  "'dataOrigin' has to be either an integer .*, or its name")
     expect_error(.sel_file_sql(sciexSQL1, dataOrigin = 0.5),
@@ -135,9 +144,6 @@ test_that(".sel_file_sql works", {
     ## Correct case: Only the 2nd file is selected
     expect_identical(.sel_file_sql(sciexCombined, dataOrigin = 2),
                  c(rep(FALSE, 10), rep(TRUE, 10)))
-    ## Both file 1 and 2 are selected
-    expect_identical(.sel_file_sql(sciexCombined, dataOrigin = c(1, 2)),
-                     rep(TRUE, 20))
 })
 
 test_that(".combine_backend_SqlDb works", {
@@ -159,10 +165,6 @@ test_that(".combine_backend_SqlDb works", {
 test_that(".attach_migration works", {
     testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
     testSQL2 <- .clone_MsBackendSqlDb(sciexSQL2)
-    testSQL1$random <- rep(1, length(testSQL1))
-    expect_error(.attach_migration(testSQL1, testSQL2),
-                 "Can only merge backends with the same spectra variables.")
-    
     ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
     testSQL3 <- testSQL2
     testSQL4 <- testSQL2

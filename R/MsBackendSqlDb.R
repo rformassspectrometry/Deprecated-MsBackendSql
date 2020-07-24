@@ -42,6 +42,8 @@ NULL
 #'     metadata/data. This parameter can be empty for `MsBackendMzR` backends
 #'     but needs to be provided for `MsBackendDataFrame` and `MsBackendSqlDb` 
 #'     backends.
+#'     
+#' @param ... Additional arguments.
 #'
 #' @param dbtable `character(1)` the name of the database table with
 #'     the data.  Defaults to `dbtable = "msdata"`.

@@ -41,6 +41,20 @@ test_that("show,MsBackendSqlDb works", {
     show(be)
 })
 
+test_that("Spectra,character works", {
+    conn <- dbConnect(SQLite(), "msdata.db")
+    res <- Spectra(sciexmzMLAll, backend = MsBackendSqlDb(dbcon = conn),
+                                 BPPARAM = SerialParam())
+    expect_true(is(res@backend, "MsBackendSqlDb"))
+    expect_equal(unique(res@backend$dataStorage), sciexmzMLAll)
+    expect_identical(rtime(res), rtime(sciex_mzR_All))
+  
+    res_2 <- Spectra(sciexmzMLAll)
+    expect_identical(rtime(res), rtime(res_2))
+  
+    show(res)
+})
+
 test_that("backendMerge,MsBackendSqlDb works", {
     be <- backendInitialize(MsBackendSqlDb(), data = msdf)
   
@@ -296,65 +310,4 @@ test_that("precursorCharge,MsBackendSqlDb works", {
     df$precursorCharge <- c(-1L, 1L, 0L)
     be <- backendInitialize(MsBackendSqlDb(), data = df)
     expect_equal(precursorCharge(be), c(-1L, 1L, 0L))
-})
-
-test_that("precursorIntensity,MsBackendSqlDb works", {
-    expect_true(is(precursorIntensity(sciexSQL1), "numeric"))
-    expect_identical(precursorIntensity(test_be), precursorIntensity(b1))
-})
-
-test_that("precursorMz,MsBackendSqlDb works", {
-    expect_true(is(precursorMz(test_be), "numeric"))
-    expect_identical(precursorMz(test_be), precursorMz(b1))
-})
-
-test_that("rtime,MsBackendSqlDb works", {
-    expect_true(is(rtime(test_be), "numeric"))
-    expect_identical(rtime(test_be), rtime(b1))
-})
-
-test_that("scanIndex,MsBackendSqlDb works", {
-    expect_true(is(scanIndex(test_be), "integer"))
-    expect_identical(scanIndex(test_be), scanIndex(b1))
-})
-
-test_that("smoothed,MsBackendSqlDb works", {
-    expect_true(is(smoothed(test_be), "logical"))
-    expect_identical(smoothed(test_be), smoothed(b1))
-})
-
-test_that("tic,MsBackendSqlDb works", {
-    expect_true(is(tic(test_be), "numeric"))
-    expect_identical(tic(test_be, initial = TRUE), tic(b2, initial = TRUE))
-    expect_identical(tic(test_be, initial = FALSE), tic(b2, initial = FALSE))
-})
-
-test_that("spectraVariables,MsBackendSqlDb works", {
-    expect_equal(spectraVariables(test_be), spectraVariables(b1))
-})
-
-test_that("$,MsBackendSqlDb works", {
-    expect_true(is(test_be$msLevel, "integer"))
-    expect_identical(test_be$msLevel, b1$msLevel)
-    expect_identical(test_be$intensity, b1$intensity)
-})
-
-test_that("Spectra,character works", {
-    conn1 <- dbConnect(SQLite(), "sciex.db")
-    on.exit(DBI::dbDisconnect(conn1))
-    res <- Spectra(sciex_file, backend = MsBackendSqlDb(conn1))
-    expect_true(is(res@backend, "MsBackendSqlDb"))
-    expect_equal(unique(res@backend$dataStorage), "<db>")
-    expect_identical(rtime(res), rtime(sciex_mzr))
-    show(res)
-})
-
-test_that("Spectra,MsBackendSqlDb works", {
-    conn2 <- dbConnect(SQLite(), "sciex.db")
-    on.exit(DBI::dbDisconnect(conn2))
-    res <- Spectra(MsBackendSqlDb(conn2))
-    expect_true(length(res) == length(sciex_mzr))
-    expect_identical(mz(res), mz(sciex_mzr))
-    expect_true(is(res@backend, "MsBackendSqlDb"))
-    show(res)
 })
