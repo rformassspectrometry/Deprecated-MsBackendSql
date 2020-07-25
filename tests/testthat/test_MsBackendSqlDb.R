@@ -49,7 +49,6 @@ test_that("Spectra,character works", {
     expect_equal(unique(res@backend$dataStorage), 
                  normalizePath(sciexmzMLAll))
     expect_identical(rtime(res), rtime(sciex_mzR_All))
-  
     res_2 <- Spectra(sciexmzMLAll)
     expect_identical(rtime(res), rtime(res_2))
   
