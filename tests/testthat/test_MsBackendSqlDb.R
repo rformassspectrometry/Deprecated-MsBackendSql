@@ -43,13 +43,15 @@ test_that("show,MsBackendSqlDb works", {
 
 test_that("Spectra,character works", {
     conn <- dbConnect(SQLite(), "msdata.db")
-    res <- Spectra(sciexmzMLAll, backend = MsBackendSqlDb(dbcon = conn),
-                                 BPPARAM = SerialParam())
+    res <- Spectra(normalizePath(sciexmzMLAll), 
+                   backend = MsBackendSqlDb(dbcon = conn),
+                   BPPARAM = SerialParam())
     expect_true(is(res@backend, "MsBackendSqlDb"))
-    expect_equal(unique(res@backend$dataStorage), sciexmzMLAll)
+    expect_equal(unique(sciexmzMLAll(res@backend$dataStorage)), 
+                 normalizePath(sciexmzMLAll))
     expect_identical(rtime(res), rtime(sciex_mzR_All))
   
-    res_2 <- Spectra(sciexmzMLAll)
+    res_2 <- Spectra(normalizePath(sciexmzMLAll))
     expect_identical(rtime(res), rtime(res_2))
   
     show(res)
@@ -75,14 +77,6 @@ test_that("backendMerge,MsBackendSqlDb works", {
     expect_identical(res$intensity, sciexCombined$intensity)
     expect_identical(res$rtime, sciexCombined$rtime)
     expect_identical(res$msLevel, sciexCombined$msLevel)
-})
-
-test_that("Spectra,character works", {
-    res <- Spectra(normalizePath(sciexmzML1), backend = MsBackendSqlDb())
-    expect_true(is(res@backend, "MsBackendSqlDb"))
-    expect_identical(rtime(res), rtime(sciex_mzR1))
-  
-    show(res)
 })
 
 test_that("acquisitionNum, MsBackendSqlDb works", {
