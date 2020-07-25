@@ -78,9 +78,9 @@ test_that("backendMerge,MsBackendSqlDb works", {
 })
 
 test_that("Spectra,character works", {
-    res <- Spectra(sciexmzML1, backend = MsBackendSqlDb())
+    res <- Spectra(normalizePath(sciexmzML1), backend = MsBackendSqlDb())
     expect_true(is(res@backend, "MsBackendSqlDb"))
-    expect_equal(unique(res@backend$dataStorage), sciexmzML1)
+    expect_equal(unique(res@backend$dataStorage), normalizePath(sciexmzML1))
     expect_identical(rtime(res), rtime(sciex_mzR1))
   
     show(res)
