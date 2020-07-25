@@ -93,14 +93,14 @@ spectra originating from the second file and acquired between 175 and
 
 ```{r filtering-mzr}
 sp_mzr %>%
-    filterDataOrigin(fls[2]) %>%
+    filterDataOrigin(normalizePath(fls[2])) %>%
     filterRt(c(175, 189))
 ```
 
 
 ```{r filtering-sql}
 sp_sql %>%
-    filterDataOrigin(fls[2]) %>%
+    filterDataOrigin(normalizePath(fls[2])) %>%
     filterRt(c(175, 189))
 ```
 
@@ -136,8 +136,8 @@ small `MsBackendSqlDb` backends. Firstly, we can create 2 distinct
 `Spectra` instances with `MsBackendMzR` backends:
 
 ```{r merge-sql1}
-sp_mzr1 <- sp_mzr %>% filterDataOrigin(fls[1])
-sp_mzr2 <- sp_mzr %>% filterDataOrigin(fls[2])
+sp_mzr1 <- sp_mzr %>% filterDataOrigin(normalizePath(fls[1]))
+sp_mzr2 <- sp_mzr %>% filterDataOrigin(normalizePath(fls[2]))
 ```
 
 We switch the backends to `MsBackendSqlDb`:
