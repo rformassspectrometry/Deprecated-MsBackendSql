@@ -302,3 +302,70 @@ test_that("precursorCharge,MsBackendSqlDb works", {
     be <- backendInitialize(MsBackendSqlDb(), data = df)
     expect_equal(precursorCharge(be), c(-1L, 1L, 0L))
 })
+
+test_that("precursorIntensity,MsBackendSqlDb works", {
+    expect_true(is(precursorCharge(sciexSQL1), "numeric"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_match(precursorIntensity(be), "Columns missing from database.")
+  
+    df$precursorIntensity <- c(134.4, 4322.2, 862.54)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(precursorIntensity(be), c(134.4, 4322.2, 862.54))
+})
+
+test_that("precursorMz,MsBackendSqlDb works", {
+    expect_true(is(precursorMz(sciexSQL1), "numeric"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_match(precursorMz(be), "Columns missing from database.")
+  
+    df$precursorMz <- c(134.4, 342.2, 862.54)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(precursorMz(be), c(134.4, 342.2, 862.54))
+})
+
+test_that("rtime,MsBackendSqlDb works", {
+    expect_true(is(rtime(sciexSQL1), "numeric"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(rtime(be), c(1.2, 3.4, 5.6))
+  
+    df$rtime <- c(123, 124, 125)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(rtime(be), c(123, 124, 125))
+})
+
+
+test_that("scanIndex,MsBackendSqlDb works", {
+    expect_true(is(scanIndex(sciexSQL1), "integer"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(scanIndex(be), c(4, 5, 6))
+  
+    df$scanIndex <- c(123, 124, 125)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(scanIndex(be), c(123, 124, 125))
+})
+
+
+test_that("smoothed,MsBackendSqlDb works", {
+    ## smoothed(sciexSQL1) returns "NA" values
+    expect_true(is(smoothed(sciexSQL1), "logical"))
+  
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_match(smoothed(be), "Columns missing from database.")
+  
+    df$smoothed <- c(1, 0, 1)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(smoothed(be), c(TRUE, FALSE, TRUE))
+    
+    df$smoothed <- c(FALSE, FALSE, TRUE)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(smoothed(be), c(FALSE, FALSE, TRUE))
+})

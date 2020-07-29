@@ -444,7 +444,12 @@ setMethod("scanIndex", "MsBackendSqlDb", function(object) {
 #'
 #' @importMethodsFrom ProtGenerics smoothed
 setMethod("smoothed", "MsBackendSqlDb", function(object) {
-    as.logical(.get_db_data(object, "smoothed"))
+    results <- .get_db_data(object, "smoothed")
+    if (identical(results, "Columns missing from database.")) {
+        return("Columns missing from database.")
+    } else {
+        as.logical(results)
+    }
 })
 
 #' @rdname hidden_aliases

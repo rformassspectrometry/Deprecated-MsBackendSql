@@ -1,0 +1,289 @@
+diff a/tests/testthat/test_MsBackendSqlDb-functions.R b/tests/testthat/test_MsBackendSqlDb-functions.R	(rejected hunks)
+@@ -1,50 +1,251 @@
++test_that("MsBackendSqlDb works", {
++    sql <- MsBackendSqlDb()
++    expect_true(is(sql, "MsBackendSqlDb"))
++    expect_true(is(sql@dbcon, "SQLiteConnection"))
++    
++    connCon <- dbConnect(SQLite(), "constructor1.db")
++    sql1 <- MsBackendSqlDb(connCon)
++    expect_true(is(sql1, "MsBackendSqlDb"))
++    expect_true(is(sql1@dbcon, "SQLiteConnection"))
++})
++
++test_that(".valid_db_table_exists works", {
++    sql <- MsBackendSqlDb()
++    expect_match(.valid_db_table_exists(sql@dbcon, "msdata"), 
++                 "database table 'msdata' not found") 
++    expect_null(.valid_db_table_exists(sciexSQL1@dbcon, "msdata"))
++    expect_match(.valid_db_table_exists(sciexSQL1@dbcon, "foobar"), 
++                 "not found")
++})
++
++test_that(".valid_db_table_columns works", {
++    expect_null(.valid_db_table_columns(sciexSQL1@dbcon, "msdata", 
++                                        pkey = "_pkey"))
++    expect_match(.valid_db_table_columns(sciexSQL1@dbcon, 
++                                         "msdata", pkey = "pkey"),
++                 "required .* not found")
++    expect_match(.valid_db_table_columns(sciexSQL1@dbcon, "msdata",
++                                         columns = "foo", pkey = "_pkey"),
++                 "required .* foo not found")
++    
++    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
++    on.exit(DBI::dbDisconnect(con))
++    msdf$mz <- c(1.5, 3.6, 8.3)
++    msdf$intensity <- c(5.0, 9, 15)
++    DBI::dbWriteTable(con, "msdata", msdf)
++    
++    msdf2 <- msdf
++    msdf2$msLevel <- as.character(msdf2$msLevel)
++    msdf2$pkey <- c(1L, 2L, 3L)
++    DBI::dbWriteTable(con, "msdata2test", msdf2)
++    dbSendQuery(con, "ALTER TABLE msdata2test RENAME COLUMN pkey to _pkey")
++    expect_match(.valid_db_table_columns(con, "msdata2test", pkey = "_pkey"),
++                 "wrong data type")
++})
++
++test_that(".write_mzR_to_db works", {
++    sql <- MsBackendSqlDb()
++    on.exit(DBI::dbDisconnect(sql@dbcon))
++    expect_equal(.write_mzR_to_db(sciexmzML1, sql@dbcon), 10)
++    expect_equal(dbListTables(sql@dbcon), "msdata")
++})
++
++test_that(".initiate_data_to_table works", {
++    data <- dbReadTable(sciexSQL1@dbcon, "msdata")
++    ## "_pkey" column from SQLite DB will be renamed to "X_pkey" by R
++    data <- data[, names(data)[!names(data) %in% "X_pkey"]]
++    sql <- MsBackendSqlDb()
++    on.exit(DBI::dbDisconnect(sql@dbcon))
++    ## Before this function, there shall not be a table in the connection obj
++    expect_identical(dbListTables(sql@dbcon), character(0))
++    
++    x <- .initiate_data_to_table(data, sql@dbcon)
++    ## This function shall return a data.frame for other functions
++    expect_true(is(x, "data.frame"))
++    ## We can also expect by default, `msdata` table is created in the con obj
++    expect_match(dbListTables(sql@dbcon), "msdata")
++    ## We can test whether `mz` and `intensity` columns have type as BLOB
++    typeCol <- dbGetQuery(sql@dbcon, "PRAGMA table_info(msdata)")
++    expect_match(typeCol[typeCol$name %in% c("mz", "intensity"),]$type,
++                 "BLOB")
++})
++
+ test_that(".write_data_to_db works", {
+-    expect_equal(.write_data_to_db(test_tbl[,1:3], test_con1, "test_tbl1"),
+-                 7534)
++    data <- dbReadTable(sciexSQL1@dbcon, "msdata")
++    ## "_pkey" column from SQLite DB will be renamed to "X_pkey" by R
++    data <- data[, names(data)[!names(data) %in% "X_pkey"]]
++    sql <- MsBackendSqlDb()
++    on.exit(DBI::dbDisconnect(sql@dbcon))
++    ## Before this function, there shall not be a table in the connection obj
++    expect_identical(dbListTables(sql@dbcon), character(0))
++    
++    ## This function shall append 10L rows to the dbcon
++    ## and create a SQLite table "msdata"
++    expect_identical(.write_data_to_db(data, sql@dbcon), 10L)
++    expect_match(dbListTables(sql@dbcon), "msdata")
++    ## After using this function, there shall be a table `msdata`
++    ## has 10 rows
++    rowNum <- dbGetQuery(sql@dbcon, "SELECT COUNT(*) FROM msdata")
++    expect_identical(rowNum[1, 1], 
++                 10L)
++    
++    ## We can append another data (same dimensions as before) 
++    ## to this connection obj
++    expect_identical(.write_data_to_db(data, sql@dbcon), 10L)
++    ## Now `msdata` has 20 rows
++    rowNum2 <- dbGetQuery(sql@dbcon, "SELECT COUNT(*) FROM msdata")
++    expect_identical(rowNum2[1, 1], 
++                     20L)
+ })
+ 
+ test_that(".get_db_data works", {
+-    expect_match(.get_db_data(test_be2, "Random"),
++    expect_match(.get_db_data(sciexSQL1, "Random"),
+                  "Columns missing from database")
+-    expect_equal(.get_db_data(test_be2, "totIonCurrent"), 
+-                 test_tbl$totIonCurrent) 
+-    expect_equal(.get_db_data(test_be2, "acquisitionNum"), 
+-                 test_tbl$acquisitionNum)
++    expect_equal(.get_db_data(sciexSQL1, "totIonCurrent"), 
++                 testTbl$totIonCurrent) 
++    expect_equal(.get_db_data(sciexSQL1, "highMZ"), 
++                 testTbl$highMZ)
++    expect_true(is(.get_db_data(sciexSQL1, c("highMZ","mz", "intensity")), 
++                   "DFrame"))
++    expect_true(is(.get_db_data(sciexSQL1, "mz"),
++                   "SimpleNumericList"))
+ })
+ 
++test_that(".subset_backend_SqlDb works", {
++    ## If missing "i"
++    sql0 <- .subset_backend_SqlDb(sciexSQL1)
++    ## `sql0`` shall be equal to `sciexSQL1`
++    expect_identical(sql0@rows, sciexSQL1@rows)
++    
++    ## While `i` is provided as integer()
++    sql1 <- .subset_backend_SqlDb(sciexSQL1, c(4, 1, 3))
++    expect_identical(length(sql1), 3L)
++    expect_identical(sql1@rows, c(4L, 1L, 3L))
++    
++    ## While `i` is provided as logical vector
++    logI <- c(rep(c(TRUE, FALSE), 3), FALSE, FALSE, FALSE, TRUE)
++    sql2 <- .subset_backend_SqlDb(sciexSQL1, logI)
++    expect_identical(length(sql2), 4L)
++    expect_identical(sql2@rows, c(1L, 3L, 5L, 10L))
++})
+ 
+-msdf <- data.frame(
+-    pkey = 1L:3L,
+-    rtime = c(1.2, 3.4, 5.6),
+-    msLevel = c(1L, 2L, 2L),
+-    dataStorage = "<db>",
+-    dataOrigin = "file.mzML",
+-    stringsAsFactors = FALSE
+-)
+-msdf$mz <- lapply(1:3, serialize, NULL)
+-msdf$intensity <- lapply(4:6, serialize, NULL)
++test_that(".sel_file_sql works", {
++    ## The case of `dataStorage` is omitted here
++    ## The current values of `dataStorage` is `<db>`
++    
++    dataOriginLog <- c(TRUE, FALSE, TRUE, FALSE, TRUE,
++                       FALSE, TRUE, FALSE, TRUE, FALSE)
++    expect_error(.sel_file_sql(sciexSQL1, dataOrigin = dataOriginLog),
++                 "'dataOrigin' has to be either an integer .*, or its name")
++    expect_error(.sel_file_sql(sciexSQL1, dataOrigin = 0.5),
++                 "'dataOrigin' should be an integer between *.")
++    expect_error(.sel_file_sql(sciexCombined, dataOrigin = 3),
++                 "'dataOrigin' should be an integer between 1 and 2")
++    ## Correct case: Only the 2nd file is selected
++    expect_identical(.sel_file_sql(sciexCombined, dataOrigin = 2),
++                 c(rep(FALSE, 10), rep(TRUE, 10)))
++})
+ 
+-con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+-on.exit(DBI::dbDisconnect(con))
++test_that(".combine_backend_SqlDb works", {
++    expect_error(.combine_backend_SqlDb(c(sciexSQL1, sciex_mzR1)),
++                 "Can only merge backends of the same type: MsBackendSqlDb")
++    testSQL <- .combine_backend_SqlDb(c(sciexSQL1))
++    expect_true(is(testSQL, "MsBackendSqlDb"))
++    expect_identical(testSQL$mz, sciexSQL1$mz)
++    expect_identical(testSQL$intensity, sciexSQL1$intensity)
++    expect_identical(testSQL@dbtable, sciexSQL1@dbtable)
++    
++    ## Test the case while we merge `sciexSQL1` and `sciexSQL2`
++    testSQLMer <- .combine_backend_SqlDb(c(sciexSQL1, sciexSQL2))
++    expect_identical(testSQLMer$mz, sciexCombined$mz)
++    expect_identical(testSQLMer$intensity, sciexCombined$intensity)
++    expect_identical(testSQLMer@dbtable, sciexCombined@dbtable)
++})
+ 
+-DBI::dbWriteTable(con, "msdata", msdf)
++test_that(".attach_migration works", {
++    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
++    testSQL2 <- .clone_MsBackendSqlDb(sciexSQL2)
++    ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
++    testSQL3 <- testSQL2
++    testSQL4 <- testSQL2
++    testSQL3@rows <- seq(1L, 10L, 2L)
++    testSQL4@rows <- seq(2L, 10L, 2L)
++    testSQL5 <- .attach_migration(testSQL3, testSQL4)
++    expect_true(identical(setdiff(testSQL2@rows, testSQL5@rows), 
++                          setdiff(testSQL5@rows, testSQL2@rows)))
++    rm(testSQL5)
++    
++    ## If `x` and `y` are sharing the same dbfile, and using different dbtable
++    rm(testSQL1)
++    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
++    ## We put testSQL2's SQLite table into testSQL1@dbcon
++    dbExecute(testSQL1@dbcon, paste0("ATTACH DATABASE '",
++                                     testSQL2@dbcon@dbname, "' AS toMerge"))
++    res <- dbSendQuery(testSQL1@dbcon, "CREATE TABLE msdata2 AS
++                                        SELECT *
++                                        FROM toMerge.msdata")
++    suppressWarnings(dbExecute(testSQL1@dbcon, "DETACH DATABASE toMerge"))
++    ## `MsBackendSqlDb` object `testSQL6` shares the same dbfile with
++    ## testSQL1, but using a differetnt SQLite table `msdata2`
++    testSQL6 <- testSQL1
++    testSQL6@dbtable <- "msdata2"
++    ## testSQL5 is actually the merged result of `sciexSQL1` and `sciexSQL2`
++    testSQL5 <- .attach_migration(testSQL1, testSQL6)
++    expect_identical(length(testSQL5), 20L)
++    expect_identical(testSQL5$mz, sciexCombined$mz)
++    expect_identical(testSQL5$intensity, sciexCombined$intensity)
++    expect_identical(testSQL5$basePeakIntensity, 
++                     sciexCombined$basePeakIntensity)
++    rm(testSQL1, testSQL5)
++    
++    ## While x and y have different db files:
++    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
++    testSQL5 <- .attach_migration(testSQL1, testSQL2)
++    expect_identical(length(testSQL5), 20L)
++    expect_identical(testSQL5$mz, sciexCombined$mz)
++    expect_identical(testSQL5$intensity, sciexCombined$intensity)
++    expect_identical(testSQL5$basePeakIntensity, 
++                     sciexCombined$basePeakIntensity)
++})
+ 
+-test_that(".valid_db_table_exists", {
+-    expect_null(.valid_db_table_exists(con, "msdata"))
+-    expect_match(.valid_db_table_exists(con, "foobar"), "not found")
++test_that(".clone_MsBackendSqlDb works", {
++    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
++    expect_identical(length(testSQL1), length(sciexSQL1))
++    expect_identical(testSQL1$mz, sciexSQL1$mz)
++    expect_identical(testSQL1$intensity, sciexSQL1$intensity)
++    expect_identical(testSQL1$basePeakIntensity, 
++                     sciexSQL1$basePeakIntensity)
++    expect_false(identical(testSQL1@dbcon@dbname,
++                           sciexSQL1@dbcon@dbname))
+ })
+ 
+-test_that(".valid_db_table_columns", {
+-    expect_null(.valid_db_table_columns(con, "msdata", pkey = "pkey"))
+-    expect_match(.valid_db_table_columns(con, "msdata", pkey = "_pkey"),
+-                 "required .* not found")
+-    expect_match(.valid_db_table_columns(con, "msdata",
+-                                         columns = "foo", pkey = "pkey"),
+-                 "required .* foo not found")
++test_that(".update_db_table_columns works", {
++    ## Clone `MsBackendSqlDb` instance `sciexSQL1`
++    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
++    testSQL1 <- .update_db_table_columns(testSQL1, "msLevel", 
++                                         rep("testLevel", length(testSQL1)))
++    testSQL1 <- .update_db_table_columns(testSQL1, "mz", 
++                                         mz(sciexSQL2))
++    testSQL1 <- .update_db_table_columns(testSQL1, "intensity", 
++                                         intensity(sciexSQL2))
++    expect_identical(testSQL1$msLevel, rep("testLevel", length(testSQL1)))
++    expect_identical(testSQL1$mz, sciexSQL2$mz)
++    expect_identical(testSQL1$intensity, sciexSQL2$intensity)
++})
++
++test_that(".insert_db_table_columns works", {
++    ## Clone `MsBackendSqlDb` instance `sciexSQL1`
++    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
++    mz2 <- mz(sciexSQL2)
++    origin2 <- dataOrigin(sciexSQL2)
++    rtime2 <- rtime(sciexSQL2)
+     
+-    msdf2 <- msdf
+-    msdf2$msLevel <- as.character(msdf2$msLevel)
+-    DBI::dbWriteTable(con, "msdata2", msdf2)
+-    expect_match(.valid_db_table_columns(con, "msdata2", pkey = "pkey"),
+-                 "wrong data type")
++    testSQL1 <- .insert_db_table_columns(testSQL1, "mzTest", mz2)
++    testSQL1 <- .insert_db_table_columns(testSQL1, "originTest", origin2)
++    testSQL1 <- .insert_db_table_columns(testSQL1, "rtimeTest", rtime2)
++    
++    ## expect_identical(testSQL1$mzTest, mz2) failed,
++    ## it requires modifications of `.get_db_data`
++    expect_identical(testSQL1$originTest, origin2)
++    expect_identical(testSQL1$rtimeTest, rtime2)
+ })
+\ No newline at end of file
