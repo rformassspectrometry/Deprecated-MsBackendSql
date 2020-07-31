@@ -340,11 +340,13 @@ MsBackendSqlDb <- function(dbcon) {
                                                " SELECT ", 
                                                paste(spectraVariables(y), 
                                                      collapse = ", "), 
-                                               " FROM ", y@dbtable))
+                                               " FROM ", y@dbtable, 
+                                               " WHERE _pkey = ?"))
+        qry <- dbBind(qry, list(y@rows))
         dbClearResult(qry)
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- unlist(c(x@rows, y@rows + x_length))
+        x@rows <- unlist(c(x@rows, seq_along(y@rows) + x_length))
         x@modCount <- unlist(c(x@modCount, y@modCount),
                              use.names = FALSE)
         return(x) } else {
@@ -356,16 +358,19 @@ MsBackendSqlDb <- function(dbcon) {
         ## Use `ATTACH` statement to migrate y@dbtable to the db file of x
         dbExecute(x@dbcon, paste0("ATTACH DATABASE '",
                                   y@dbcon@dbname, "' AS toMerge"))
-        st <- dbSendStatement(x@dbcon, paste0("insert into ", x@dbtable, " (", 
+        st <- dbSendStatement(x@dbcon, paste0("INSERT INTO ", x@dbtable, " (", 
                                               paste(spectraVariables(x), 
                                               collapse = ", "), ") ",
-                                        "select ", paste(spectraVariables(y), 
+                                        "SELECT ", paste(spectraVariables(y), 
                                               collapse = ", "), 
-                                            " from toMerge.", y@dbtable))
+                                            " FROM toMerge.", y@dbtable,
+                                        " WHERE _pkey = ?"))
+        st <- dbBind(st, list(y@rows))
+        dbClearResult(st)
         suppressWarnings(dbExecute(x@dbcon, "DETACH DATABASE toMerge"))
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- unlist(c(x@rows, y@rows + x_length))
+        x@rows <- unlist(c(x@rows, seq_along(y@rows) + x_length))
         x@modCount <- unlist(c(x@modCount, y@modCount),
                              use.names = FALSE)
         return(x) 

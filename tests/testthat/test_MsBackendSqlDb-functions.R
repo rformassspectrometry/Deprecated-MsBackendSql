@@ -171,13 +171,15 @@ test_that(".attach_migration works", {
     testSQL3@rows <- seq(1L, 10L, 2L)
     testSQL4@rows <- seq(2L, 10L, 2L)
     testSQL5 <- .attach_migration(testSQL3, testSQL4)
+    expect_identical(testSQL3@dbcon, testSQL4@dbcon)
+    expect_identical(testSQL3@dbcon, testSQL5@dbcon)
+    expect_identical(testSQL3@dbtable, testSQL5@dbtable)
     expect_true(identical(setdiff(testSQL2@rows, testSQL5@rows), 
                           setdiff(testSQL5@rows, testSQL2@rows)))
+    expect_identical(testSQL5@rows, unlist(c(testSQL3@rows, testSQL4@rows)))
     rm(testSQL5)
     
     ## If `x` and `y` are sharing the same dbfile, and using different dbtable
-    rm(testSQL1)
-    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
     ## We put testSQL2's SQLite table into testSQL1@dbcon
     dbExecute(testSQL1@dbcon, paste0("ATTACH DATABASE '",
                                      testSQL2@dbcon@dbname, "' AS toMerge"))
@@ -189,23 +191,35 @@ test_that(".attach_migration works", {
     ## testSQL1, but using a differetnt SQLite table `msdata2`
     testSQL6 <- testSQL1
     testSQL6@dbtable <- "msdata2"
-    ## testSQL5 is actually the merged result of `sciexSQL1` and `sciexSQL2`
+    ## Only keep 4 rows in the second MSBackendSqlDb instance
+    testSQL6@rows <- unlist(c(2L, 5L, 7L, 9L))
+    ## testSQL5 is used as the merged result
     testSQL5 <- .attach_migration(testSQL1, testSQL6)
-    expect_identical(length(testSQL5), 20L)
-    expect_identical(testSQL5$mz, sciexCombined$mz)
-    expect_identical(testSQL5$intensity, sciexCombined$intensity)
-    expect_identical(testSQL5$basePeakIntensity, 
-                     sciexCombined$basePeakIntensity)
+    expect_identical(testSQL1@dbcon, testSQL5@dbcon)
+    expect_identical(testSQL6@dbcon, testSQL5@dbcon)
+    ## testSQL5 will share the same "dbtable" with testSQL1
+    expect_identical(testSQL1@dbtable, testSQL5@dbtable)
+    expect_identical(length(testSQL5), 14L)
+    expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL6))
+    expect_identical(testSQL5@rows, unlist(c(testSQL1@rows, 11:14)))
+    ## We expect, the dbtable in testSQL5 only preserved 14 rows
+    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 14L)
     rm(testSQL1, testSQL5)
     
-    ## While x and y have different db files:
+    ## While x and y have different db files, but dbtables have the same name:
     testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    testSQL2@rows <- unlist(c(2L, 5L, 7L, 9L))
     testSQL5 <- .attach_migration(testSQL1, testSQL2)
-    expect_identical(length(testSQL5), 20L)
-    expect_identical(testSQL5$mz, sciexCombined$mz)
-    expect_identical(testSQL5$intensity, sciexCombined$intensity)
-    expect_identical(testSQL5$basePeakIntensity, 
-                     sciexCombined$basePeakIntensity)
+    
+    expect_identical(testSQL1@dbcon, testSQL5@dbcon)
+    ## testSQL1/testSQL5 has different dbcon obj than testSQL2
+    expect_identical(identical(testSQL1@dbcon, testSQL2@dbcon), FALSE)
+    expect_identical(testSQL1@dbtable, testSQL5@dbtable)
+    expect_identical(length(testSQL5), 14L)
+    expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL2))
+    expect_identical(testSQL5@rows, unlist(c(testSQL1@rows, 11:14)))
+    ## We expect, the dbtable in testSQL5 only preserved 14 rows
+    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 14L)
 })
 
 test_that(".clone_MsBackendSqlDb works", {
