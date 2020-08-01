@@ -57,11 +57,14 @@ test_that("Spectra,character works", {
 
 test_that("backendMerge,MsBackendSqlDb works", {
     be <- backendInitialize(MsBackendSqlDb(), data = msdf)
-  
+    
+    ## Test for conditions:
     expect_equal(backendMerge(sciexSQL1), sciexSQL1)
     expect_error(backendMerge(sciexSQL1, 4), "backends of the same type")
   
-    res <- backendMerge(sciexSQL1, sciexSQL2)
+    ## Test case 1: when `dbcon` isn't provided
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- backendMerge(testSQL1, sciexSQL2)
     expect_true(is(res, "MsBackendSqlDb"))
     expect_identical(res$dataStorage, rep("<db>", 20))
     expect_identical(dataStorage(res), rep("<db>", 20))
@@ -70,11 +73,47 @@ test_that("backendMerge,MsBackendSqlDb works", {
     expect_true(is(res$precScanNum, "integer"))
     expect_true(is(res$mz, "NumericList"))
     expect_true(is(res$intensity, "SimpleNumericList"))
-  
     expect_identical(res$mz, sciexCombined$mz)
     expect_identical(res$intensity, sciexCombined$intensity)
     expect_identical(res$rtime, sciexCombined$rtime)
     expect_identical(res$msLevel, sciexCombined$msLevel)
+    expect_identical(res@dbtable, sciexCombined@dbtable)
+    expect_identical(res@dbcon, testSQL1@dbcon)
+    rm(res, testSQL1)
+    
+    ## Extra test with Spectra constructor
+    ## Also the test case, while `dbcon` isn't provided.
+    connTest <- dbConnect(SQLite(), "tmpMerge1.db")
+    sp_test <- Spectra(sciexmzMLAll, 
+                       backend = MsBackendSqlDb(dbcon = connTest),
+                       BPPARAM = SerialParam())
+    expect_identical(sp_test@backend@dbtable, dbListTables(connTest))
+    expect_identical(sp_test@backend@dbcon, connTest)
+    expect_identical(sp_test$mz, sciexCombined$mz)
+    expect_identical(sp_test$intensity, sciexCombined$intensity)
+    expect_identical(sp_test$rtime, sciexCombined$rtime)
+    expect_identical(sp_test$msLevel, sciexCombined$msLevel)
+    expect_identical(nrow(dbReadTable(sp_test@backend@dbcon, 
+                                      sp_test@backend@dbtable)), 20L)
+    
+    ## Test case 2:
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    connTest2 <- dbConnect(SQLite(), "tmp2.db")
+    res <- backendMerge(testSQL1, sciexSQL2, dbcon = connTest2)
+    expect_identical(res@dbcon, connTest2)
+    expect_identical(dbListTables(connTest2), res@dbtable)
+    expect_identical(nrow(dbReadTable(res@dbcon, 
+                                      res@dbtable)), 20L)
+    expect_identical(res$mz, sciexCombined$mz)
+    expect_identical(res$intensity, sciexCombined$intensity)
+    expect_identical(res$rtime, sciexCombined$rtime)
+    expect_identical(res$msLevel, sciexCombined$msLevel)
+    ## And the function doesn't have impact over testSQL1
+    expect_identical(nrow(dbReadTable(testSQL1@dbcon, 
+                                      testSQL1@dbtable)), 10L)
+    expect_identical(testSQL1@dbtable, sciexSQL1@dbtable)
+    expect_identical(identical(testSQL1@dbcon, res@dbcon), FALSE)
+    expect_identical(asDataFrame(testSQL1), asDataFrame(sciexSQL1))
 })
 
 test_that("acquisitionNum, MsBackendSqlDb works", {
