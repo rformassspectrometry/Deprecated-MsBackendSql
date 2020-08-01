@@ -147,19 +147,49 @@ test_that(".sel_file_sql works", {
 })
 
 test_that(".combine_backend_SqlDb works", {
+    ## Conditional case: objects with different Backend Types
     expect_error(.combine_backend_SqlDb(c(sciexSQL1, sciex_mzR1)),
                  "Can only merge backends of the same type: MsBackendSqlDb")
+    
+    ## Conditional case: objects with different spectra variables
+    dfSQL <- backendInitialize(MsBackendSqlDb(), data = msdf)
+    expect_error(.combine_backend_SqlDb(c(dfSQL, sciexSQL1)),
+                 "Can only merge backends with the same spectra variables")
+    
+    ## Test case 1: if (length(objects) == 1)
     testSQL <- .combine_backend_SqlDb(c(sciexSQL1))
     expect_true(is(testSQL, "MsBackendSqlDb"))
     expect_identical(testSQL$mz, sciexSQL1$mz)
     expect_identical(testSQL$intensity, sciexSQL1$intensity)
     expect_identical(testSQL@dbtable, sciexSQL1@dbtable)
+    expect_identical(testSQL@dbcon, sciexSQL1@dbcon)
     
-    ## Test the case while we merge `sciexSQL1` and `sciexSQL2`
-    testSQLMer <- .combine_backend_SqlDb(c(sciexSQL1, sciexSQL2))
+    ## Test Case 2: while we merge `sciexSQL1/testSQL1` and `sciexSQL2`
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    testSQLMer <- .combine_backend_SqlDb(c(testSQL1, sciexSQL2))
     expect_identical(testSQLMer$mz, sciexCombined$mz)
     expect_identical(testSQLMer$intensity, sciexCombined$intensity)
     expect_identical(testSQLMer@dbtable, sciexCombined@dbtable)
+    expect_identical(testSQLMer@dbcon, testSQL1@dbcon)
+    rm(testSQLMer)
+    
+    ## Test Case 3: while we merge `sciexSQL1/testSQL1` and `sciexSQL2`
+    ##     with dbcon provided
+    connTest <- dbConnect(SQLite(), "tmp.db")
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    testSQLMer <- .combine_backend_SqlDb(c(testSQL1, sciexSQL2), 
+                                         dbcon = connTest)
+    expect_identical(testSQLMer$mz, sciexCombined$mz)
+    expect_identical(testSQLMer$intensity, sciexCombined$intensity)
+    expect_identical(testSQLMer@dbtable, sciexCombined@dbtable)
+    expect_identical(testSQLMer@dbcon, connTest)
+    expect_identical(dbListTables(connTest), testSQLMer@dbtable)
+    expect_identical(nrow(dbReadTable(testSQLMer@dbcon, 
+                                      testSQLMer@dbtable)), 20L)
+    ## As we expected, testSQL1 wasn't modified by the function
+    expect_identical(dbListTables(testSQL1@dbcon), testSQL1@dbtable)
+    expect_identical(nrow(dbReadTable(testSQL1@dbcon, 
+                                      testSQL1@dbtable)), 10L)
 })
 
 test_that(".attach_migration works", {

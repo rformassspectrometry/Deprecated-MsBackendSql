@@ -299,11 +299,18 @@ MsBackendSqlDb <- function(dbcon) {
     spcVar <- lapply(objects, function(z) spectraVariables(z))
     if (!length(unique(spcVar)) == 1)
         stop("Can only merge backends with the same spectra variables.")
-    res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
-    for (i in 2:length(objects)) {
-        res <- .attach_migration(res, objects[[i]])
+    if (missing(dbcon)) {
+        for (i in 2:length(objects)) {
+            objects[[1]] <- .attach_migration(objects[[1]], objects[[i]])
+        }
+        return(objects[[1]])
+    } else {
+        res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
+        for (i in 2:length(objects)) {
+            res <- .attach_migration(res, objects[[i]])
+        }
+        return(res)
     }
-    res
 }
 
 #' Helper function for schema migration, which will use `ATTACH` statement
