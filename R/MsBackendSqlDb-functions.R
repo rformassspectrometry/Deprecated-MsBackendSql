@@ -328,11 +328,11 @@ MsBackendSqlDb <- function(dbcon) {
 #' @noRd
 .attach_migration <- function(x, y) {
     ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
+    ## Hence `modCount` stays the same for obj `x`,
+    ## we don't have any database writing operations here. 
     if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         identical(x@dbtable, y@dbtable)) {
         x@rows <- c(x@rows, y@rows)
-        x@modCount <- unlist(c(x@modCount, y@modCount),
-                             use.names = FALSE)
         return(x) } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         (!identical(x@dbtable, y@dbtable))) {
         ## If `x` and `y` are sharing the same dbfile, and using different dbtable
@@ -353,9 +353,10 @@ MsBackendSqlDb <- function(dbcon) {
         dbClearResult(qry)
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- unlist(c(x@rows, seq_along(y@rows) + x_length))
-        x@modCount <- unlist(c(x@modCount, y@modCount),
-                             use.names = FALSE)
+        x@rows <- c(x@rows, seq_along(y@rows) + x_length)
+        ## Append `y.dbtable` to the end of `x.dbtable`
+        ## The writing operation increases "1".
+        x@modCount <- x@modCount + 1L
         return(x) } else {
         ## While x and y have different db files.
         ## We want to know the length (row numbers) of x@dbtable
@@ -377,9 +378,8 @@ MsBackendSqlDb <- function(dbcon) {
         suppressWarnings(dbExecute(x@dbcon, "DETACH DATABASE toMerge"))
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- unlist(c(x@rows, seq_along(y@rows) + x_length))
-        x@modCount <- unlist(c(x@modCount, y@modCount),
-                             use.names = FALSE)
+        x@rows <- c(x@rows, seq_along(y@rows) + x_length)
+        x@modCount <- x@modCount + 1L
         return(x) 
        }
 }
