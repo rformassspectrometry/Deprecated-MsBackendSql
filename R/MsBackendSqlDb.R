@@ -189,6 +189,7 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
     object@dbtable <- dbtable
     ## `data` can also be a `data.frame`
     if (nrow(data)) {
+        data$dataStorage <- "<db>"
         .write_data_to_db(data, object@dbcon, dbtable = dbtable)
         ## Since we use `dbAppendTable` to write new data into SQLite db,
         ## The newly appended data will be at the end of the `msdata` table,

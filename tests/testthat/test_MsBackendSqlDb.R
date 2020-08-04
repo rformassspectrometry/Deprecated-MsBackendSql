@@ -4,9 +4,16 @@ test_that("initializeBackend,MsBackendSqlDb works", {
     be <- MsBackendSqlDb()
     expect_true(is(be, "MsBackendSqlDb"))
     ## initialize `MsBackendSqlDb` from `data`
+    df <- DataFrame(msdf)
+    df$dataStorage <- c("fake", "backend", "dataStorage")
+    be3 <- backendInitialize(MsBackendSqlDb(), 
+                             data = df)
+    expect_identical(be3$dataStorage, rep("<db>", 3))
+    expect_identical(dataStorage(be3), rep("<db>", 3))
+    
     be2 <- backendInitialize(be, data = msdf[msdf$msLevel %in% 2L, ])
     expect_true(is(be2, "MsBackendSqlDb"))
-    expect_equal(dataStorage(be2), c("<db>", "<db>"))
+    
     ## Read back `mz` and `intensity` columns as `NumericList`
     expect_true(is(be2$mz, "NumericList"))
     expect_true(is(be2$intensity, "NumericList"))
@@ -28,6 +35,7 @@ test_that("initializeBackend,MsBackendSqlDb works", {
                                    dbcon = test_con1,
                                    files = 4),
                  "invalid 'file' argument")
+    ## sciexSQL1 was initialized using `sciex_subset1.mzML` (on-disk file)
     expect_identical(dataStorage(sciexSQL1)[1], "<db>")
     expect_true(is(mz(sciexSQL1), "NumericList"))
     expect_true(is(intensity(sciexSQL1), "NumericList"))
@@ -47,6 +55,8 @@ test_that("Spectra,character works", {
                                  BPPARAM = SerialParam())
     expect_true(is(res@backend, "MsBackendSqlDb"))
     expect_equal(unique(res@backend$dataStorage), 
+                 "<db>")
+    expect_equal(unique(res@backend$dataOrigin), 
                  normalizePath(sciexmzMLAll))
     expect_identical(rtime(res), rtime(sciex_mzR_All))
     res_2 <- Spectra(sciexmzMLAll)
@@ -407,4 +417,42 @@ test_that("smoothed,MsBackendSqlDb works", {
     df$smoothed <- c(FALSE, FALSE, TRUE)
     be <- backendInitialize(MsBackendSqlDb(), data = df)
     expect_equal(smoothed(be), c(FALSE, FALSE, TRUE))
+})
+
+test_that("spectraNames,MsBackendSqlDb works", {
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    ## This method is explicitly defined to return `NULL`
+    expect_null(spectraNames(be))
+})
+
+test_that("spectraVariables,MsBackendDataFrame works", {
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(spectraVariables(be), names(Spectra:::.SPECTRA_DATA_COLUMNS))
+  
+    df$other_column <- 3
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(spectraVariables(be),
+                 c(names(Spectra:::.SPECTRA_DATA_COLUMNS), "other_column"))
+})
+
+test_that("tic,MsBackendDataFrame works", {
+    df <- DataFrame(msdf)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_true(is(tic(be), "numeric"))
+    expect_equal(tic(be), c(NA_real_, NA_real_, NA_real_))
+    expect_equal(tic(be, initial = FALSE), 
+                 tic(sciexSQL1, initial = FALSE)[1:3])
+  
+    df$totIonCurrent <- c(5, 3, 7)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(tic(be), c(5, 3, 7))
+    expect_equal(tic(be, initial = FALSE), 
+                 tic(sciexSQL1, initial = FALSE)[1:3])
+    df$intensity <- list(5:7, 1:4, 20:29)
+    df$mz <- list(1:3, 1:4, 1:5)
+    be <- backendInitialize(MsBackendSqlDb(), data = df)
+    expect_equal(tic(be, initial = FALSE), 
+                 c(sum(5:7), sum(1:4), sum(20:29)))
 })
