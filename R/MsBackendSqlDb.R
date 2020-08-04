@@ -694,35 +694,3 @@ setMethod("filterRt", "MsBackendSqlDb",
         object
     } else object
 })
-
-
-
-#' Filter the intensity values from a `MsBackendSqlDb` object.  If
-#' only one numeric parameter is provided, the returned intensity will
-#' keep any values larger than the parameter. If two values are
-#' provided, only the intensity values between the two parameters will
-#' be preserved.
-#'
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @param intensities a `numeric` vector either be length 1 or 2.
-#' 
-#' @importFrom IRanges NumericList
-#' 
-#' @export
-#' 
-#' @rdname hidden_aliases
-filterIntensity <- function(x, intensities = numeric()) {
-    if (length(intensities) == 1) {
-        filteredIntensity <- lapply(intensity(x), 
-                                    function(i) (i[i > intensities]))
-        filteredIntensity <- NumericList(filteredIntensity, compress = FALSE)
-    } else if (length(intensities) == 2) {
-        filteredIntensity <- lapply(intensity(x), 
-                                    function(i) (i[i > intensities[1] &
-                                                   i < intensities[2]]))
-        filteredIntensity <- NumericList(filteredIntensity, compress = FALSE)
-    } else {
-        stop("intensities must be of length 1 or 2. See man page for details.")
-    }
-}
