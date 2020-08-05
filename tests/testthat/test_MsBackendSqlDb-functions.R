@@ -225,13 +225,15 @@ test_that(".attach_migration works", {
     ## Only keep 4 rows in the second MSBackendSqlDb instance
     testSQL6@rows <- c(2L, 5L, 7L, 9L)
     ## testSQL5 is used as the merged result
+    testSQL6@modCount <- 6L
+    testSQL6@modCount <- 9L
     testSQL5 <- .attach_migration(testSQL1, testSQL6)
     expect_identical(testSQL1@dbcon, testSQL5@dbcon)
     expect_identical(testSQL6@dbcon, testSQL5@dbcon)
     ## testSQL5 will share the same "dbtable" with testSQL1
     expect_identical(testSQL1@dbtable, testSQL5@dbtable)
     ## `ATTACH` table will increase `modCount` by 1L.
-    expect_identical(testSQL5@modCount, testSQL1@modCount + 1L)
+    expect_identical(testSQL5@modCount, 10L)
     expect_identical(length(testSQL5), 14L)
     expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL6))
     expect_identical(testSQL5@rows, c(testSQL1@rows, 11:14))
@@ -242,13 +244,14 @@ test_that(".attach_migration works", {
     ## While x and y have different db files, but dbtables have the same name:
     testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
     testSQL2@rows <- c(2L, 5L, 7L, 9L)
+    testSQL2@modCount <- 5L
     testSQL5 <- .attach_migration(testSQL1, testSQL2)
     
     expect_identical(testSQL1@dbcon, testSQL5@dbcon)
     ## testSQL1/testSQL5 has different dbcon obj than testSQL2
     expect_identical(identical(testSQL1@dbcon, testSQL2@dbcon), FALSE)
     expect_identical(testSQL1@dbtable, testSQL5@dbtable)
-    expect_identical(testSQL5@modCount, testSQL1@modCount + 1L)
+    expect_identical(testSQL5@modCount, 6L)
     expect_identical(length(testSQL5), 14L)
     expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL2))
     expect_identical(testSQL5@rows, c(testSQL1@rows, 11:14))

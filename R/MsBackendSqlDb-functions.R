@@ -355,8 +355,8 @@ MsBackendSqlDb <- function(dbcon) {
         ## into the tail of x@rows
         x@rows <- c(x@rows, seq_along(y@rows) + x_length)
         ## Append `y.dbtable` to the end of `x.dbtable`
-        ## The writing operation increases "1".
-        x@modCount <- x@modCount + 1L
+        ## The writing operation increases "1" for the merged instance.
+        x@modCount <- max(x@modCount, y@modCount) + 1L
         return(x) } else {
         ## While x and y have different db files.
         ## We want to know the length (row numbers) of x@dbtable
@@ -379,7 +379,7 @@ MsBackendSqlDb <- function(dbcon) {
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
         x@rows <- c(x@rows, seq_along(y@rows) + x_length)
-        x@modCount <- x@modCount + 1L
+        x@modCount <- max(x@modCount, y@modCount) + 1L
         return(x) 
        }
 }
