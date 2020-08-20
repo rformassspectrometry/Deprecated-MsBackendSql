@@ -18,10 +18,10 @@ Authors@R:
              email = "laurent.gatto@uclouvain.be",
              role = "aut",	     
              comment = c(ORCID = "0000-0002-1520-2268")),
-     person(given = "Sebastian", family = "Gibb",
-	    email = "mail@sebastiangibb.de",
-	    role = "aut",
-	    comment = c(ORCID = "0000-0001-7406-4443")))
+      person(given = "Sebastian", family = "Gibb",
+	           email = "mail@sebastiangibb.de",
+	           role = "aut",
+	           comment = c(ORCID = "0000-0001-7406-4443")))
 Depends:
     R (>= 3.5.0),
     Spectra (>= 0.5.0),
@@ -52,7 +52,7 @@ VignetteBuilder: knitr
 BugReports: https://github.com/RforMassSpectrometry/MsBackendSql/issues
 URL: https://github.com/RforMassSpectrometry/MsBackendSql
 biocViews: Infrastructure, Proteomics, MassSpectrometry
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Roxygen: list(markdown=TRUE)
 Collate:
     'hidden_aliases.R'

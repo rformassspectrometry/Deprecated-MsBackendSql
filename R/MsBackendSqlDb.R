@@ -38,6 +38,13 @@ NULL
 #'     be imported. Only required if the database to which `dbcon`
 #'     connects does not already contain the data.
 #'
+#' @param data For `backendInitialize`: `DataFrame` with spectrum
+#'     metadata/data. This parameter can be empty for `MsBackendMzR` backends
+#'     but needs to be provided for `MsBackendDataFrame` and `MsBackendSqlDb` 
+#'     backends.
+#'     
+#' @param ... Additional arguments.
+#'
 #' @param dbtable `character(1)` the name of the database table with
 #'     the data.  Defaults to `dbtable = "msdata"`.
 #'
@@ -107,18 +114,54 @@ setValidity("MsBackendSqlDb", function(object) {
 })
 
 #' @importMethodsFrom methods show
+#' 
+#' @importMethodsFrom S4Vectors head tail
 #'
 #' @importFrom utils capture.output
 #' 
 #' @rdname hidden_aliases
 setMethod("show", "MsBackendSqlDb", function(object) {
-    spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
-    cat(class(object), "with", nrow(spd), "spectra\n")
-    if (nrow(spd)) {
-      txt <- capture.output(print(spd))
-      cat(txt[-1], sep = "\n")
-      sp_cols <- spectraVariables(object)
-      cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
+    if (length(object@rows) == 0) {
+        cat(class(object), "with", 0, "spectra\n")
+  } else if (length(object@rows) > 10) {
+    ## get the first 3 and last 3 rows, and print them
+    columns <- c("msLevel", "rtime", "scanIndex")
+    if (length(setdiff(columns, object@columns)) == 0) {
+        qry <- dbSendQuery(object@dbcon,
+                           paste0("select msLevel, rtime, scanIndex",
+                                " from ", object@dbtable, " where _pkey = ?"))
+        rows_print <- c(head(object@rows, 3), 
+                        tail(object@rows, 3))
+        qry <- dbBind(qry, list(rows_print))
+        res <- dbFetch(qry)
+        dbClearResult(qry)
+        res <- DataFrame(res)
+        cat(class(object), "with", length(object@rows), "spectra\n")
+        txt <- capture.output(print(res))
+        ## Use ellipses to split the head and tails of output string
+        txt_prt <- c(txt[-1][1:5],
+                     "...     ...       ...       ...",
+                     txt[-1][6:8])
+        ## Replace the index numbers with correct row numbers
+        txt_prt[7] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 2), 
+                           txt_prt[7])
+        txt_prt[8] <- gsub("^[0-9]\\s\\s\\s", toString(length(object) - 1), 
+                           txt_prt[8])
+        txt_prt[9] <- gsub("^[0-9]\\s\\s\\s", toString(length(object)), 
+                           txt_prt[9])
+        cat(txt_prt, sep = "\n")
+        sp_cols <- spectraVariables(object)
+        cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
+    } else {
+        return("Columns missing from database.")
+      }
+    } else {
+        spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
+        cat(class(object), "with", nrow(spd), "spectra\n")
+        txt <- capture.output(print(spd))
+        cat(txt[-1], sep = "\n")
+        sp_cols <- spectraVariables(object)
+        cat(" ...", length(sp_cols) - 3, "more variables/columns.\n")
     }
 })
 
@@ -130,40 +173,92 @@ setMethod("show", "MsBackendSqlDb", function(object) {
 #'
 #' @exportMethod backendInitialize
 setMethod("backendInitialize", signature = "MsBackendSqlDb",
-          function(object, dbcon, files = character(), dbtable = "msdata") {
-    if (missing(dbcon) || !dbIsValid(dbcon))
-        stop("A valid connection to a database has to be provided",
-             " with parameter 'dbcon'. See ?MsBackendSqlDb for more",
-             " information.")
+          function(object, files = character(), data = DataFrame(), 
+                   ..., dbcon, dbtable = "msdata") {
+    if (missing(dbcon) || !dbIsValid(dbcon)) {
+        object@dbcon <- object@dbcon
+    } else { 
+        object@dbcon <- dbcon
+    }
+    if (is.data.frame(data))
+        data <- DataFrame(data)
+    if (!is(data, "DataFrame"))
+        stop("'data' is supposed to be a 'DataFrame' with ",
+             "spectrum data")
     pkey <- "_pkey"
-    object@dbcon <- dbcon
     object@dbtable <- dbtable
+    ## `data` can also be a `data.frame`
+    if (nrow(data)) {
+        data$dataStorage <- "<db>"
+        .write_data_to_db(data, object@dbcon, dbtable = dbtable)
+        ## Since we use `dbAppendTable` to write new data into SQLite db,
+        ## The newly appended data will be at the end of the `msdata` table,
+        ## The code below uses SQL statement to fetch the last `nrow(data)`
+        ## _pkey as object@rows
+        res <- dbGetQuery(object@dbcon, paste0("SELECT * FROM (SELECT ",
+                          pkey, " FROM ", dbtable, " ORDER BY ", pkey, 
+                          " DESC LIMIT ", nrow(data), ") ORDER BY ", pkey,
+                          " ASC"))
+        ## res is a data frame, we convert it into integer vector
+        object@rows <- as.integer(res[, 1])
+        } else {
     if (length(files)) {
-        idx <- lapply(files, FUN = .write_mzR_to_db, con = dbcon,
+        idx <- lapply(files, FUN = .write_mzR_to_db, con = object@dbcon,
                       dbtable = dbtable)
-        object@rows <- seq_len(sum(unlist(idx, use.names = FALSE)))
+        ## We sum up all the numbers from idx list
+        sum_idx <- Reduce("+", idx)
+        ## Use the same way to fetch the last `sum_idx` _pkeys
+        res <- dbGetQuery(object@dbcon, paste0("SELECT * FROM (SELECT ",
+                          pkey, " FROM ", dbtable, " ORDER BY ", pkey, 
+                          " DESC LIMIT ", sum_idx, ") ORDER BY ", pkey,
+                          " ASC"))
+        object@rows <- as.integer(res[, 1])
     } else {
         object@rows <- dbGetQuery(
-            dbcon, paste0("select ", pkey, " from ", dbtable))[, pkey]
-    }
-    msg <- .valid_db_table_columns(dbcon, dbtable)
+            object@dbcon, paste0("select ", pkey, " from ", 
+                                 dbtable))[, pkey]
+    } }
+    msg <- .valid_db_table_columns(object@dbcon, dbtable)
     if (length(msg)) stop(msg)
-    cns <- colnames(dbGetQuery(dbcon, paste0("select * from ",
+    cns <- colnames(dbGetQuery(object@dbcon, paste0("select * from ",
                                              dbtable, " limit 2")))
     object@columns <- cns[cns != pkey]
     object@query <- dbSendQuery(
-        dbcon, paste0("select ? from ", dbtable, " where ",
+        object@dbcon, paste0("select ? from ", dbtable, " where ",
                       pkey, "= ?"))
     object
 })
 
-## Data accessors
+#' `backendMerge` method for `MsBackendSqlDb` class. When a `dbcon` is provided,
+#' a new `MsBackendSqlDb` instance will be created; the dbtable from `object` 
+#' will be inserted into the newly created `MsBackendSqlDb` instance, using 
+#' `ATTACH` SQL statement. Or if `dbcon` is missing, the dbtable from other 
+#' `object` will be inserted into this `object` using the same schema migration
+#' mechanism.
+#' 
+#' @param dbcon a `DBIConnection` object to connect to the database.
+#' 
+#' @importMethodsFrom Spectra backendMerge
+#' 
+#' @exportMethod backendMerge
+#'
+#' @rdname hidden_aliases
+setMethod("backendMerge", "MsBackendSqlDb", function(object, ..., dbcon) {
+    object <- unname(c(object, ...))
+    ## If `MsBackendSqlDb` has no mz values, the list will not merge it
+    object <- object[lengths(object) > 0]
+    res <- suppressWarnings(.combine_backend_SqlDb(object, dbcon))
+    res
+})
 
+## Data accessors
+#' @importMethodsFrom Spectra acquisitionNum
+#'
 #' @rdname hidden_aliases
 #' 
 #' @importMethodsFrom ProtGenerics acquisitionNum
 setMethod("acquisitionNum", "MsBackendSqlDb", function(object) {
-  .get_db_data(object, "acquisitionNum")
+    .get_db_data(object, "acquisitionNum")
 })
 
 #' @rdname hidden_aliases
@@ -227,6 +322,8 @@ setMethod("isEmpty", "MsBackendSqlDb", function(x) {
     lengths(intensity(x)) == 0
 })
 
+#' @importMethodsFrom Spectra isolationWindowLowerMz
+#' 
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics isolationWindowLowerMz
@@ -241,6 +338,8 @@ setMethod("isolationWindowTargetMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "isolationWindowTargetMz")
 })
 
+#' @importMethodsFrom Spectra isolationWindowUpperMz
+#'
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics isolationWindowUpperMz
@@ -258,6 +357,8 @@ setMethod("lengths", "MsBackendSqlDb", function(x, use.names = FALSE) {
     lengths(mz(x))
 })
 
+#' @importMethodsFrom Spectra msLevel
+#'
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics msLevel
@@ -292,6 +393,8 @@ setMethod("polarity", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "polarity")
 })
 
+#' @importMethodsFrom Spectra precScanNum
+#'
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics precScanNum
@@ -313,6 +416,8 @@ setMethod("precursorIntensity", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorIntensity")
 })
 
+#' @importMethodsFrom Spectra precursorMz
+#'
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics precursorMz
@@ -320,6 +425,8 @@ setMethod("precursorMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorMz")
 })
 
+#' @importMethodsFrom Spectra rtime
+#'
 #' @rdname hidden_aliases
 #'
 #' @importMethodsFrom ProtGenerics rtime
@@ -338,7 +445,12 @@ setMethod("scanIndex", "MsBackendSqlDb", function(object) {
 #'
 #' @importMethodsFrom ProtGenerics smoothed
 setMethod("smoothed", "MsBackendSqlDb", function(object) {
-    as.logical(.get_db_data(object, "smoothed"))
+    results <- .get_db_data(object, "smoothed")
+    if (identical(results, "Columns missing from database.")) {
+        return("Columns missing from database.")
+    } else {
+        as.logical(results)
+    }
 })
 
 #' @rdname hidden_aliases
@@ -354,7 +466,19 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #' @exportMethod asDataFrame
 setMethod("asDataFrame", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
-             .get_db_data(object, columns)
+    res <- .get_db_data(object, columns)
+    ## According to the limitation of SQLite, some of the column types
+    ## are missing from the returning values, such as boolean/logical values
+    ## We have to change these column types to the correct ones.
+    colsToChange <- names(res)[names(res) %in% 
+                                 names(Spectra:::.SPECTRA_DATA_COLUMNS)]
+    colsToChange <- colsToChange[!colsToChange %in% c("mz", "intensity")]
+    for(i in colsToChange){
+        class(res[, i]) <- Spectra:::.SPECTRA_DATA_COLUMNS[i]
+        if (Spectra:::.SPECTRA_DATA_COLUMNS[i] == "logical")
+            res[, i] <- ifelse(res[, i] == 0, FALSE, TRUE)
+    }
+    res
 })
 
 #' @rdname hidden_aliases
@@ -398,15 +522,14 @@ setMethod("$", signature = "MsBackendSqlDb",
 #' @rdname hidden_aliases
 #' 
 setReplaceMethod("$", "MsBackendSqlDb", function(x, name, value) {
-  if (!(length(list(x@rows)) == length(value)))
-  stop("Provided values has different length than the column.")
-  basic_type <- c("integer", "numeric", "logical", "factor", "character")
-  if (is.list(value) && any(c("mz", "intensity") == name) && 
-       inherits(value, basic_type))
-    value <- lapply(value, base::serialize, NULL)
-  .replace_db_table_columns(x, name, value)
-  x@modCount <- x@modCount + 1L
-  x
+    if (!(length(value) == length(x)))
+        stop("Provided values has different length than the object.") 
+    if (name %in% spectraVariables(x)) {
+        x <- .update_db_table_columns(x, name, value)
+    } else {
+        x <- .insert_db_table_columns(x, name, value)
+    }
+    x
 })
 
 #### ---------------------------------------------------------------------------
@@ -571,35 +694,3 @@ setMethod("filterRt", "MsBackendSqlDb",
         object
     } else object
 })
-
-
-
-#' Filter the intensity values from a `MsBackendSqlDb` object.  If
-#' only one numeric parameter is provided, the returned intensity will
-#' keep any values larger than the parameter. If two values are
-#' provided, only the intensity values between the two parameters will
-#' be preserved.
-#'
-#' @param x a `MsBackendSqlDb` object.
-#' 
-#' @param intensities a `numeric` vector either be length 1 or 2.
-#' 
-#' @importFrom IRanges NumericList
-#' 
-#' @export
-#' 
-#' @rdname hidden_aliases
-filterIntensity <- function(x, intensities = numeric()) {
-    if (length(intensities) == 1) {
-        filteredIntensity <- lapply(intensity(x), 
-                                    function(i) (i[i > intensities]))
-        filteredIntensity <- NumericList(filteredIntensity, compress = FALSE)
-    } else if (length(intensities) == 2) {
-        filteredIntensity <- lapply(intensity(x), 
-                                    function(i) (i[i > intensities[1] &
-                                                   i < intensities[2]]))
-        filteredIntensity <- NumericList(filteredIntensity, compress = FALSE)
-    } else {
-        stop("intensities must be of length 1 or 2. See man page for details.")
-    }
-}

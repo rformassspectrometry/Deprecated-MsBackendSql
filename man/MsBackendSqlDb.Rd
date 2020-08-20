@@ -7,18 +7,32 @@
 \alias{backendInitialize,MsBackendSqlDb-method}
 \title{SQL database based mass spectrometry data backend}
 \usage{
-MsBackendSqlDb()
+MsBackendSqlDb(dbcon)
 
-\S4method{backendInitialize}{MsBackendSqlDb}(object, dbcon, files = character(), dbtable = "msdata")
+\S4method{backendInitialize}{MsBackendSqlDb}(
+  object,
+  files = character(),
+  data = DataFrame(),
+  ...,
+  dbcon,
+  dbtable = "msdata"
+)
 }
 \arguments{
-\item{object}{a \code{MsBackendSqlDb} object.}
-
 \item{dbcon}{a \code{DBIConnection} object to connect to the database.}
+
+\item{object}{a \code{MsBackendSqlDb} object.}
 
 \item{files}{\code{character} with the file names from which data should
 be imported. Only required if the database to which \code{dbcon}
 connects does not already contain the data.}
+
+\item{data}{For \code{backendInitialize}: \code{DataFrame} with spectrum
+metadata/data. This parameter can be empty for \code{MsBackendMzR} backends
+but needs to be provided for \code{MsBackendDataFrame} and \code{MsBackendSqlDb}
+backends.}
+
+\item{...}{Additional arguments.}
 
 \item{dbtable}{\code{character(1)} the name of the database table with
 the data.  Defaults to \code{dbtable = "msdata"}.}
