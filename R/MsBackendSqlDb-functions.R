@@ -327,6 +327,9 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @noRd
 .attach_migration <- function(x, y) {
+    ## `ATTACH DATABASE` is a SQLite-specific command
+    ## We will check whether both `x` and `y` are using SQLite connections
+    if (is(x@dbcon, "SQLiteConnection") && is(y@dbcon, "SQLiteConnection")) {
     ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
     ## Hence `modCount` stays the same for obj `x`,
     ## we don't have any database writing operations here. 
@@ -381,7 +384,10 @@ MsBackendSqlDb <- function(dbcon) {
         x@rows <- c(x@rows, seq_along(y@rows) + x_length)
         x@modCount <- max(x@modCount, y@modCount) + 1L
         x
-       }
+        }
+    } else {
+      stop("This operation is currently only supported on SQLite databases")
+      }
 }
 
 #' Helper function to clone a `MsBackendSqlDb` instance.
