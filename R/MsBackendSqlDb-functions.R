@@ -20,11 +20,11 @@ MsBackendSqlDb <- function(dbcon) {
         x <- new("MsBackendSqlDb")
         slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
                                                tempfile(fileext = ".db"))
-        return(x)
+        x
     } else {
       x <- new("MsBackendSqlDb")
       slot(x, "dbcon", check = FALSE) <- dbcon
-      return(x)
+      x
     }
 }
 
@@ -303,13 +303,13 @@ MsBackendSqlDb <- function(dbcon) {
         for (i in 2:length(objects)) {
             objects[[1]] <- .attach_migration(objects[[1]], objects[[i]])
         }
-        return(objects[[1]])
+        objects[[1]]
     } else {
         res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
         for (i in 2:length(objects)) {
             res <- .attach_migration(res, objects[[i]])
         }
-        return(res)
+        res
     }
 }
 
@@ -333,7 +333,7 @@ MsBackendSqlDb <- function(dbcon) {
     if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         identical(x@dbtable, y@dbtable)) {
         x@rows <- c(x@rows, y@rows)
-        return(x) } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
+        x } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         (!identical(x@dbtable, y@dbtable))) {
         ## If `x` and `y` are sharing the same dbfile, and using different dbtable
         ## We want to know the length (row numbers) of x@dbtable
@@ -357,7 +357,7 @@ MsBackendSqlDb <- function(dbcon) {
         ## Append `y.dbtable` to the end of `x.dbtable`
         ## The writing operation increases "1" for the merged instance.
         x@modCount <- max(x@modCount, y@modCount) + 1L
-        return(x) } else {
+        x} else {
         ## While x and y have different db files.
         ## We want to know the length (row numbers) of x@dbtable
         x_length <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", 
@@ -380,7 +380,7 @@ MsBackendSqlDb <- function(dbcon) {
         ## into the tail of x@rows
         x@rows <- c(x@rows, seq_along(y@rows) + x_length)
         x@modCount <- max(x@modCount, y@modCount) + 1L
-        return(x) 
+        x
        }
 }
 
@@ -435,7 +435,7 @@ MsBackendSqlDb <- function(dbcon) {
         res@query <- dbSendQuery(res@dbcon, paste0("select ? from ", 
                                                    res@dbtable, 
                                                    " where _pkey = ?"))
-        return(res)
+        res
 }
 
 #' Replace the values of a SQLite table column, and ensure the right data type

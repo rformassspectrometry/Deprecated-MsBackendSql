@@ -557,7 +557,7 @@ setMethod("split", "MsBackendSqlDb", function(x, f, drop = FALSE, ...) {
         slot(x, "rows", check = FALSE) <- idx[[i]]
         output[[i]] <- x
     }
-    return(output)
+    output
 })
 
 #' @rdname hidden_aliases
