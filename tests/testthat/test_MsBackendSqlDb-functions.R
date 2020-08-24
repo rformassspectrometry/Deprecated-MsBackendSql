@@ -225,7 +225,6 @@ test_that(".attach_migration works", {
     ## Only keep 4 rows in the second MSBackendSqlDb instance
     testSQL6@rows <- c(2L, 5L, 7L, 9L)
     ## testSQL5 is used as the merged result
-    testSQL6@modCount <- 6L
     testSQL6@modCount <- 9L
     testSQL5 <- .attach_migration(testSQL1, testSQL6)
     expect_identical(testSQL1@dbcon, testSQL5@dbcon)
@@ -236,9 +235,9 @@ test_that(".attach_migration works", {
     expect_identical(testSQL5@modCount, 10L)
     expect_identical(length(testSQL5), 14L)
     expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL6))
-    expect_identical(testSQL5@rows, c(testSQL1@rows, 11:14))
+    expect_identical(testSQL5@rows, c(testSQL1@rows, 10L + testSQL6@rows))
     ## We expect, the dbtable in testSQL5 only preserved 14 rows
-    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 14L)
+    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)
     rm(testSQL1, testSQL5)
     
     ## While x and y have different db files, but dbtables have the same name:
@@ -254,9 +253,9 @@ test_that(".attach_migration works", {
     expect_identical(testSQL5@modCount, 6L)
     expect_identical(length(testSQL5), 14L)
     expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL2))
-    expect_identical(testSQL5@rows, c(testSQL1@rows, 11:14))
+    expect_identical(testSQL5@rows, c(testSQL1@rows, 10L + testSQL2@rows))
     ## We expect, the dbtable in testSQL5 only preserved 14 rows
-    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 14L)
+    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)
 })
 
 test_that(".clone_MsBackendSqlDb works", {

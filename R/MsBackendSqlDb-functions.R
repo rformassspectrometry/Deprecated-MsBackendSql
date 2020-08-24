@@ -350,13 +350,11 @@ MsBackendSqlDb <- function(dbcon) {
                                                " SELECT ", 
                                                paste(spectraVariables(y), 
                                                      collapse = ", "), 
-                                               " FROM ", y@dbtable, 
-                                               " WHERE _pkey = ?"))
-        qry <- dbBind(qry, list(y@rows))
+                                               " FROM ", y@dbtable))
         dbClearResult(qry)
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- c(x@rows, seq_along(y@rows) + x_length)
+        x@rows <- c(x@rows, y@rows + x_length)
         ## Append `y.dbtable` to the end of `x.dbtable`
         ## The writing operation increases "1" for the merged instance.
         x@modCount <- max(x@modCount, y@modCount) + 1L
@@ -374,14 +372,12 @@ MsBackendSqlDb <- function(dbcon) {
                                               collapse = ", "), ") ",
                                         "SELECT ", paste(spectraVariables(y), 
                                               collapse = ", "), 
-                                            " FROM toMerge.", y@dbtable,
-                                        " WHERE _pkey = ?"))
-        st <- dbBind(st, list(y@rows))
+                                            " FROM toMerge.", y@dbtable))
         dbClearResult(st)
         suppressWarnings(dbExecute(x@dbcon, "DETACH DATABASE toMerge"))
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- c(x@rows, seq_along(y@rows) + x_length)
+        x@rows <- c(x@rows, y@rows + x_length)
         x@modCount <- max(x@modCount, y@modCount) + 1L
         x
         }
@@ -400,7 +396,7 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @noRd
 .clone_MsBackendSqlDb <- function(x, dbcon) {
-    ## If `cbdbcon` is missing, we will create an empty `MsBackendSqlDb` 
+    ## If `dbcon` is missing, we will create an empty `MsBackendSqlDb` 
     ## Instance with its '.db' file in `tempdir()`.
     if (missing(dbcon) || !dbIsValid(dbcon)) {
         res <- MsBackendSqlDb()

@@ -69,7 +69,7 @@ Can we load the mz and intensity values from the both backends?
 ```{r comp-mz}
 mz1 <- mz(sp_mzr)
 mz2 <- mz(sp_sql)
-identical(mz1, mz1)
+identical(mz1, mz2)
 ```
 
 
