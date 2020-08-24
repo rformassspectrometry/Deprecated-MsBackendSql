@@ -20,11 +20,11 @@ MsBackendSqlDb <- function(dbcon) {
         x <- new("MsBackendSqlDb")
         slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
                                                tempfile(fileext = ".db"))
-        x
+        return(x)
     } else {
       x <- new("MsBackendSqlDb")
       slot(x, "dbcon", check = FALSE) <- dbcon
-      x
+      return(x)
     }
 }
 
@@ -303,13 +303,13 @@ MsBackendSqlDb <- function(dbcon) {
         for (i in 2:length(objects)) {
             objects[[1]] <- .attach_migration(objects[[1]], objects[[i]])
         }
-        objects[[1]]
+        return(objects[[1]])
     } else {
         res <- .clone_MsBackendSqlDb(objects[[1]], dbcon)
         for (i in 2:length(objects)) {
             res <- .attach_migration(res, objects[[i]])
         }
-        res
+        return(res)
     }
 }
 
@@ -336,7 +336,8 @@ MsBackendSqlDb <- function(dbcon) {
     if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         identical(x@dbtable, y@dbtable)) {
         x@rows <- c(x@rows, y@rows)
-        x } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
+        return(x) 
+        } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         (!identical(x@dbtable, y@dbtable))) {
         ## If `x` and `y` are sharing the same dbfile, and using different dbtable
         ## We want to know the length (row numbers) of x@dbtable
@@ -358,7 +359,8 @@ MsBackendSqlDb <- function(dbcon) {
         ## Append `y.dbtable` to the end of `x.dbtable`
         ## The writing operation increases "1" for the merged instance.
         x@modCount <- max(x@modCount, y@modCount) + 1L
-        x} else {
+        return(x)
+        } else {
         ## While x and y have different db files.
         ## We want to know the length (row numbers) of x@dbtable
         x_length <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", 
