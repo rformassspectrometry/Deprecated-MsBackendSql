@@ -555,3 +555,17 @@ MsBackendSqlDb <- function(dbcon) {
     slot(x, "columns", check = FALSE) <- c(x@columns, name)
     x
 }
+
+#' Helper function to reset the row indices after filtering and/or subsettting
+#' operations on `MsBackendSqlDb` object.
+#'  
+#' @param x [MsBackendSqlDb()] object.
+#' 
+#' @noRd
+.reset_row_indices <- function(x) {
+    ## We fetch the number of rows for SQLite table
+    rowNum <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", x@dbtable))
+    ## Then link `rows` index to SQLite table
+    slot(x, "rows", check = FALSE) <- 1L:rowNum[1, 1]
+    x
+}

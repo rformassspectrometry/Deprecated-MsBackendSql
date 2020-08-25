@@ -425,6 +425,13 @@ setMethod("precursorMz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "precursorMz")
 })
 
+#' @importMethodsFrom Spectra reset
+#'
+#' @rdname hidden_aliases
+setMethod("reset", "MsBackendSqlDb", function(object) {
+    .reset_row_indices(object)
+})
+
 #' @importMethodsFrom Spectra rtime
 #'
 #' @rdname hidden_aliases

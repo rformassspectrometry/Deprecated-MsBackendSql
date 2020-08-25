@@ -27,6 +27,7 @@
 \alias{precursorCharge,MsBackendSqlDb-method}
 \alias{precursorIntensity,MsBackendSqlDb-method}
 \alias{precursorMz,MsBackendSqlDb-method}
+\alias{reset,MsBackendSqlDb-method}
 \alias{rtime,MsBackendSqlDb-method}
 \alias{scanIndex,MsBackendSqlDb-method}
 \alias{smoothed,MsBackendSqlDb-method}
@@ -97,6 +98,8 @@
 \S4method{precursorIntensity}{MsBackendSqlDb}(object)
 
 \S4method{precursorMz}{MsBackendSqlDb}(object)
+
+\S4method{reset}{MsBackendSqlDb}(object)
 
 \S4method{rtime}{MsBackendSqlDb}(object)
 

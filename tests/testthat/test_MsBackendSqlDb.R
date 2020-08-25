@@ -376,6 +376,16 @@ test_that("precursorMz,MsBackendSqlDb works", {
     expect_equal(precursorMz(be), c(134.4, 342.2, 862.54))
 })
 
+test_that("reset,MsBackendSqlDb works", {
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- reset(testSQL1)
+    expect_equal(mz(res), mz(testSQL1))
+  
+    sps_mod <- testSQL1[3:8]
+    res <- reset(sps_mod)
+    expect_equal(mz(res), mz(testSQL1))
+})
+
 test_that("rtime,MsBackendSqlDb works", {
     expect_true(is(rtime(sciexSQL1), "numeric"))
   

@@ -299,3 +299,13 @@ test_that(".insert_db_table_columns works", {
     expect_identical(testSQL1$originTest, origin2)
     expect_identical(testSQL1$rtimeTest, rtime2)
 })
+
+test_that(".insert_db_table_columns works", {
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- .reset_row_indices(testSQL1)
+    expect_equal(mz(res), mz(testSQL1))
+    
+    sps_mod <- testSQL1[3:8]
+    res <- .reset_row_indices(sps_mod)
+    expect_equal(mz(res), mz(testSQL1))
+})  
