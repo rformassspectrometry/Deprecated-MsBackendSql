@@ -104,6 +104,17 @@ sp_sql %>%
     filterRt(c(175, 189))
 ```
 
+If we want to revert the filtering operations on the `Spectra` instance with a
+`MsBackendSqlDb` backend, we can also use `reset` function:
+
+```{r reset}
+subset_sp <- sp_sql %>%
+                 filterDataOrigin(normalizePath(fls[2])) %>%
+                 filterRt(c(175, 189))
+reset_sp <- reset(subset_sp)
+reset_sp
+```
+
 If we now compare the memory footprint of the `Spectra` objects with
 the respective backends. `sp_mzr` uses the `MsBackendMzR` backend that
 stored the metadata in memory, and accessed the raw data (m/z and
