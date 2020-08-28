@@ -563,9 +563,7 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @noRd
 .reset_row_indices <- function(x) {
-    ## We fetch the number of rows for SQLite table
     rowNum <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", x@dbtable))
-    ## Then link `rows` index to SQLite table
-    slot(x, "rows", check = FALSE) <- 1L:rowNum[1, 1]
+    slot(x, "rows", check = FALSE) <- seq_len(rowNum[1, 1])
     x
 }
