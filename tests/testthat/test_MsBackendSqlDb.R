@@ -123,7 +123,7 @@ test_that("backendMerge,MsBackendSqlDb works", {
                                       testSQL1@dbtable)), 10L)
     expect_identical(testSQL1@dbtable, sciexSQL1@dbtable)
     expect_identical(identical(testSQL1@dbcon, res@dbcon), FALSE)
-    expect_identical(asDataFrame(testSQL1), asDataFrame(sciexSQL1))
+    expect_identical(spectraData(testSQL1), spectraData(sciexSQL1))
 })
 
 test_that("acquisitionNum, MsBackendSqlDb works", {

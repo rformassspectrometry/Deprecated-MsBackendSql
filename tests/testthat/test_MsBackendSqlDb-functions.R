@@ -234,7 +234,7 @@ test_that(".attach_migration works", {
     ## `ATTACH` table will increase `modCount` by 1L.
     expect_identical(testSQL5@modCount, 10L)
     expect_identical(length(testSQL5), 14L)
-    expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL6))
+    expect_identical(spectraData(testSQL5[11:14]), spectraData(testSQL6))
     expect_identical(testSQL5@rows, c(testSQL1@rows, 10L + testSQL6@rows))
     ## We expect, the dbtable in testSQL5 only preserved 14 rows
     expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)
@@ -252,7 +252,7 @@ test_that(".attach_migration works", {
     expect_identical(testSQL1@dbtable, testSQL5@dbtable)
     expect_identical(testSQL5@modCount, 6L)
     expect_identical(length(testSQL5), 14L)
-    expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL2))
+    expect_identical(spectraData(testSQL5[11:14]), spectraData(testSQL2))
     expect_identical(testSQL5@rows, c(testSQL1@rows, 10L + testSQL2@rows))
     ## We expect, the dbtable in testSQL5 only preserved 14 rows
     expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)

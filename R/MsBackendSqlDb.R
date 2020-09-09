@@ -156,7 +156,7 @@ setMethod("show", "MsBackendSqlDb", function(object) {
         return("Columns missing from database.")
       }
     } else {
-        spd <- asDataFrame(object, c("msLevel", "rtime", "scanIndex"))
+        spd <- spectraData(object, c("msLevel", "rtime", "scanIndex"))
         cat(class(object), "with", nrow(spd), "spectra\n")
         txt <- capture.output(print(spd))
         cat(txt[-1], sep = "\n")
@@ -466,12 +466,12 @@ setMethod("smoothed", "MsBackendSqlDb", function(object) {
 #'
 #' @importFrom S4Vectors SimpleList
 #' 
-#' @importMethodsFrom Spectra asDataFrame
+#' @importMethodsFrom Spectra spectraData
 #' 
 #' @importMethodsFrom DBI dbListFields
 #' 
-#' @exportMethod asDataFrame
-setMethod("asDataFrame", "MsBackendSqlDb",
+#' @exportMethod spectraData
+setMethod("spectraData", "MsBackendSqlDb",
           function(object, columns = spectraVariables(object)) {
     res <- .get_db_data(object, columns)
     ## According to the limitation of SQLite, some of the column types

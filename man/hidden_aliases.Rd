@@ -31,7 +31,7 @@
 \alias{rtime,MsBackendSqlDb-method}
 \alias{scanIndex,MsBackendSqlDb-method}
 \alias{smoothed,MsBackendSqlDb-method}
-\alias{asDataFrame,MsBackendSqlDb-method}
+\alias{spectraData,MsBackendSqlDb-method}
 \alias{spectraNames,MsBackendSqlDb-method}
 \alias{spectraVariables,MsBackendSqlDb-method}
 \alias{tic,MsBackendSqlDb-method}
@@ -107,7 +107,7 @@
 
 \S4method{smoothed}{MsBackendSqlDb}(object)
 
-\S4method{asDataFrame}{MsBackendSqlDb}(object, columns = spectraVariables(object))
+\S4method{spectraData}{MsBackendSqlDb}(object, columns = spectraVariables(object))
 
 \S4method{spectraNames}{MsBackendSqlDb}(object)
 
