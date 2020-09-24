@@ -20,6 +20,8 @@ sciexCombined <- backendInitialize(MsBackendSqlDb(sciexConn))
 
 ## Read back the metadata table from the `MsBackendSqlDb` object
 testTbl <- dbReadTable(sciexSQL1@dbcon, "msdata")
+testTbl$mz <- lapply(testTbl$mz, 'unserialize') 
+testTbl$intensity <- lapply(testTbl$intensity, 'unserialize') 
 
 ## Subsetted mzML files
 sciexmzML1 <- system.file("extdata/sciex_subset1.mzML", 

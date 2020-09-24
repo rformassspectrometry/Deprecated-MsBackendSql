@@ -302,7 +302,7 @@ test_that("as.list,MsBackendSqlDb works", {
                                          intensity = c(6, 15, 19))))
 })
 
-test_that("lengths,MsBackendDataFrame works", {
+test_that("lengths,MsBackendSqlDb works", {
     expect_true(is(lengths(sciexSQL1), "integer"))
   
     df <- DataFrame(msdf)
@@ -314,6 +314,14 @@ test_that("lengths,MsBackendDataFrame works", {
     df$mz <- list(numeric(0), numeric(0), numeric(0))
     be <- backendInitialize(MsBackendSqlDb(), data = df)
     expect_equal(lengths(be), c(0, 0, 0))
+})
+
+test_that("spectraData,MsBackendSqlDb works", {
+    be <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- spectraData(be)
+    expect_identical(res$msLevel, testTbl$msLevel)
+    expect_identical(res$mz, NumericList(testTbl$mz))
+    expect_identical(res$intensity, NumericList(testTbl$intensity))
 })
 
 test_that("polarity,MsBackendSqlDb works", {
