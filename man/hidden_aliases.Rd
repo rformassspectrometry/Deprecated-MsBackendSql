@@ -21,7 +21,7 @@
 \alias{lengths,MsBackendSqlDb-method}
 \alias{msLevel,MsBackendSqlDb-method}
 \alias{mz,MsBackendSqlDb-method}
-\alias{as.list,MsBackendSqlDb-method}
+\alias{peaksData,MsBackendSqlDb-method}
 \alias{polarity,MsBackendSqlDb-method}
 \alias{precScanNum,MsBackendSqlDb-method}
 \alias{precursorCharge,MsBackendSqlDb-method}
@@ -87,7 +87,7 @@
 
 \S4method{mz}{MsBackendSqlDb}(object)
 
-\S4method{as.list}{MsBackendSqlDb}(x)
+\S4method{peaksData}{MsBackendSqlDb}(object)
 
 \S4method{polarity}{MsBackendSqlDb}(object)
 

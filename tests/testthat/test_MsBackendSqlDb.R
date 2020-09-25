@@ -289,14 +289,14 @@ test_that("mz,MsBackendSqlDb works", {
                  "mz not found")
 })
 
-test_that("as.list,MsBackendSqlDb works", {
-    expect_true(is(as.list(sciexSQL1), "list"))
+test_that("peaksData,MsBackendSqlDb works", {
+    expect_true(is(peaksData(sciexSQL1), "list"))
   
     df <- DataFrame(msdf)
     df$mz <- list(1:3, c(2.1), c(3.5, 6.7, 12.3))
     df$intensity <- list(1:3, 4, c(6, 15, 19))
     be <- backendInitialize(MsBackendSqlDb(), data = df)
-    expect_equal(as.list(be), list(cbind(mz = 1:3, intensity = 1:3),
+    expect_equal(peaksData(be), list(cbind(mz = 1:3, intensity = 1:3),
                                    cbind(mz = 2.1, intensity = 4),
                                    cbind(mz = c(3.5, 6.7, 12.3),
                                          intensity = c(6, 15, 19))))

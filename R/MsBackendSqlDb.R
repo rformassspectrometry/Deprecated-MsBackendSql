@@ -312,7 +312,7 @@ setMethod("ionCount", "MsBackendSqlDb", function(object) {
 #'
 #' @importMethodsFrom ProtGenerics isCentroided
 setMethod("isCentroided", "MsBackendSqlDb", function(object, ...) {
-    vapply1l(as.list(object), Spectra:::.peaks_is_centroided)
+    vapply1l(peaksData(object), Spectra:::.peaks_is_centroided)
 })
 
 #' @rdname hidden_aliases
@@ -375,13 +375,13 @@ setMethod("mz", "MsBackendSqlDb", function(object) {
     .get_db_data(object, "mz")
 })
 
-#' @importMethodsFrom BiocGenerics as.list
+#' @importMethodsFrom Spectra peaksData
 #' 
-#' @exportMethod as.list
+#' @exportMethod peaksData
 #'
 #' @rdname hidden_aliases
-setMethod("as.list", "MsBackendSqlDb", function(x) {
-    mapply(cbind, mz = mz(x), intensity = intensity(x),
+setMethod("peaksData", "MsBackendSqlDb", function(object) {
+    mapply(cbind, mz = mz(object), intensity = intensity(object),
            SIMPLIFY = FALSE, USE.NAMES = FALSE)
 })
 
