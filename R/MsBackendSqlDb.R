@@ -73,8 +73,19 @@ NULL
 #'     the backend.
 #'
 #' @name MsBackendSqlDb
+#' 
+#' @section Backend functions:
+#' 
+#' MsBackendSqlDb extend the base `MsBackend` class from Spectra package.
+#' Currently, MsBackendSqlDb supports all the reading functions from `MsBackend` 
+#' class. Only specific functions in MsBackendSqlDb will be listed:  
+#' 
+#' - `reset` the row indices of a MsBackendSqlDb backend after filtering
+#'  and/or subsetting operations. MsBackendSqlDb backend utilizes slot `rows`
+#'  to mark filtering and subsetting results. The underlying SQLite data tables
+#'  won't be influenced by these operations.  
 #'
-#' @author Johannes Rainer
+#' @author Chong Tang, Johannes Rainer
 #'
 #' @export MsBackendSqlDb
 #'

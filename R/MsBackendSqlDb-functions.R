@@ -556,7 +556,7 @@ MsBackendSqlDb <- function(dbcon) {
     x
 }
 
-#' Helper function to reset the row indices after filtering and/or subsettting
+#' Helper function to reset the row indices after filtering and/or subsetting
 #' operations on `MsBackendSqlDb` object.
 #'  
 #' @param x [MsBackendSqlDb()] object.

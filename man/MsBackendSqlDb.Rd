@@ -93,6 +93,20 @@ The \code{MsBackendSqlDb} defines the following slots which should not
 be accessed or changed by the user.
 }
 
+\section{Backend functions}{
+
+
+MsBackendSqlDb extend the base \code{MsBackend} class from Spectra package.
+Currently, MsBackendSqlDb supports all the reading functions from \code{MsBackend}
+class. Only specific functions in MsBackendSqlDb will be listed:
+\itemize{
+\item \code{reset} the row indices of a MsBackendSqlDb backend after filtering
+and/or subsetting operations. MsBackendSqlDb backend utilizes slot \code{rows}
+to mark filtering and subsetting results. The underlying SQLite data tables
+won't be influenced by these operations.
+}
+}
+
 \examples{
 
 ## Initialize an MsBackendSqlDb filling it with data from mzML files
@@ -104,5 +118,5 @@ fls <- dir(system.file("sciex", package = "msdata"), full.names = TRUE,
 msb <- backendInitialize(MsBackendSqlDb(), dbcon = con, files = fls)
 }
 \author{
-Johannes Rainer
+Chong Tang, Johannes Rainer
 }
