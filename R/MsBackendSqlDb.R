@@ -187,9 +187,10 @@ setMethod("backendInitialize", signature = "MsBackendSqlDb",
           function(object, files = character(), data = DataFrame(), 
                    ..., dbcon, dbtable = "msdata") {
     if (missing(dbcon) || !dbIsValid(dbcon)) {
-        object@dbcon <- object@dbcon
+        slot(object, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
+                                                     tempfile(fileext = ".db"))
     } else { 
-        object@dbcon <- dbcon
+        slot(object, "dbcon", check = FALSE) <- dbcon
     }
     if (is.data.frame(data))
         data <- DataFrame(data)

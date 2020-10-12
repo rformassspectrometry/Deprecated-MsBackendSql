@@ -1,31 +1,14 @@
 #' @include hidden_aliases.R
 NULL
 
-#' @param dbcon a `DBIConnection` object to connect to the database.
-#'
 #' @rdname MsBackendSqlDb
 #'
-#' @importFrom methods is new
-#' 
-#' @importMethodsFrom DBI dbConnect 
-#' 
-#' @importFrom RSQLite SQLite
-#'
 #' @export MsBackendSqlDb
-MsBackendSqlDb <- function(dbcon) {
+MsBackendSqlDb <- function() {
     if (!requireNamespace("DBI", quietly = TRUE))
         stop("The use of 'MsBackendSqlDb' requires package 'DBI'. Please ",
              "install with 'install.packages(\"DBI\")'")
-    if (missing(dbcon)) {
-        x <- new("MsBackendSqlDb")
-        slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
-                                               tempfile(fileext = ".db"))
-        return(x)
-    } else {
-      x <- new("MsBackendSqlDb")
-      slot(x, "dbcon", check = FALSE) <- dbcon
-      return(x)
-    }
+    new("MsBackendMzR")
 }
 
 #' Test if db table is available
