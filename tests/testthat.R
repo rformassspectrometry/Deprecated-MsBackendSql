@@ -14,9 +14,9 @@ sciexConn2 <- dbConnect(SQLite(), sciexSubset2)
 sciexConn <- dbConnect(SQLite(), sciexAll)
 
 ## Create `MsBackendSqlDb` instances for preloaded datasets
-sciexSQL1 <- backendInitialize(MsBackendSqlDb(sciexConn1))
-sciexSQL2 <- backendInitialize(MsBackendSqlDb(sciexConn2))
-sciexCombined <- backendInitialize(MsBackendSqlDb(sciexConn))
+sciexSQL1 <- backendInitialize(MsBackendSqlDb(), dbcon = sciexConn1)
+sciexSQL2 <- backendInitialize(MsBackendSqlDb(), dbcon = sciexConn2)
+sciexCombined <- backendInitialize(MsBackendSqlDb(), dbcon = sciexConn)
 
 ## Read back the metadata table from the `MsBackendSqlDb` object
 testTbl <- dbReadTable(sciexSQL1@dbcon, "msdata")
