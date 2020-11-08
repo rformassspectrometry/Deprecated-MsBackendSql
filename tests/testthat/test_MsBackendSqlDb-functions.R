@@ -41,12 +41,13 @@ test_that(".initiate_data_to_table works", {
     data <- dbReadTable(sciexSQL1@dbcon, "msdata")
     ## "_pkey" column from SQLite DB will be renamed to "X_pkey" by R
     data <- data[, names(data)[!names(data) %in% "X_pkey"]]
-    sql <- MsBackendSqlDb()
-    on.exit(DBI::dbDisconnect(sql@dbcon))
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
     ## Before this function, there shall not be a table in the connection obj
-    expect_identical(dbListTables(sql@dbcon), character(0))
+    expect_identical(dbListTables(con), character(0))
     
-    x <- .initiate_data_to_table(data, sql@dbcon)
+    x <- .initiate_data_to_table(data, con)
+    MsBackendSqlDb1 <- backendInitialize(MsBackendSqlDb(), dbcon = con)
     ## This function shall return a data.frame for other functions
     expect_true(is(x, "data.frame"))
     ## We can also expect by default, `msdata` table is created in the con obj
