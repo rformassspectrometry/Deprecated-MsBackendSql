@@ -30,10 +30,11 @@ test_that(".valid_db_table_columns works", {
 })
 
 test_that(".write_mzR_to_db works", {
-    sql <- MsBackendSqlDb()
-    on.exit(DBI::dbDisconnect(sql@dbcon))
-    expect_equal(.write_mzR_to_db(sciexmzML1, sql@dbcon), 10)
-    expect_equal(dbListTables(sql@dbcon), "msdata")
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
+    expect_equal(.write_mzR_to_db(sciexmzML1, con), 10)
+    MsBackendSqlDb1 <- backendInitialize(MsBackendSqlDb(), dbcon = con)
+    expect_equal(dbListTables(MsBackendSqlDb1@dbcon), "msdata")
 })
 
 test_that(".initiate_data_to_table works", {
