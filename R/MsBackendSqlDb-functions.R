@@ -8,7 +8,7 @@ MsBackendSqlDb <- function() {
     if (!requireNamespace("DBI", quietly = TRUE))
         stop("The use of 'MsBackendSqlDb' requires package 'DBI'. Please ",
              "install with 'install.packages(\"DBI\")'")
-    new("MsBackendMzR")
+    new("MsBackendSqlDb")
 }
 
 #' Test if db table is available

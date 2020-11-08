@@ -1,18 +1,4 @@
-test_that("MsBackendSqlDb works", {
-    sql <- MsBackendSqlDb()
-    expect_true(is(sql, "MsBackendSqlDb"))
-    expect_true(is(sql@dbcon, "SQLiteConnection"))
-    
-    connCon <- dbConnect(SQLite(), "constructor1.db")
-    sql1 <- MsBackendSqlDb(connCon)
-    expect_true(is(sql1, "MsBackendSqlDb"))
-    expect_true(is(sql1@dbcon, "SQLiteConnection"))
-})
-
 test_that(".valid_db_table_exists works", {
-    sql <- MsBackendSqlDb()
-    expect_match(.valid_db_table_exists(sql@dbcon, "msdata"), 
-                 "database table 'msdata' not found") 
     expect_null(.valid_db_table_exists(sciexSQL1@dbcon, "msdata"))
     expect_match(.valid_db_table_exists(sciexSQL1@dbcon, "foobar"), 
                  "not found")

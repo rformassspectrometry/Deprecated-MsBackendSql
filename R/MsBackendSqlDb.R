@@ -115,7 +115,7 @@ setClass("MsBackendSqlDb",
                                modCount = 0L,
                                rows = integer(0),
                                columns = character(0),
-                               version = "0.1"))
+                               version = "0.5"))
 
 setValidity("MsBackendSqlDb", function(object) {
     msg <- .valid_db_table_exists(object@dbcon, object@dbtable)
