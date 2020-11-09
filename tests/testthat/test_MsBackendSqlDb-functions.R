@@ -62,26 +62,25 @@ test_that(".write_data_to_db works", {
     data <- dbReadTable(sciexSQL1@dbcon, "msdata")
     ## "_pkey" column from SQLite DB will be renamed to "X_pkey" by R
     data <- data[, names(data)[!names(data) %in% "X_pkey"]]
-    sql <- MsBackendSqlDb()
-    on.exit(DBI::dbDisconnect(sql@dbcon))
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
     ## Before this function, there shall not be a table in the connection obj
-    expect_identical(dbListTables(sql@dbcon), character(0))
+    expect_identical(dbListTables(con), character(0))
     
     ## This function shall append 10L rows to the dbcon
     ## and create a SQLite table "msdata"
-    expect_identical(.write_data_to_db(data, sql@dbcon), 10L)
-    expect_match(dbListTables(sql@dbcon), "msdata")
+    expect_identical(.write_data_to_db(data, con), 10L)
+    expect_match(dbListTables(con), "msdata")
     ## After using this function, there shall be a table `msdata`
     ## has 10 rows
-    rowNum <- dbGetQuery(sql@dbcon, "SELECT COUNT(*) FROM msdata")
-    expect_identical(rowNum[1, 1], 
-                 10L)
+    rowNum <- dbGetQuery(con, "SELECT COUNT(*) FROM msdata")
+    expect_identical(rowNum[1, 1], 10L)
     
     ## We can append another data (same dimensions as before) 
     ## to this connection obj
-    expect_identical(.write_data_to_db(data, sql@dbcon), 10L)
+    expect_identical(.write_data_to_db(data, con), 10L)
     ## Now `msdata` has 20 rows
-    rowNum2 <- dbGetQuery(sql@dbcon, "SELECT COUNT(*) FROM msdata")
+    rowNum2 <- dbGetQuery(con, "SELECT COUNT(*) FROM msdata")
     expect_identical(rowNum2[1, 1], 
                      20L)
 })
