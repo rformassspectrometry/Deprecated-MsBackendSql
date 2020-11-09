@@ -51,9 +51,9 @@ test_that(".initiate_data_to_table works", {
     ## This function shall return a data.frame for other functions
     expect_true(is(x, "data.frame"))
     ## We can also expect by default, `msdata` table is created in the con obj
-    expect_match(dbListTables(sql@dbcon), "msdata")
+    expect_match(dbListTables(MsBackendSqlDb1@dbcon), "msdata")
     ## We can test whether `mz` and `intensity` columns have type as BLOB
-    typeCol <- dbGetQuery(sql@dbcon, "PRAGMA table_info(msdata)")
+    typeCol <- dbGetQuery(MsBackendSqlDb1@dbcon, "PRAGMA table_info(msdata)")
     expect_match(typeCol[typeCol$name %in% c("mz", "intensity"),]$type,
                  "BLOB")
 })
