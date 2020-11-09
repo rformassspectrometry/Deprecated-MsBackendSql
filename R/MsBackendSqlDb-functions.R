@@ -425,55 +425,6 @@ MsBackendSqlDb <- function() {
         res
 }
 
-#' Replace the values of a SQLite table column, and ensure the right data type
-#'  can be returned. It's temporarily not in use.
-#'  I kept this function, since replacing column values in huge database is
-#'  extremely time consuming. It's more efficient to use the strategy here.
-#'  
-#'  
-#' @param x [MsBackendSqlDb()] object.
-#' 
-#' @param name A `character(1)` with the name of the column will be replaced.
-#' 
-#' @param value vector with values to replace the `name`.
-#'
-#' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable dbListFields
-#'
-#' @noRd
-.replace_db_table_columns <- function(x, name, value) {
-    flds <- dbListFields(x@dbcon, "msdata")
-    str1 <- dbListFields(x@dbcon, "msdata")[dbListFields(x@dbcon, 
-                                                       "msdata") != name]
-    sql1 <- paste0("CREATE VIEW metaview AS SELECT ",
-                   toString(str1), " FROM ", x@dbtable)
-    qry <- dbSendQuery(x@dbcon, sql1)
-    dbClearResult(qry)
-    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "_pkey",
-                   " FROM ", x@dbtable)
-    qry2 <- dbSendQuery(x@dbcon, sql2)
-    dbClearResult(qry2)
-    metapkey <- dbReadTable(x@dbcon, 'metakey')
-    token <- data.frame(name = value, pkey = metapkey)
-    colnames(token) <- c(name, "pkey")
-    dbWriteTable(x@dbcon, 'token', token)
-    sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
-                   "INNER JOIN token on token.pkey = metaview._pkey")
-    dbExecute(x@dbcon, sql3)
-    dbExecute(x@dbcon, paste0("ALTER TABLE ", x@dbtable,
-                              " RENAME TO _msdata_old"))
-    ## We have to sort `str2` into ordinary metadata order
-    sql2 <- paste0("CREATE TABLE msdata AS SELECT ",
-                   toString(flds), " FROM msdata1")
-    qry2 <- dbSendQuery(x@dbcon, sql2)
-    dbClearResult(qry2)
-    dbExecute(x@dbcon, "DROP TABLE IF EXISTS _msdata_old")
-    dbExecute(x@dbcon, "DROP TABLE IF EXISTS msdata1")
-    ## Drop View
-    dbExecute(x@dbcon, "DROP TABLE IF EXISTS token")
-    dbExecute(x@dbcon, "DROP VIEW IF EXISTS metaview")
-    dbExecute(x@dbcon, "DROP VIEW IF EXISTS metakey")
-}
-
 #' Replace the values of a SQLite table column.
 #'  
 #' @param x [MsBackendSqlDb()] object.
