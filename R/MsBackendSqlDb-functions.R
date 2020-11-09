@@ -383,10 +383,13 @@ MsBackendSqlDb <- function() {
 .clone_MsBackendSqlDb <- function(x, dbcon) {
     ## If `dbcon` is missing, we will create an empty `MsBackendSqlDb` 
     ## Instance with its '.db' file in `tempdir()`.
+    res <- MsBackendSqlDb()
     if (missing(dbcon) || !dbIsValid(dbcon)) {
-        res <- MsBackendSqlDb()
+        slot(res, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
+                                                 tempfile(fileext = ".db"))
+        
     } else {
-        res <- MsBackendSqlDb(dbcon)
+        slot(res, "dbcon", check = FALSE) <- dbcon
     }
     slot(res, "dbtable", check = FALSE) <- x@dbtable
     slot(res, "modCount", check = FALSE) <- x@modCount
