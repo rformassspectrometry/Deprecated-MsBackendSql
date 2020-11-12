@@ -227,7 +227,7 @@ test_that(".attach_migration works", {
     expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)
     rm(testSQL1, testSQL5)
     
-    ## While x and y have different db files, but dbtables have the same name:
+    ## While x and y have different db files, but identical dbtable names:
     testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
     testSQL2@rows <- c(2L, 5L, 7L, 9L)
     testSQL2@modCount <- 5L
