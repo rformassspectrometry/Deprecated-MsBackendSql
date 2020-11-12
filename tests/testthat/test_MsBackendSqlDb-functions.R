@@ -139,7 +139,7 @@ test_that(".combine_backend_SqlDb works", {
                  "Can only merge backends of the same type: MsBackendSqlDb")
     
     ## Conditional case: objects with different spectra variables
-    dfSQL <- backendInitialize(MsBackendSqlDb(), data = msdf)
+    dfSQL <- backendInitialize(MsBackendSqlDb(), data = testTbl)
     expect_error(.combine_backend_SqlDb(c(dfSQL, sciexSQL1)),
                  "Can only merge backends with the same spectra variables")
     
