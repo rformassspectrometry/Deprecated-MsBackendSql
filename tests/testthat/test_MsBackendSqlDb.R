@@ -96,7 +96,8 @@ test_that("backendMerge,MsBackendSqlDb works", {
     ## Also the test case, while `dbcon` isn't provided.
     connTest <- dbConnect(SQLite(), "tmpMerge1.db")
     sp_test <- Spectra(sciexmzMLAll, 
-                       backend = MsBackendSqlDb(dbcon = connTest),
+                       backend = MsBackendSqlDb(),
+                       dbcon = connTest,
                        BPPARAM = SerialParam())
     expect_identical(sp_test@backend@dbtable, dbListTables(connTest))
     expect_identical(sp_test@backend@dbcon, connTest)
