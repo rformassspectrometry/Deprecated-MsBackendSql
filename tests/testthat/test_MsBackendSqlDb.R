@@ -51,7 +51,8 @@ test_that("show,MsBackendSqlDb works", {
 
 test_that("Spectra,character works", {
     conn <- dbConnect(SQLite(), "msdata.db")
-    res <- Spectra(sciexmzMLAll, backend = MsBackendSqlDb(dbcon = conn),
+    res <- Spectra(sciexmzMLAll, backend = MsBackendSqlDb(),
+                                 dbcon = conn,
                                  BPPARAM = SerialParam())
     expect_true(is(res@backend, "MsBackendSqlDb"))
     expect_equal(unique(res@backend$dataStorage), 
