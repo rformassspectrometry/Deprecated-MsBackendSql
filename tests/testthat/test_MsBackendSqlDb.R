@@ -4,13 +4,15 @@ test_that("initializeBackend,MsBackendSqlDb works", {
     be <- MsBackendSqlDb()
     expect_true(is(be, "MsBackendSqlDb"))
     ## initialize `MsBackendSqlDb` from `data`
-    df <- DataFrame(msdf)
-    df$dataStorage <- c("fake", "backend", "dataStorage")
+    df <- DataFrame(testTbl)
+    df$dataStorage <- c(rep(c("fake", "backend", "dataStorage"), 3), "none")
     be3 <- backendInitialize(MsBackendSqlDb(), 
                              data = df)
-    expect_identical(be3$dataStorage, rep("<db>", 3))
-    expect_identical(dataStorage(be3), rep("<db>", 3))
+    expect_identical(be3$dataStorage, rep("<db>", 10))
+    expect_identical(dataStorage(be3), rep("<db>", 10))
     
+    msdf$mz <- testTbl$mz[5:7]
+    msdf$intensity <- testTbl$intensity[5:7]
     be2 <- backendInitialize(be, data = msdf[msdf$msLevel %in% 2L, ])
     expect_true(is(be2, "MsBackendSqlDb"))
     
@@ -28,8 +30,6 @@ test_that("initializeBackend,MsBackendSqlDb works", {
     
     expect_error(backendInitialize(MsBackendSqlDb()))
     expect_error(backendInitialize(MsBackendSqlDb(), dbcon = test_con1),
-                 "no such table: msdata")
-    expect_error(backendInitialize(MsBackendSqlDb(dbcon = test_con1)),
                  "no such table: msdata")
     expect_error(backendInitialize(MsBackendSqlDb(), 
                                    dbcon = test_con1,
