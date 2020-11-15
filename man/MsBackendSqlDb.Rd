@@ -7,7 +7,7 @@
 \alias{backendInitialize,MsBackendSqlDb-method}
 \title{SQL database based mass spectrometry data backend}
 \usage{
-MsBackendSqlDb(dbcon)
+MsBackendSqlDb()
 
 \S4method{backendInitialize}{MsBackendSqlDb}(
   object,
@@ -19,8 +19,6 @@ MsBackendSqlDb(dbcon)
 )
 }
 \arguments{
-\item{dbcon}{a \code{DBIConnection} object to connect to the database.}
-
 \item{object}{a \code{MsBackendSqlDb} object.}
 
 \item{files}{\code{character} with the file names from which data should
@@ -33,6 +31,8 @@ but needs to be provided for \code{MsBackendDataFrame} and \code{MsBackendSqlDb}
 backends.}
 
 \item{...}{Additional arguments.}
+
+\item{dbcon}{a \code{DBIConnection} object to connect to the database.}
 
 \item{dbtable}{\code{character(1)} the name of the database table with
 the data.  Defaults to \code{dbtable = "msdata"}.}
