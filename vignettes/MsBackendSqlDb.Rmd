@@ -59,7 +59,8 @@ use non-parallel execution to create the new `Spectra` object:
 
 ```{r backend-sql}
 conn <- dbConnect(SQLite(), "msdata.db")
-sp_sql <- Spectra(fls, backend = MsBackendSqlDb(dbcon = conn),
+sp_sql <- Spectra(fls, backend = MsBackendSqlDb(), 
+                  dbcon = conn,
                   BPPARAM = SerialParam())
 sp_sql
 ```
