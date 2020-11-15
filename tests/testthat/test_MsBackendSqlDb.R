@@ -421,7 +421,6 @@ test_that("scanIndex,MsBackendSqlDb works", {
     expect_equal(scanIndex(be), c(123, 124, 125))
 })
 
-
 test_that("smoothed,MsBackendSqlDb works", {
     ## smoothed(sciexSQL1) returns "NA" values
     expect_true(is(smoothed(sciexSQL1), "logical"))
