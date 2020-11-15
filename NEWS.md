@@ -1,5 +1,9 @@
 # MsBackendSql 0.5.1
 
+## Changes in 0.5.2  
+    - Flip over the constructor, the new constructor will only return an (empty) backend
+	      object and eventually check that all required libraries are available.  
+
 
 ## Changes in 0.5.1  
     - Replace `asDataFrame` with `spectraData`.  
