@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • MsBackendSql</title>
+<title>Changelog • MsBackendSql</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,7 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Changelog" />
 
 
 
@@ -58,7 +58,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-article-index">
+    <div class="container template-news">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -116,19 +116,41 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+      <h1 data-toc-skip>Changelog <small></small></h1>
+      <small>Source: <a href='https://github.com/RforMassSpectrometry/MsBackendSql/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <dl>
-        <dt><a href="MsBackendSqlDb.html">Description and usage of MsBackendSqlDb</a></dt>
-        <dd></dt>
-      </dl>
-    </div>
+    <div id="msbackendsql-051" class="section level1">
+<h1 class="page-header" data-toc-text="0.5.1">
+<a href="#msbackendsql-051" class="anchor"></a>MsBackendSql 0.5.1</h1>
+<div id="changes-in-052" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-in-052" class="anchor"></a>Changes in 0.5.2</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="op">-</span><span class="st"> </span>Flip over the constructor, the new constructor will only return <span class="kw">an</span> (empty) backend</span>
+<span id="cb1-2"><a href="#cb1-2"></a>      object and eventually check that all required libraries are available.  </span></code></pre></div>
+</div>
+<div id="changes-in-051" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-in-051" class="anchor"></a>Changes in 0.5.1</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="op">-</span><span class="st"> </span>Replace <span class="st">`</span><span class="dt">asDataFrame</span><span class="st">`</span> with <span class="st">`</span><span class="dt">spectraData</span><span class="st">`</span>.  </span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="op">-</span><span class="st"> </span>Replace <span class="st">`</span><span class="dt">as.list</span><span class="st">`</span> with <span class="st">`</span><span class="dt">peaksData</span><span class="st">`</span>.  </span></code></pre></div>
+</div>
+<div id="changes-in-050" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-in-050" class="anchor"></a>Changes in 0.5.0</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="op">-</span><span class="st"> </span>Add <span class="st">`</span><span class="dt">constructor</span><span class="st">`</span> method which is compatible with <span class="st">`</span><span class="dt">spectra, character</span><span class="st">`</span> method <span class="cf">in</span> <span class="st">`</span><span class="dt">Spectra</span><span class="st">`</span> package.  </span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="op">-</span><span class="st"> </span>Add <span class="st">`</span><span class="dt">reset</span><span class="st">`</span> method.  </span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="op">-</span><span class="st"> </span>rename asDataFrame to spectraData. </span></code></pre></div>
+</div>
+</div>
   </div>
+
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
+  </div>
+
 </div>
 
 

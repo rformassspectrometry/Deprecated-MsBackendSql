@@ -78,19 +78,13 @@ with limited resources." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MsBackendSql</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -104,6 +98,9 @@ with limited resources." />
       <a href="../articles/MsBackendSqlDb.html">Description and usage of MsBackendSqlDb</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -141,10 +138,17 @@ representing very large mass spectrometry data sets on computers
 with limited resources.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>MsBackendSqlDb</span>()
+    <pre class="usage"><span class='fu'>MsBackendSqlDb</span><span class='op'>(</span><span class='op'>)</span>
 
 <span class='co'># S4 method for MsBackendSqlDb</span>
-<span class='fu'>backendInitialize</span>(<span class='kw'>object</span>, <span class='kw'>dbcon</span>, files = <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span>(), dbtable = <span class='st'>"msdata"</span>)</pre>
+<span class='fu'>backendInitialize</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  files <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>,
+  data <span class='op'>=</span> <span class='fu'>DataFrame</span><span class='op'>(</span><span class='op'>)</span>,
+  <span class='va'>...</span>,
+  <span class='va'>dbcon</span>,
+  dbtable <span class='op'>=</span> <span class='st'>"msdata"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -154,14 +158,28 @@ with limited resources.</p>
       <td><p>a <code>MsBackendSqlDb</code> object.</p></td>
     </tr>
     <tr>
-      <th>dbcon</th>
-      <td><p>a <code>DBIConnection</code> object to connect to the database.</p></td>
-    </tr>
-    <tr>
       <th>files</th>
       <td><p><code>character</code> with the file names from which data should
 be imported. Only required if the database to which <code>dbcon</code>
 connects does not already contain the data.</p></td>
+    </tr>
+    <tr>
+      <th>data</th>
+      <td><p>For <code>backendInitialize</code>: <code>DataFrame</code> with spectrum
+metadata/data from which data should be imported. This parameter
+is the alternative of <code>files</code> parameter, only required if the
+database to which <code>dbcon</code> connects does not already contain the
+data, and the data is not from MS data files.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional arguments.</p></td>
+    </tr>
+    <tr>
+      <th>dbcon</th>
+      <td><p>a <code>DBIConnection</code> object to connect to the database. If
+not provided, <code>backendInitialize</code>method will create a <code>DBIConnection</code>
+object in the temporary directory of R.</p></td>
     </tr>
     <tr>
       <th>dbtable</th>
@@ -201,16 +219,21 @@ the backend.</p></dd>
 
 
 <p>Like all <code>MsBackend()</code> objects, <code>MsBackendSqlDb</code> have to be
-<em>initialized</em> with the <code>backendInitialize()</code> method that either
-fills the object with data from mass spectrometry files provided
-with the <code>files</code> parameter or checks if the pre-generated database
-contains all required data. A connection to a database (with write
-access) has to be provided with the <code>dbcon</code> parameter which expects
-a <code>DBIConnection</code> returned by a call to <code>dbConnect()</code>. To fill the
-database with MS data files (usually mzML files, but all files
-types supported by the <code>mzR</code> package are allowed), these have to be
-provided with the <code>files</code> parameter. Parameter <code>dbtable</code> can be
-used to optionally specify the database table name that contains,
+<em>initialized</em> with the <code>backendInitialize()</code> method. There are three
+ways to initialize a <code>MsBackendSqlDb</code> object by <code>backendInitialize()</code>
+method. We can either fill the object with data from mass spectrometry
+files provided with the <code>files</code> parameter, or we can pass a <code>DataFrame</code>
+object with metadata and spectra data with the <code>data</code> parameter, or
+checks if the pre-generated database contains all required data. A
+connection to a database (with write access) has to be provided with
+the <code>dbcon</code> parameter which expects a <code>DBIConnection</code> returned by a
+call to <code>dbConnect()</code>. To fill the database with MS data files (usually
+mzML files, but all files types supported by the <code>mzR</code> package are
+allowed), these have to be provided with the <code>files</code> parameter. Or, we
+can pass a <code>DataFrame</code> object to the database through the <code>DBIConnection</code>
+object. This <code>DataFrame</code> shall contain the metadata and spectra data parsed
+by other backends, or generated by by user themselves. Parameter <code>dbtable</code>
+can be used to optionally specify the database table name that contains,
 or should contain the data.</p>
     <h2 class="hasAnchor" id="implementation-notes"><a class="anchor" href="#implementation-notes"></a>Implementation notes</h2>
 
@@ -219,19 +242,34 @@ or should contain the data.</p>
 
 <p>The <code>MsBackendSqlDb</code> defines the following slots which should not
 be accessed or changed by the user.</p>
+    <h2 class="hasAnchor" id="backend-functions"><a class="anchor" href="#backend-functions"></a>Backend functions</h2>
+
+    
+
+
+<p>MsBackendSqlDb extend the base <code>MsBackend</code> class from Spectra package.
+Currently, MsBackendSqlDb supports all the reading functions from <code>MsBackend</code>
+class. Only specific functions in MsBackendSqlDb will be listed:</p><ul>
+<li><p><code>reset</code> the row indices of a MsBackendSqlDb backend after filtering
+and/or subsetting operations. MsBackendSqlDb backend utilizes slot <code>rows</code>
+to mark filtering and subsetting results. The underlying SQLite data tables
+won't be influenced by these operations.</p></li>
+</ul>
+
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Johannes Rainer</p>
+    <p>Chong Tang, Johannes Rainer</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
 <span class='co'>## Initialize an MsBackendSqlDb filling it with data from mzML files</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='kw'>msdata</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='kw'><a href='https://rsqlite.r-dbi.org'>RSQLite</a></span>)
-<span class='kw'>con</span> <span class='op'>&lt;-</span> <span class='fu'>dbConnect</span>(<span class='fu'><a href='https://rsqlite.r-dbi.org/reference/SQLite.html'>SQLite</a></span>(), <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>())
-<span class='kw'>fls</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.files.html'>dir</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span>(<span class='st'>"sciex"</span>, package = <span class='st'>"msdata"</span>), full.names = <span class='fl'>TRUE</span>,
-    pattern = <span class='st'>"mzML$"</span>)
-<span class='kw'>msb</span> <span class='op'>&lt;-</span> <span class='fu'>backendInitialize</span>(<span class='fu'>MsBackendSqlDb</span>(), dbcon = <span class='kw'>con</span>, files = <span class='kw'>fls</span>)</div></pre>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>msdata</span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://rsqlite.r-dbi.org'>RSQLite</a></span><span class='op'>)</span>
+<span class='va'>con</span> <span class='op'>&lt;-</span> <span class='fu'>dbConnect</span><span class='op'>(</span><span class='fu'><a href='https://rsqlite.r-dbi.org/reference/SQLite.html'>SQLite</a></span><span class='op'>(</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>fls</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.files.html'>dir</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/system.file.html'>system.file</a></span><span class='op'>(</span><span class='st'>"sciex"</span>, package <span class='op'>=</span> <span class='st'>"msdata"</span><span class='op'>)</span>, full.names <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    pattern <span class='op'>=</span> <span class='st'>"mzML$"</span><span class='op'>)</span>
+<span class='va'>msb</span> <span class='op'>&lt;-</span> <span class='fu'>backendInitialize</span><span class='op'>(</span><span class='fu'>MsBackendSqlDb</span><span class='op'>(</span><span class='op'>)</span>, dbcon <span class='op'>=</span> <span class='va'>con</span>, files <span class='op'>=</span> <span class='va'>fls</span><span class='op'>)</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -247,7 +285,7 @@ be accessed or changed by the user.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.9000.</p>
 </div>
 
       </footer>

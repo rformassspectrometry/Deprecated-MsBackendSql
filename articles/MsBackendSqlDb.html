@@ -31,18 +31,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MsBackendSql</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -57,6 +51,9 @@
       <a href="../articles/MsBackendSqlDb.html">Description and usage of MsBackendSqlDb</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
@@ -100,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (links[i].hostname != window.location.hostname)
       links[i].target = '_blank';
 });
-</script><p><strong>Package</strong>: <em><a href="https://bioconductor.org/packages/3.11/MsBackendSql">MsBackendSql</a></em><br><strong>Authors</strong>: RforMassSpectrometry Package Maintainer [cre], Johannes Rainer [aut] (<a href="https://orcid.org/0000-0002-6977-7147" class="uri">https://orcid.org/0000-0002-6977-7147</a>), Chong Tang [aut], Laurent Gatto [aut] (<a href="https://orcid.org/0000-0002-1520-2268" class="uri">https://orcid.org/0000-0002-1520-2268</a>), Sebastian Gibb [aut] (<a href="https://orcid.org/0000-0001-7406-4443" class="uri">https://orcid.org/0000-0001-7406-4443</a>)<br><strong>Last modified:</strong> 2020-07-01 14:22:52<br><strong>Compiled</strong>: Wed Jul 1 14:25:05 2020</p>
+</script><p><strong>Package</strong>: <em><a href="https://bioconductor.org/packages/3.12/MsBackendSql">MsBackendSql</a></em><br><strong>Authors</strong>: RforMassSpectrometry Package Maintainer [cre], Johannes Rainer [aut] (<a href="https://orcid.org/0000-0002-6977-7147" class="uri">https://orcid.org/0000-0002-6977-7147</a>), Chong Tang [aut], Laurent Gatto [aut] (<a href="https://orcid.org/0000-0002-1520-2268" class="uri">https://orcid.org/0000-0002-1520-2268</a>), Sebastian Gibb [aut] (<a href="https://orcid.org/0000-0001-7406-4443" class="uri">https://orcid.org/0000-0001-7406-4443</a>)<br><strong>Last modified:</strong> 2020-12-06 16:45:21<br><strong>Compiled</strong>: Sun Dec 6 16:52:50 2020</p>
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
@@ -110,23 +107,21 @@ document.addEventListener("DOMContentLoaded", function() {
 <h1 class="hasAnchor">
 <a href="#usage" class="anchor"></a>Usage</h1>
 <p>Firstly, we load the relevant packages:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://github.com/RforMassSpectrometry/Spectra">"Spectra"</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://rsqlite.r-dbi.org">"RSQLite"</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"msdata"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://github.com/RforMassSpectrometry/MsBackendSql">"MsBackendSql"</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"magrittr"</span>)
-</pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/RforMassSpectrometry/Spectra">"Spectra"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://rsqlite.r-dbi.org">"RSQLite"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st">"msdata"</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/RforMassSpectrometry/MsBackendSql">"MsBackendSql"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://magrittr.tidyverse.org">"magrittr"</a></span><span class="op">)</span></code></pre></div>
 </div>
 <div id="creating-spectra-objects-with-an-msbackendsqldb-backend" class="section level1">
 <h1 class="hasAnchor">
 <a href="#creating-spectra-objects-with-an-msbackendsqldb-backend" class="anchor"></a>Creating <code>Spectra</code> objects with an <code>MsBackendSqlDb</code> backend</h1>
 <p>We will use a small sciex to create the backend objects.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="kw">fls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">dir</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span>(<span class="st">"sciex"</span>, package = <span class="st">"msdata"</span>), full.names = <span class="fl">TRUE</span>)
-<span class="kw">sp_mzr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/Spectra.html">Spectra</a></span>(<span class="kw">fls</span>, backend = <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/MsBackend.html">MsBackendMzR</a></span>())
-<span class="kw">sp_mzr</span>
-</pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">dir</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"sciex"</span>, package <span class="op">=</span> <span class="st">"msdata"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">sp_mzr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/Spectra.html">Spectra</a></span><span class="op">(</span><span class="va">fls</span>, backend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/MsBackend.html">MsBackendMzR</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="va">sp_mzr</span></code></pre></div>
 <pre><code>## MSn data (Spectra) with 1862 spectra in a MsBackendMzR backend:
 ##        msLevel     rtime scanIndex
 ##      &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
@@ -145,97 +140,83 @@ document.addEventListener("DOMContentLoaded", function() {
 ## 
 ## file(s):
 ## 20171016_POOL_POS_1_105-134.mzML
-## 20171016_POOL_POS_3_105-134.mzML
-## Processing:
-## </code></pre>
-<p>For <code>MsBackendSqlDb</code> backend, we have to create a <code>connection</code> object:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="kw">conn</span> <span class="op">&lt;-</span> <span class="fu">dbConnect</span>(<span class="fu"><a href="https://rsqlite.r-dbi.org/reference/SQLite.html">SQLite</a></span>(), <span class="st">"msdata.db"</span>)
-<span class="kw">be_sql</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">backendInitialize</a></span>(<span class="fu"><a href="../reference/MsBackendSqlDb.html">MsBackendSqlDb</a></span>(), dbcon = <span class="kw">conn</span>, files = <span class="kw">fls</span>)
-<span class="kw">sp_sql</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/Spectra.html">Spectra</a></span>(backend = <span class="kw">be_sql</span>)
-<span class="kw">sp_sql</span>
-</pre></div>
-<pre><code>## MSn data (Spectra) with 1862 spectra in a MsBackendSqlDb backend:</code></pre>
-<pre><code>## Warning: Closing open result set, pending rows</code></pre>
-<pre><code>##        msLevel     rtime scanIndex
-##      &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
-## 1            1     0.280         1
-## 2            1     0.559         2
-## 3            1     0.838         3
-## 4            1     1.117         4
-## 5            1     1.396         5
-## ...        ...       ...       ...
-## 1858         1   258.636       927
-## 1859         1   258.915       928
-## 1860         1   259.194       929
-## 1861         1   259.473       930
-## 1862         1   259.752       931
+## 20171016_POOL_POS_3_105-134.mzML</code></pre>
+<p>For <code>MsBackendSqlDb</code> backend, we can choose either to create a <code>connection</code> object or to use the internal embedded <code>connection</code> object with a path in <code><a href="https://rdrr.io/r/base/tempfile.html">tempdir()</a></code> to initialize a <code>Spectra</code> instance. In the following example, we will create a <code>Spectra</code> object with a new <code>MsBackendSqlDb</code> backend. Usually, SQLite allows at most one writer to proceed concurrently, hence we will use non-parallel execution to create the new <code>Spectra</code> object:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">conn</span> <span class="op">&lt;-</span> <span class="fu">dbConnect</span><span class="op">(</span><span class="fu"><a href="https://rsqlite.r-dbi.org/reference/SQLite.html">SQLite</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"msdata.db"</span><span class="op">)</span>
+<span class="va">sp_sql</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/Spectra.html">Spectra</a></span><span class="op">(</span><span class="va">fls</span>, backend <span class="op">=</span> <span class="fu"><a href="../reference/MsBackendSqlDb.html">MsBackendSqlDb</a></span><span class="op">(</span><span class="op">)</span>, 
+                  dbcon <span class="op">=</span> <span class="va">conn</span>,
+                  BPPARAM <span class="op">=</span> <span class="fu">SerialParam</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Warning: Closing open result set, pending rows
+
+## Warning: Closing open result set, pending rows</code></pre>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_sql</span></code></pre></div>
+<pre><code>## MSn data (Spectra) with 1862 spectra in a MsBackendSqlDb backend:
+##     msLevel     rtime scanIndex
+##   &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
+## 1         1     0.280         1
+## 2         1     0.559         2
+## 3         1     0.838         3
+## ...     ...       ...       ...
+## 1860      1   259.194       929
+## 1861      1   259.473       930
+## 1862      1   259.752       931
 ##  ... 33 more variables/columns.
 ## Processing:
-## </code></pre>
+##  Switch backend from MsBackendMzR to MsBackendSqlDb [Sun Dec  6 16:52:57 2020]</code></pre>
 <p>Can we load the mz and intensity values from the both backends?</p>
-<div class="sourceCode" id="cb8"><pre class="downlit">
-<span class="kw">mz1</span> <span class="op">&lt;-</span> <span class="fu">mz</span>(<span class="kw">sp_mzr</span>)
-<span class="kw">mz2</span> <span class="op">&lt;-</span> <span class="fu">mz</span>(<span class="kw">sp_sql</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span>(<span class="kw">mz1</span>, <span class="kw">mz1</span>)
-</pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mz1</span> <span class="op">&lt;-</span> <span class="fu">mz</span><span class="op">(</span><span class="va">sp_mzr</span><span class="op">)</span>
+<span class="va">mz2</span> <span class="op">&lt;-</span> <span class="fu">mz</span><span class="op">(</span><span class="va">sp_sql</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">mz1</span>, <span class="va">mz2</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb10"><pre class="downlit">
-<span class="kw">intensity1</span> <span class="op">&lt;-</span> <span class="fu">intensity</span>(<span class="kw">sp_mzr</span>)
-<span class="kw">intensity2</span> <span class="op">&lt;-</span> <span class="fu">intensity</span>(<span class="kw">sp_sql</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span>(<span class="kw">intensity1</span>, <span class="kw">intensity2</span>)
-</pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">intensity1</span> <span class="op">&lt;-</span> <span class="fu">intensity</span><span class="op">(</span><span class="va">sp_mzr</span><span class="op">)</span>
+<span class="va">intensity2</span> <span class="op">&lt;-</span> <span class="fu">intensity</span><span class="op">(</span><span class="va">sp_sql</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">intensity1</span>, <span class="va">intensity2</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 <p>Now we want to check the subsetting functions:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit">
-<span class="kw">sp_mzr</span>[<span class="fl">5</span><span class="op">:</span><span class="fl">20</span>]
-</pre></div>
-<pre><code>## MSn data (Spectra) with 16 spectra in a MsBackendMzR backend:
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_mzr</span><span class="op">[</span><span class="fl">6</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span></code></pre></div>
+<pre><code>## MSn data (Spectra) with 15 spectra in a MsBackendMzR backend:
 ##       msLevel     rtime scanIndex
 ##     &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
-## 1           1     1.396         5
-## 2           1     1.675         6
-## 3           1     1.954         7
-## 4           1     2.233         8
-## 5           1     2.512         9
+## 1           1     1.675         6
+## 2           1     1.954         7
+## 3           1     2.233         8
+## 4           1     2.512         9
+## 5           1     2.791        10
 ## ...       ...       ...       ...
-## 12          1     4.465        16
-## 13          1     4.744        17
-## 14          1     5.023        18
-## 15          1     5.302        19
-## 16          1     5.581        20
+## 11          1     4.465        16
+## 12          1     4.744        17
+## 13          1     5.023        18
+## 14          1     5.302        19
+## 15          1     5.581        20
 ##  ... 33 more variables/columns.
 ## 
 ## file(s):
-## 20171016_POOL_POS_1_105-134.mzML
-## Processing:
-## </code></pre>
-<div class="sourceCode" id="cb14"><pre class="downlit">
-<span class="kw">sp_sql</span>[<span class="fl">5</span><span class="op">:</span><span class="fl">20</span>]
-</pre></div>
-<pre><code>## MSn data (Spectra) with 16 spectra in a MsBackendSqlDb backend:
-##       msLevel     rtime scanIndex
-##     &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
-## 1           1     1.396         5
-## 2           1     1.675         6
-## 3           1     1.954         7
-## 4           1     2.233         8
-## 5           1     2.512         9
-## ...       ...       ...       ...
-## 12          1     4.465        16
-## 13          1     4.744        17
-## 14          1     5.023        18
-## 15          1     5.302        19
-## 16          1     5.581        20
+## 20171016_POOL_POS_1_105-134.mzML</code></pre>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_sql</span><span class="op">[</span><span class="fl">6</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span></code></pre></div>
+<pre><code>## MSn data (Spectra) with 15 spectra in a MsBackendSqlDb backend:
+##     msLevel     rtime scanIndex
+##   &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
+## 1         1     1.675         6
+## 2         1     1.954         7
+## 3         1     2.233         8
+## ...     ...       ...       ...
+## 13      1     5.023        18
+## 14      1     5.302        19
+## 15      1     5.581        20
 ##  ... 33 more variables/columns.
 ## Processing:
-## </code></pre>
-<p>Below, we reproduce and example from the <code>Spectra</code> vignette, where spectra originating from the second file and acquired between 175 and 189 seconds are retained:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit">
-<span class="kw">sp_mzr</span> <span class="op">%&gt;%</span>
-    <span class="fu">filterDataOrigin</span>(<span class="kw">fls</span>[<span class="fl">2</span>]) <span class="op">%&gt;%</span>
-    <span class="fu">filterRt</span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">175</span>, <span class="fl">189</span>))
-</pre></div>
+##  Switch backend from MsBackendMzR to MsBackendSqlDb [Sun Dec  6 16:52:57 2020]</code></pre>
+<p>Below, we reproduce the example from the <code>Spectra</code> vignette, where spectra originating from the second file and acquired between 175 and 189 seconds are retained:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_mzr</span> <span class="op">%&gt;%</span>
+    <span class="fu">filterDataOrigin</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html">normalizePath</a></span><span class="op">(</span><span class="va">fls</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu">filterRt</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">175</span>, <span class="fl">189</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## MSn data (Spectra) with 50 spectra in a MsBackendMzR backend:
 ##       msLevel     rtime scanIndex
 ##     &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
@@ -255,57 +236,120 @@ document.addEventListener("DOMContentLoaded", function() {
 ## file(s):
 ## 20171016_POOL_POS_3_105-134.mzML
 ## Processing:
-##  Filter: select data origin(s) /Users/runner/work/_temp/Library/msdata/sciex/20171016_POOL_POS_3_105-134.mzML [Wed Jul  1 14:25:17 2020]
-##  Filter: select retention time [175..189] on MS level(s) 1 [Wed Jul  1 14:25:17 2020]</code></pre>
-<div class="sourceCode" id="cb18"><pre class="downlit">
-<span class="kw">sp_sql</span> <span class="op">%&gt;%</span>
-    <span class="fu">filterDataOrigin</span>(<span class="kw">fls</span>[<span class="fl">2</span>]) <span class="op">%&gt;%</span>
-    <span class="fu">filterRt</span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">175</span>, <span class="fl">189</span>))
-</pre></div>
+##  Filter: select data origin(s) /Users/runner/work/_temp/Library/msdata/sciex/20171016_POOL_POS_3_105-134.mzML [Sun Dec  6 16:53:01 2020]
+##  Filter: select retention time [175..189] on MS level(s) 1 [Sun Dec  6 16:53:01 2020]</code></pre>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_sql</span> <span class="op">%&gt;%</span>
+    <span class="fu">filterDataOrigin</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html">normalizePath</a></span><span class="op">(</span><span class="va">fls</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu">filterRt</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">175</span>, <span class="fl">189</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## MSn data (Spectra) with 50 spectra in a MsBackendSqlDb backend:
-##       msLevel     rtime scanIndex
-##     &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
-## 1           1   175.212       628
-## 2           1   175.491       629
-## 3           1   175.770       630
-## 4           1   176.049       631
-## 5           1   176.328       632
-## ...       ...       ...       ...
-## 46          1   187.768       673
-## 47          1   188.047       674
-## 48          1   188.326       675
-## 49          1   188.605       676
-## 50          1   188.884       677
+##     msLevel     rtime scanIndex
+##   &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
+## 1         1   175.212       628
+## 2         1   175.491       629
+## 3         1   175.770       630
+## ...     ...       ...       ...
+## 48      1   188.326       675
+## 49      1   188.605       676
+## 50      1   188.884       677
 ##  ... 33 more variables/columns.
 ## Processing:
-##  Filter: select data origin(s) /Users/runner/work/_temp/Library/msdata/sciex/20171016_POOL_POS_3_105-134.mzML [Wed Jul  1 14:25:17 2020]
-##  Filter: select retention time [175..189] on MS level(s) 1 [Wed Jul  1 14:25:17 2020]</code></pre>
+##  Switch backend from MsBackendMzR to MsBackendSqlDb [Sun Dec  6 16:52:57 2020]
+##  Filter: select data origin(s) /Users/runner/work/_temp/Library/msdata/sciex/20171016_POOL_POS_3_105-134.mzML [Sun Dec  6 16:53:01 2020]
+##  Filter: select retention time [175..189] on MS level(s) 1 [Sun Dec  6 16:53:01 2020]</code></pre>
+<p>If we want to revert the filtering operations on the <code>Spectra</code> instance with a <code>MsBackendSqlDb</code> backend, we can also use <code>reset</code> function:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">subset_sp</span> <span class="op">&lt;-</span> <span class="va">sp_sql</span> <span class="op">%&gt;%</span>
+                 <span class="fu">filterDataOrigin</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html">normalizePath</a></span><span class="op">(</span><span class="va">fls</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+                 <span class="fu">filterRt</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">175</span>, <span class="fl">189</span><span class="op">)</span><span class="op">)</span>
+<span class="va">reset_sp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">reset</a></span><span class="op">(</span><span class="va">subset_sp</span><span class="op">)</span>
+<span class="va">reset_sp</span></code></pre></div>
+<pre><code>## MSn data (Spectra) with 1862 spectra in a MsBackendSqlDb backend:
+##     msLevel     rtime scanIndex
+##   &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
+## 1         1     0.280         1
+## 2         1     0.559         2
+## 3         1     0.838         3
+## ...     ...       ...       ...
+## 1860      1   259.194       929
+## 1861      1   259.473       930
+## 1862      1   259.752       931
+##  ... 33 more variables/columns.
+## Processing:
+##  Switch backend from MsBackendMzR to MsBackendSqlDb [Sun Dec  6 16:52:57 2020]
+##  Filter: select data origin(s) /Users/runner/work/_temp/Library/msdata/sciex/20171016_POOL_POS_3_105-134.mzML [Sun Dec  6 16:53:01 2020]
+##  Filter: select retention time [175..189] on MS level(s) 1 [Sun Dec  6 16:53:01 2020]
+##  Reset object. [Sun Dec  6 16:53:01 2020]</code></pre>
 <p>If we now compare the memory footprint of the <code>Spectra</code> objects with the respective backends. <code>sp_mzr</code> uses the <code>MsBackendMzR</code> backend that stored the metadata in memory, and accessed the raw data (m/z and intensities) on demand directly in the <code>mzML</code> files.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span>(<span class="kw">sp_mzr</span>), units = <span class="st">"Kb"</span>)
-</pre></div>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="va">sp_mzr</span><span class="op">)</span>, units <span class="op">=</span> <span class="st">"Kb"</span><span class="op">)</span></code></pre></div>
 <pre><code>## 386.1 Kb</code></pre>
 <p><code>sp_sql</code> uses the <code>MsBackendSqlDb</code> backend that stored neither in memory. The metadata and the raw data are stored in a SQLite file (<code>msdata.db</code> defined above), and thus further minimses the memory footprint.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span>(<span class="kw">sp_sql</span>), units = <span class="st">"Kb"</span>)
-</pre></div>
-<pre><code>## 18.2 Kb</code></pre>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="va">sp_sql</span><span class="op">)</span>, units <span class="op">=</span> <span class="st">"Kb"</span><span class="op">)</span></code></pre></div>
+<pre><code>## 18.4 Kb</code></pre>
 <p>Both these backends are implemented to minimise memory usage, as opposed to a full in-memory backend that stores all data and metadata in RAM:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit">
-<span class="kw">sp_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">setBackend</a></span>(<span class="kw">sp_mzr</span>, <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/MsBackend.html">MsBackendDataFrame</a></span>())
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span>(<span class="kw">sp_df</span>), units = <span class="st">"Mb"</span>)
-</pre></div>
-<pre><code>## 52.4 Mb</code></pre>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">setBackend</a></span><span class="op">(</span><span class="va">sp_sql</span>, <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/MsBackend.html">MsBackendDataFrame</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html">object.size</a></span><span class="op">(</span><span class="va">sp_df</span><span class="op">)</span>, units <span class="op">=</span> <span class="st">"Mb"</span><span class="op">)</span></code></pre></div>
+<pre><code>## 52.2 Mb</code></pre>
+<p>We can also create a merged <code>Spectra</code> object by using several small <code>MsBackendSqlDb</code> backends. Firstly, we can create 2 distinct <code>Spectra</code> instances with <code>MsBackendMzR</code> backends:</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_mzr1</span> <span class="op">&lt;-</span> <span class="va">sp_mzr</span> <span class="op">%&gt;%</span> <span class="fu">filterDataOrigin</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html">normalizePath</a></span><span class="op">(</span><span class="va">fls</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
+<span class="va">sp_mzr2</span> <span class="op">&lt;-</span> <span class="va">sp_mzr</span> <span class="op">%&gt;%</span> <span class="fu">filterDataOrigin</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html">normalizePath</a></span><span class="op">(</span><span class="va">fls</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p>We switch the backends to <code>MsBackendSqlDb</code>:</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_sql1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">setBackend</a></span><span class="op">(</span><span class="va">sp_mzr1</span>, <span class="fu"><a href="../reference/MsBackendSqlDb.html">MsBackendSqlDb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Warning: Closing open result set, pending rows
+
+## Warning: Closing open result set, pending rows</code></pre>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_sql2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">setBackend</a></span><span class="op">(</span><span class="va">sp_mzr2</span>, <span class="fu"><a href="../reference/MsBackendSqlDb.html">MsBackendSqlDb</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Warning: Closing open result set, pending rows
+
+## Warning: Closing open result set, pending rows</code></pre>
+<p>Now we want to merge these 2 smaller <code>Spectra</code> objects into one <code>Spectra</code> object with <code>MsBackendSqlDb</code> backend:</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">mergedBackendSql</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/hidden_aliases.html">backendMerge</a></span><span class="op">(</span><span class="va">sp_sql1</span><span class="op">@</span><span class="va">backend</span>, <span class="va">sp_sql2</span><span class="op">@</span><span class="va">backend</span><span class="op">)</span>
+<span class="va">sp_sql_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Spectra/man/Spectra.html">Spectra</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="va">mergedBackendSql</span><span class="op">)</span>
+<span class="va">sp_sql_merged</span></code></pre></div>
+<pre><code>## MSn data (Spectra) with 1862 spectra in a MsBackendSqlDb backend:
+##     msLevel     rtime scanIndex
+##   &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;
+## 1         1     0.280         1
+## 2         1     0.559         2
+## 3         1     0.838         3
+## ...     ...       ...       ...
+## 1860      1   259.194       929
+## 1861      1   259.473       930
+## 1862      1   259.752       931
+##  ... 33 more variables/columns.</code></pre>
+<p>The merged <code>Spectra</code> object has its SQLite database file in the <code><a href="https://rdrr.io/r/base/tempfile.html">tempdir()</a></code> directory.</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">sp_sql_merged</span><span class="op">$</span><span class="va">mz</span>, <span class="va">sp_sql</span><span class="op">$</span><span class="va">mz</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">sp_sql_merged</span><span class="op">$</span><span class="va">intensity</span>, <span class="va">sp_sql</span><span class="op">$</span><span class="va">intensity</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/identical.html">identical</a></span><span class="op">(</span><span class="va">sp_sql_merged</span><span class="op">$</span><span class="va">dataOrigin</span>, <span class="va">sp_sql</span><span class="op">$</span><span class="va">dataOrigin</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<p>The <code>MsBackendSqlDb</code> also provides writing functionality to users:</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sp_sql_merged</span><span class="op">$</span><span class="va">dataOrigin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">"DDUV"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">sp_sql_merged</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## Warning: Closing open result set, pending rows</code></pre>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">sp_sql_merged</span><span class="op">$</span><span class="va">dataOrigin</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] "DDUV"</code></pre>
 </div>
 <div id="session-information" class="section level1">
 <h1 class="hasAnchor">
 <a href="#session-information" class="anchor"></a>Session information</h1>
-<div class="sourceCode" id="cb26"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html">sessionInfo</a></span>()
-</pre></div>
-<pre><code>## R version 4.0.2 (2020-06-22)
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code>## R version 4.0.3 (2020-10-10)
 ## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Catalina 10.15.5
+## Running under: macOS Catalina 10.15.7
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
@@ -319,25 +363,25 @@ document.addEventListener("DOMContentLoaded", function() {
 ## [8] methods   base     
 ## 
 ## other attached packages:
-##  [1] magrittr_1.5        MsBackendSql_0.1.0  msdata_0.28.0      
-##  [4] RSQLite_2.2.0       Spectra_0.5.5       ProtGenerics_1.20.0
-##  [7] BiocParallel_1.22.0 S4Vectors_0.26.1    BiocGenerics_0.34.0
-## [10] BiocStyle_2.16.0   
+##  [1] magrittr_2.0.1      MsBackendSql_0.5.1  msdata_0.30.0      
+##  [4] RSQLite_2.2.1       Spectra_1.1.9       ProtGenerics_1.22.0
+##  [7] BiocParallel_1.24.1 S4Vectors_0.28.0    BiocGenerics_0.36.0
+## [10] BiocStyle_2.18.1   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.4.6        compiler_4.0.2      BiocManager_1.30.10
-##  [4] tools_4.0.2         ncdf4_1.17          digest_0.6.25      
-##  [7] bit_1.1-15.2        evaluate_0.14       memoise_1.1.0      
-## [10] pkgconfig_2.0.3     rlang_0.4.6         DBI_1.1.0          
-## [13] yaml_2.2.1          pkgdown_1.5.1.9000  xfun_0.15          
-## [16] stringr_1.4.0       knitr_1.29          desc_1.2.0         
-## [19] fs_1.4.2            vctrs_0.3.1         IRanges_2.22.2     
-## [22] MsCoreUtils_1.1.4   rprojroot_1.3-2     bit64_0.9-7        
-## [25] Biobase_2.48.0      R6_2.4.1            rmarkdown_2.3.2    
-## [28] bookdown_0.20       mzR_2.22.0          blob_1.2.1         
-## [31] codetools_0.2-16    backports_1.1.8     htmltools_0.5.0    
-## [34] MASS_7.3-51.6       assertthat_0.2.1    stringi_1.4.6      
-## [37] crayon_1.3.4</code></pre>
+##  [1] Rcpp_1.0.5          compiler_4.0.3      BiocManager_1.30.10
+##  [4] tools_4.0.3         ncdf4_1.17          digest_0.6.27      
+##  [7] bit_4.0.4           evaluate_0.14       memoise_1.1.0      
+## [10] pkgconfig_2.0.3     rlang_0.4.9         DBI_1.1.0          
+## [13] yaml_2.2.1          pkgdown_1.6.1.9000  xfun_0.19          
+## [16] stringr_1.4.0       knitr_1.30          desc_1.2.0         
+## [19] fs_1.5.0            vctrs_0.3.5         systemfonts_0.3.2  
+## [22] IRanges_2.24.0      MsCoreUtils_1.3.2   rprojroot_2.0.2    
+## [25] bit64_4.0.5         Biobase_2.50.0      R6_2.5.0           
+## [28] textshaping_0.2.1   rmarkdown_2.5       bookdown_0.21      
+## [31] mzR_2.24.1          blob_1.2.1          codetools_0.2-16   
+## [34] htmltools_0.5.0     MASS_7.3-53         assertthat_0.2.1   
+## [37] ragg_0.4.0          stringi_1.5.3       crayon_1.3.4</code></pre>
 </div>
   </div>
 
@@ -356,7 +400,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.9000.</p>
 </div>
 
       </footer>
