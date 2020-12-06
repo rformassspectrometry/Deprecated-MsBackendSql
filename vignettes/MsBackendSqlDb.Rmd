@@ -59,7 +59,8 @@ use non-parallel execution to create the new `Spectra` object:
 
 ```{r backend-sql}
 conn <- dbConnect(SQLite(), "msdata.db")
-sp_sql <- Spectra(fls, backend = MsBackendSqlDb(dbcon = conn),
+sp_sql <- Spectra(fls, backend = MsBackendSqlDb(), 
+                  dbcon = conn,
                   BPPARAM = SerialParam())
 sp_sql
 ```
@@ -69,7 +70,7 @@ Can we load the mz and intensity values from the both backends?
 ```{r comp-mz}
 mz1 <- mz(sp_mzr)
 mz2 <- mz(sp_sql)
-identical(mz1, mz1)
+identical(mz1, mz2)
 ```
 
 
@@ -102,6 +103,17 @@ sp_mzr %>%
 sp_sql %>%
     filterDataOrigin(normalizePath(fls[2])) %>%
     filterRt(c(175, 189))
+```
+
+If we want to revert the filtering operations on the `Spectra` instance with a
+`MsBackendSqlDb` backend, we can also use `reset` function:
+
+```{r reset}
+subset_sp <- sp_sql %>%
+                 filterDataOrigin(normalizePath(fls[2])) %>%
+                 filterRt(c(175, 189))
+reset_sp <- reset(subset_sp)
+reset_sp
 ```
 
 If we now compare the memory footprint of the `Spectra` objects with

@@ -1,31 +1,14 @@
 #' @include hidden_aliases.R
 NULL
 
-#' @param dbcon a `DBIConnection` object to connect to the database.
-#'
 #' @rdname MsBackendSqlDb
 #'
-#' @importFrom methods is new
-#' 
-#' @importMethodsFrom DBI dbConnect 
-#' 
-#' @importFrom RSQLite SQLite
-#'
 #' @export MsBackendSqlDb
-MsBackendSqlDb <- function(dbcon) {
+MsBackendSqlDb <- function() {
     if (!requireNamespace("DBI", quietly = TRUE))
         stop("The use of 'MsBackendSqlDb' requires package 'DBI'. Please ",
              "install with 'install.packages(\"DBI\")'")
-    if (missing(dbcon)) {
-        x <- new("MsBackendSqlDb")
-        slot(x, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
-                                               tempfile(fileext = ".db"))
-        return(x)
-    } else {
-      x <- new("MsBackendSqlDb")
-      slot(x, "dbcon", check = FALSE) <- dbcon
-      return(x)
-    }
+    new("MsBackendSqlDb")
 }
 
 #' Test if db table is available
@@ -327,13 +310,17 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @noRd
 .attach_migration <- function(x, y) {
+    ## `ATTACH DATABASE` is a SQLite-specific command
+    ## We will check whether both `x` and `y` are using SQLite connections
+    if (is(x@dbcon, "SQLiteConnection") && is(y@dbcon, "SQLiteConnection")) {
     ## If `x` and `y` are sharing the same dbfile, and using the same dbtable
     ## Hence `modCount` stays the same for obj `x`,
     ## we don't have any database writing operations here. 
     if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         identical(x@dbtable, y@dbtable)) {
         x@rows <- c(x@rows, y@rows)
-        return(x) } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
+        return(x) 
+        } else if (identical(x@dbcon@dbname, y@dbcon@dbname) && 
         (!identical(x@dbtable, y@dbtable))) {
         ## If `x` and `y` are sharing the same dbfile, and using different dbtable
         ## We want to know the length (row numbers) of x@dbtable
@@ -347,17 +334,16 @@ MsBackendSqlDb <- function(dbcon) {
                                                " SELECT ", 
                                                paste(spectraVariables(y), 
                                                      collapse = ", "), 
-                                               " FROM ", y@dbtable, 
-                                               " WHERE _pkey = ?"))
-        qry <- dbBind(qry, list(y@rows))
+                                               " FROM ", y@dbtable))
         dbClearResult(qry)
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- c(x@rows, seq_along(y@rows) + x_length)
+        x@rows <- c(x@rows, y@rows + x_length)
         ## Append `y.dbtable` to the end of `x.dbtable`
         ## The writing operation increases "1" for the merged instance.
         x@modCount <- max(x@modCount, y@modCount) + 1L
-        return(x) } else {
+        return(x)
+        } else {
         ## While x and y have different db files.
         ## We want to know the length (row numbers) of x@dbtable
         x_length <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", 
@@ -371,17 +357,18 @@ MsBackendSqlDb <- function(dbcon) {
                                               collapse = ", "), ") ",
                                         "SELECT ", paste(spectraVariables(y), 
                                               collapse = ", "), 
-                                            " FROM toMerge.", y@dbtable,
-                                        " WHERE _pkey = ?"))
-        st <- dbBind(st, list(y@rows))
+                                            " FROM toMerge.", y@dbtable))
         dbClearResult(st)
         suppressWarnings(dbExecute(x@dbcon, "DETACH DATABASE toMerge"))
         ## modify X@rows, the inserted rows will be added
         ## into the tail of x@rows
-        x@rows <- c(x@rows, seq_along(y@rows) + x_length)
+        x@rows <- c(x@rows, y@rows + x_length)
         x@modCount <- max(x@modCount, y@modCount) + 1L
-        return(x) 
-       }
+        x
+        }
+    } else {
+      stop("This operation is currently only supported on SQLite databases")
+      }
 }
 
 #' Helper function to clone a `MsBackendSqlDb` instance.
@@ -394,12 +381,15 @@ MsBackendSqlDb <- function(dbcon) {
 #' 
 #' @noRd
 .clone_MsBackendSqlDb <- function(x, dbcon) {
-    ## If `cbdbcon` is missing, we will create an empty `MsBackendSqlDb` 
+    ## If `dbcon` is missing, we will create an empty `MsBackendSqlDb` 
     ## Instance with its '.db' file in `tempdir()`.
+    res <- MsBackendSqlDb()
     if (missing(dbcon) || !dbIsValid(dbcon)) {
-        res <- MsBackendSqlDb()
+        slot(res, "dbcon", check = FALSE) <- dbConnect(SQLite(), 
+                                                 tempfile(fileext = ".db"))
+        
     } else {
-        res <- MsBackendSqlDb(dbcon)
+        slot(res, "dbcon", check = FALSE) <- dbcon
     }
     slot(res, "dbtable", check = FALSE) <- x@dbtable
     slot(res, "modCount", check = FALSE) <- x@modCount
@@ -435,56 +425,7 @@ MsBackendSqlDb <- function(dbcon) {
         res@query <- dbSendQuery(res@dbcon, paste0("select ? from ", 
                                                    res@dbtable, 
                                                    " where _pkey = ?"))
-        return(res)
-}
-
-#' Replace the values of a SQLite table column, and ensure the right data type
-#'  can be returned. It's temporarily not in use.
-#'  I kept this function, since replacing column values in huge database is
-#'  extremely time consuming. It's more efficient to use the strategy here.
-#'  
-#'  
-#' @param x [MsBackendSqlDb()] object.
-#' 
-#' @param name A `character(1)` with the name of the column will be replaced.
-#' 
-#' @param value vector with values to replace the `name`.
-#'
-#' @importFrom DBI dbSendQuery dbExecute dbClearResult dbReadTable dbWriteTable dbListFields
-#'
-#' @noRd
-.replace_db_table_columns <- function(x, name, value) {
-    flds <- dbListFields(x@dbcon, "msdata")
-    str1 <- dbListFields(x@dbcon, "msdata")[dbListFields(x@dbcon, 
-                                                       "msdata") != name]
-    sql1 <- paste0("CREATE VIEW metaview AS SELECT ",
-                   toString(str1), " FROM ", x@dbtable)
-    qry <- dbSendQuery(x@dbcon, sql1)
-    dbClearResult(qry)
-    sql2 <- paste0("CREATE VIEW metakey AS SELECT ", "_pkey",
-                   " FROM ", x@dbtable)
-    qry2 <- dbSendQuery(x@dbcon, sql2)
-    dbClearResult(qry2)
-    metapkey <- dbReadTable(x@dbcon, 'metakey')
-    token <- data.frame(name = value, pkey = metapkey)
-    colnames(token) <- c(name, "pkey")
-    dbWriteTable(x@dbcon, 'token', token)
-    sql3 <- paste0("CREATE TABLE msdata1 AS ", "SELECT * FROM metaview ",
-                   "INNER JOIN token on token.pkey = metaview._pkey")
-    dbExecute(x@dbcon, sql3)
-    dbExecute(x@dbcon, paste0("ALTER TABLE ", x@dbtable,
-                              " RENAME TO _msdata_old"))
-    ## We have to sort `str2` into ordinary metadata order
-    sql2 <- paste0("CREATE TABLE msdata AS SELECT ",
-                   toString(flds), " FROM msdata1")
-    qry2 <- dbSendQuery(x@dbcon, sql2)
-    dbClearResult(qry2)
-    dbExecute(x@dbcon, "DROP TABLE IF EXISTS _msdata_old")
-    dbExecute(x@dbcon, "DROP TABLE IF EXISTS msdata1")
-    ## Drop View
-    dbExecute(x@dbcon, "DROP TABLE IF EXISTS token")
-    dbExecute(x@dbcon, "DROP VIEW IF EXISTS metaview")
-    dbExecute(x@dbcon, "DROP VIEW IF EXISTS metakey")
+        res
 }
 
 #' Replace the values of a SQLite table column.
@@ -549,5 +490,17 @@ MsBackendSqlDb <- function(dbcon) {
                                               " FROM table_y WHERE pkey = _pkey)"))
     dbExecute(x@dbcon, "DROP TABLE IF EXISTS table_y")
     slot(x, "columns", check = FALSE) <- c(x@columns, name)
+    x
+}
+
+#' Helper function to reset the row indices after filtering and/or subsetting
+#' operations on `MsBackendSqlDb` object.
+#'  
+#' @param x [MsBackendSqlDb()] object.
+#' 
+#' @noRd
+.reset_row_indices <- function(x) {
+    rowNum <- dbGetQuery(x@dbcon, paste0("SELECT COUNT(*) FROM ", x@dbtable))
+    slot(x, "rows", check = FALSE) <- seq_len(rowNum[1, 1])
     x
 }

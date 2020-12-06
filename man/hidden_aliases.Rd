@@ -21,16 +21,17 @@
 \alias{lengths,MsBackendSqlDb-method}
 \alias{msLevel,MsBackendSqlDb-method}
 \alias{mz,MsBackendSqlDb-method}
-\alias{as.list,MsBackendSqlDb-method}
+\alias{peaksData,MsBackendSqlDb-method}
 \alias{polarity,MsBackendSqlDb-method}
 \alias{precScanNum,MsBackendSqlDb-method}
 \alias{precursorCharge,MsBackendSqlDb-method}
 \alias{precursorIntensity,MsBackendSqlDb-method}
 \alias{precursorMz,MsBackendSqlDb-method}
+\alias{reset,MsBackendSqlDb-method}
 \alias{rtime,MsBackendSqlDb-method}
 \alias{scanIndex,MsBackendSqlDb-method}
 \alias{smoothed,MsBackendSqlDb-method}
-\alias{asDataFrame,MsBackendSqlDb-method}
+\alias{spectraData,MsBackendSqlDb-method}
 \alias{spectraNames,MsBackendSqlDb-method}
 \alias{spectraVariables,MsBackendSqlDb-method}
 \alias{tic,MsBackendSqlDb-method}
@@ -86,7 +87,7 @@
 
 \S4method{mz}{MsBackendSqlDb}(object)
 
-\S4method{as.list}{MsBackendSqlDb}(x)
+\S4method{peaksData}{MsBackendSqlDb}(object)
 
 \S4method{polarity}{MsBackendSqlDb}(object)
 
@@ -98,13 +99,15 @@
 
 \S4method{precursorMz}{MsBackendSqlDb}(object)
 
+\S4method{reset}{MsBackendSqlDb}(object)
+
 \S4method{rtime}{MsBackendSqlDb}(object)
 
 \S4method{scanIndex}{MsBackendSqlDb}(object)
 
 \S4method{smoothed}{MsBackendSqlDb}(object)
 
-\S4method{asDataFrame}{MsBackendSqlDb}(object, columns = spectraVariables(object))
+\S4method{spectraData}{MsBackendSqlDb}(object, columns = spectraVariables(object))
 
 \S4method{spectraNames}{MsBackendSqlDb}(object)
 

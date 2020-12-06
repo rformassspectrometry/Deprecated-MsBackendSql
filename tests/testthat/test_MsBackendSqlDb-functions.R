@@ -1,18 +1,4 @@
-test_that("MsBackendSqlDb works", {
-    sql <- MsBackendSqlDb()
-    expect_true(is(sql, "MsBackendSqlDb"))
-    expect_true(is(sql@dbcon, "SQLiteConnection"))
-    
-    connCon <- dbConnect(SQLite(), "constructor1.db")
-    sql1 <- MsBackendSqlDb(connCon)
-    expect_true(is(sql1, "MsBackendSqlDb"))
-    expect_true(is(sql1@dbcon, "SQLiteConnection"))
-})
-
 test_that(".valid_db_table_exists works", {
-    sql <- MsBackendSqlDb()
-    expect_match(.valid_db_table_exists(sql@dbcon, "msdata"), 
-                 "database table 'msdata' not found") 
     expect_null(.valid_db_table_exists(sciexSQL1@dbcon, "msdata"))
     expect_match(.valid_db_table_exists(sciexSQL1@dbcon, "foobar"), 
                  "not found")
@@ -44,28 +30,30 @@ test_that(".valid_db_table_columns works", {
 })
 
 test_that(".write_mzR_to_db works", {
-    sql <- MsBackendSqlDb()
-    on.exit(DBI::dbDisconnect(sql@dbcon))
-    expect_equal(.write_mzR_to_db(sciexmzML1, sql@dbcon), 10)
-    expect_equal(dbListTables(sql@dbcon), "msdata")
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
+    expect_equal(.write_mzR_to_db(sciexmzML1, con), 10)
+    MsBackendSqlDb1 <- backendInitialize(MsBackendSqlDb(), dbcon = con)
+    expect_equal(dbListTables(MsBackendSqlDb1@dbcon), "msdata")
 })
 
 test_that(".initiate_data_to_table works", {
     data <- dbReadTable(sciexSQL1@dbcon, "msdata")
     ## "_pkey" column from SQLite DB will be renamed to "X_pkey" by R
     data <- data[, names(data)[!names(data) %in% "X_pkey"]]
-    sql <- MsBackendSqlDb()
-    on.exit(DBI::dbDisconnect(sql@dbcon))
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
     ## Before this function, there shall not be a table in the connection obj
-    expect_identical(dbListTables(sql@dbcon), character(0))
+    expect_identical(dbListTables(con), character(0))
     
-    x <- .initiate_data_to_table(data, sql@dbcon)
+    x <- .initiate_data_to_table(data, con)
+    MsBackendSqlDb1 <- backendInitialize(MsBackendSqlDb(), dbcon = con)
     ## This function shall return a data.frame for other functions
     expect_true(is(x, "data.frame"))
     ## We can also expect by default, `msdata` table is created in the con obj
-    expect_match(dbListTables(sql@dbcon), "msdata")
+    expect_match(dbListTables(MsBackendSqlDb1@dbcon), "msdata")
     ## We can test whether `mz` and `intensity` columns have type as BLOB
-    typeCol <- dbGetQuery(sql@dbcon, "PRAGMA table_info(msdata)")
+    typeCol <- dbGetQuery(MsBackendSqlDb1@dbcon, "PRAGMA table_info(msdata)")
     expect_match(typeCol[typeCol$name %in% c("mz", "intensity"),]$type,
                  "BLOB")
 })
@@ -74,26 +62,25 @@ test_that(".write_data_to_db works", {
     data <- dbReadTable(sciexSQL1@dbcon, "msdata")
     ## "_pkey" column from SQLite DB will be renamed to "X_pkey" by R
     data <- data[, names(data)[!names(data) %in% "X_pkey"]]
-    sql <- MsBackendSqlDb()
-    on.exit(DBI::dbDisconnect(sql@dbcon))
+    con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    on.exit(DBI::dbDisconnect(con))
     ## Before this function, there shall not be a table in the connection obj
-    expect_identical(dbListTables(sql@dbcon), character(0))
+    expect_identical(dbListTables(con), character(0))
     
     ## This function shall append 10L rows to the dbcon
     ## and create a SQLite table "msdata"
-    expect_identical(.write_data_to_db(data, sql@dbcon), 10L)
-    expect_match(dbListTables(sql@dbcon), "msdata")
+    expect_identical(.write_data_to_db(data, con), 10L)
+    expect_match(dbListTables(con), "msdata")
     ## After using this function, there shall be a table `msdata`
     ## has 10 rows
-    rowNum <- dbGetQuery(sql@dbcon, "SELECT COUNT(*) FROM msdata")
-    expect_identical(rowNum[1, 1], 
-                 10L)
+    rowNum <- dbGetQuery(con, "SELECT COUNT(*) FROM msdata")
+    expect_identical(rowNum[1, 1], 10L)
     
     ## We can append another data (same dimensions as before) 
     ## to this connection obj
-    expect_identical(.write_data_to_db(data, sql@dbcon), 10L)
+    expect_identical(.write_data_to_db(data, con), 10L)
     ## Now `msdata` has 20 rows
-    rowNum2 <- dbGetQuery(sql@dbcon, "SELECT COUNT(*) FROM msdata")
+    rowNum2 <- dbGetQuery(con, "SELECT COUNT(*) FROM msdata")
     expect_identical(rowNum2[1, 1], 
                      20L)
 })
@@ -152,7 +139,7 @@ test_that(".combine_backend_SqlDb works", {
                  "Can only merge backends of the same type: MsBackendSqlDb")
     
     ## Conditional case: objects with different spectra variables
-    dfSQL <- backendInitialize(MsBackendSqlDb(), data = msdf)
+    dfSQL <- backendInitialize(MsBackendSqlDb(), data = testTbl)
     expect_error(.combine_backend_SqlDb(c(dfSQL, sciexSQL1)),
                  "Can only merge backends with the same spectra variables")
     
@@ -225,7 +212,6 @@ test_that(".attach_migration works", {
     ## Only keep 4 rows in the second MSBackendSqlDb instance
     testSQL6@rows <- c(2L, 5L, 7L, 9L)
     ## testSQL5 is used as the merged result
-    testSQL6@modCount <- 6L
     testSQL6@modCount <- 9L
     testSQL5 <- .attach_migration(testSQL1, testSQL6)
     expect_identical(testSQL1@dbcon, testSQL5@dbcon)
@@ -235,13 +221,13 @@ test_that(".attach_migration works", {
     ## `ATTACH` table will increase `modCount` by 1L.
     expect_identical(testSQL5@modCount, 10L)
     expect_identical(length(testSQL5), 14L)
-    expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL6))
-    expect_identical(testSQL5@rows, c(testSQL1@rows, 11:14))
+    expect_identical(spectraData(testSQL5[11:14]), spectraData(testSQL6))
+    expect_identical(testSQL5@rows, c(testSQL1@rows, 10L + testSQL6@rows))
     ## We expect, the dbtable in testSQL5 only preserved 14 rows
-    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 14L)
+    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)
     rm(testSQL1, testSQL5)
     
-    ## While x and y have different db files, but dbtables have the same name:
+    ## While x and y have different db files, but identical dbtable names:
     testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
     testSQL2@rows <- c(2L, 5L, 7L, 9L)
     testSQL2@modCount <- 5L
@@ -253,10 +239,10 @@ test_that(".attach_migration works", {
     expect_identical(testSQL1@dbtable, testSQL5@dbtable)
     expect_identical(testSQL5@modCount, 6L)
     expect_identical(length(testSQL5), 14L)
-    expect_identical(asDataFrame(testSQL5[11:14]), asDataFrame(testSQL2))
-    expect_identical(testSQL5@rows, c(testSQL1@rows, 11:14))
+    expect_identical(spectraData(testSQL5[11:14]), spectraData(testSQL2))
+    expect_identical(testSQL5@rows, c(testSQL1@rows, 10L + testSQL2@rows))
     ## We expect, the dbtable in testSQL5 only preserved 14 rows
-    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 14L)
+    expect_identical(nrow(dbReadTable(testSQL5@dbcon, testSQL5@dbtable)), 20L)
 })
 
 test_that(".clone_MsBackendSqlDb works", {
@@ -300,3 +286,13 @@ test_that(".insert_db_table_columns works", {
     expect_identical(testSQL1$originTest, origin2)
     expect_identical(testSQL1$rtimeTest, rtime2)
 })
+
+test_that(".insert_db_table_columns works", {
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- .reset_row_indices(testSQL1)
+    expect_equal(mz(res), mz(testSQL1))
+    
+    sps_mod <- testSQL1[3:8]
+    res <- .reset_row_indices(sps_mod)
+    expect_equal(mz(res), mz(testSQL1))
+})  

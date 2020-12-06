@@ -4,13 +4,15 @@ test_that("initializeBackend,MsBackendSqlDb works", {
     be <- MsBackendSqlDb()
     expect_true(is(be, "MsBackendSqlDb"))
     ## initialize `MsBackendSqlDb` from `data`
-    df <- DataFrame(msdf)
-    df$dataStorage <- c("fake", "backend", "dataStorage")
+    df <- DataFrame(testTbl)
+    df$dataStorage <- c(rep(c("fake", "backend", "dataStorage"), 3), "none")
     be3 <- backendInitialize(MsBackendSqlDb(), 
                              data = df)
-    expect_identical(be3$dataStorage, rep("<db>", 3))
-    expect_identical(dataStorage(be3), rep("<db>", 3))
+    expect_identical(be3$dataStorage, rep("<db>", 10))
+    expect_identical(dataStorage(be3), rep("<db>", 10))
     
+    msdf$mz <- testTbl$mz[5:7]
+    msdf$intensity <- testTbl$intensity[5:7]
     be2 <- backendInitialize(be, data = msdf[msdf$msLevel %in% 2L, ])
     expect_true(is(be2, "MsBackendSqlDb"))
     
@@ -28,8 +30,6 @@ test_that("initializeBackend,MsBackendSqlDb works", {
     
     expect_error(backendInitialize(MsBackendSqlDb()))
     expect_error(backendInitialize(MsBackendSqlDb(), dbcon = test_con1),
-                 "no such table: msdata")
-    expect_error(backendInitialize(MsBackendSqlDb(dbcon = test_con1)),
                  "no such table: msdata")
     expect_error(backendInitialize(MsBackendSqlDb(), 
                                    dbcon = test_con1,
@@ -51,13 +51,14 @@ test_that("show,MsBackendSqlDb works", {
 
 test_that("Spectra,character works", {
     conn <- dbConnect(SQLite(), "msdata.db")
-    res <- Spectra(sciexmzMLAll, backend = MsBackendSqlDb(dbcon = conn),
+    res <- Spectra(sciexmzMLAll, backend = MsBackendSqlDb(),
+                                 dbcon = conn,
                                  BPPARAM = SerialParam())
     expect_true(is(res@backend, "MsBackendSqlDb"))
     expect_equal(unique(res@backend$dataStorage), 
                  "<db>")
     expect_equal(unique(res@backend$dataOrigin), 
-                 normalizePath(sciexmzMLAll))
+                 normalizePath(sciexmzMLAll, winslash = "/"))
     expect_identical(rtime(res), rtime(sciex_mzR_All))
     res_2 <- Spectra(sciexmzMLAll)
     expect_identical(rtime(res), rtime(res_2))
@@ -95,7 +96,8 @@ test_that("backendMerge,MsBackendSqlDb works", {
     ## Also the test case, while `dbcon` isn't provided.
     connTest <- dbConnect(SQLite(), "tmpMerge1.db")
     sp_test <- Spectra(sciexmzMLAll, 
-                       backend = MsBackendSqlDb(dbcon = connTest),
+                       backend = MsBackendSqlDb(),
+                       dbcon = connTest,
                        BPPARAM = SerialParam())
     expect_identical(sp_test@backend@dbtable, dbListTables(connTest))
     expect_identical(sp_test@backend@dbcon, connTest)
@@ -123,7 +125,7 @@ test_that("backendMerge,MsBackendSqlDb works", {
                                       testSQL1@dbtable)), 10L)
     expect_identical(testSQL1@dbtable, sciexSQL1@dbtable)
     expect_identical(identical(testSQL1@dbcon, res@dbcon), FALSE)
-    expect_identical(asDataFrame(testSQL1), asDataFrame(sciexSQL1))
+    expect_identical(spectraData(testSQL1), spectraData(sciexSQL1))
 })
 
 test_that("acquisitionNum, MsBackendSqlDb works", {
@@ -289,20 +291,20 @@ test_that("mz,MsBackendSqlDb works", {
                  "mz not found")
 })
 
-test_that("as.list,MsBackendSqlDb works", {
-    expect_true(is(as.list(sciexSQL1), "list"))
+test_that("peaksData,MsBackendSqlDb works", {
+    expect_true(is(peaksData(sciexSQL1), "list"))
   
     df <- DataFrame(msdf)
     df$mz <- list(1:3, c(2.1), c(3.5, 6.7, 12.3))
     df$intensity <- list(1:3, 4, c(6, 15, 19))
     be <- backendInitialize(MsBackendSqlDb(), data = df)
-    expect_equal(as.list(be), list(cbind(mz = 1:3, intensity = 1:3),
+    expect_equal(peaksData(be), list(cbind(mz = 1:3, intensity = 1:3),
                                    cbind(mz = 2.1, intensity = 4),
                                    cbind(mz = c(3.5, 6.7, 12.3),
                                          intensity = c(6, 15, 19))))
 })
 
-test_that("lengths,MsBackendDataFrame works", {
+test_that("lengths,MsBackendSqlDb works", {
     expect_true(is(lengths(sciexSQL1), "integer"))
   
     df <- DataFrame(msdf)
@@ -314,6 +316,14 @@ test_that("lengths,MsBackendDataFrame works", {
     df$mz <- list(numeric(0), numeric(0), numeric(0))
     be <- backendInitialize(MsBackendSqlDb(), data = df)
     expect_equal(lengths(be), c(0, 0, 0))
+})
+
+test_that("spectraData,MsBackendSqlDb works", {
+    be <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- spectraData(be)
+    expect_identical(res$msLevel, testTbl$msLevel)
+    expect_identical(res$mz, NumericList(testTbl$mz))
+    expect_identical(res$intensity, NumericList(testTbl$intensity))
 })
 
 test_that("polarity,MsBackendSqlDb works", {
@@ -376,6 +386,16 @@ test_that("precursorMz,MsBackendSqlDb works", {
     expect_equal(precursorMz(be), c(134.4, 342.2, 862.54))
 })
 
+test_that("reset,MsBackendSqlDb works", {
+    testSQL1 <- .clone_MsBackendSqlDb(sciexSQL1)
+    res <- reset(testSQL1)
+    expect_equal(mz(res), mz(testSQL1))
+  
+    sps_mod <- testSQL1[3:8]
+    res <- reset(sps_mod)
+    expect_equal(mz(res), mz(testSQL1))
+})
+
 test_that("rtime,MsBackendSqlDb works", {
     expect_true(is(rtime(sciexSQL1), "numeric"))
   
@@ -400,7 +420,6 @@ test_that("scanIndex,MsBackendSqlDb works", {
     be <- backendInitialize(MsBackendSqlDb(), data = df)
     expect_equal(scanIndex(be), c(123, 124, 125))
 })
-
 
 test_that("smoothed,MsBackendSqlDb works", {
     ## smoothed(sciexSQL1) returns "NA" values
